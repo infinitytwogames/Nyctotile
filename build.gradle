@@ -1,0 +1,38 @@
+plugins {
+    id 'java'
+    id 'application'
+}
+
+group = 'dev.merossany.calculatorapp'
+version = '1.0-SNAPSHOT'
+
+repositories {
+    mavenCentral()
+}
+
+application {
+    mainClass = 'dev.merosssany.calculatorapp.Main'
+}
+
+dependencies {
+    implementation platform("org.lwjgl:lwjgl-bom:${lwjglVersion}")
+    implementation "org.lwjgl:lwjgl"
+    implementation "org.lwjgl:lwjgl-glfw"
+    implementation "org.lwjgl:lwjgl-opengl"
+    implementation "org.lwjgl:lwjgl-stb"
+    implementation "org.lwjgl:lwjgl-assimp" // Example of another binding
+
+//    runtimeOnly platform("org.lwjgl:lwjgl-bom:${lwjglVersion}:natives-${os}")
+    runtimeOnly "org.lwjgl:lwjgl::natives-${os}"
+    runtimeOnly "org.lwjgl:lwjgl-glfw::natives-${os}"
+    runtimeOnly "org.lwjgl:lwjgl-opengl::natives-${os}"
+    runtimeOnly "org.lwjgl:lwjgl-stb::natives-${os}"
+    runtimeOnly "org.lwjgl:lwjgl-assimp::natives-${os}" // Example of another binding
+
+    testImplementation 'org.junit.jupiter:junit-jupiter-api:5.8.1'
+    testRuntimeOnly 'org.junit.jupiter:junit-jupiter-engine:5.8.1'
+}
+
+test {
+    useJUnitPlatform()
+}
