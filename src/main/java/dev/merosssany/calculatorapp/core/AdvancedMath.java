@@ -25,4 +25,8 @@ public abstract class AdvancedMath {
         if (value < min) return min;
         return (short) Math.min(value,max);
     }
+
+    public static float scale(float increment, float other) {
+        return  increment * other;
+    }
 }
