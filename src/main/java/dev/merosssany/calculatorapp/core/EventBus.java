@@ -1,5 +1,6 @@
 package dev.merosssany.calculatorapp.core;
 
+import dev.merosssany.calculatorapp.core.event.SubscribeEvent;
 import dev.merosssany.calculatorapp.logging.Logger;
 
 import java.lang.reflect.Method;
