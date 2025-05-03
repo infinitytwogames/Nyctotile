@@ -1,6 +1,9 @@
 package dev.merosssany.calculatorapp;
 
+import dev.merosssany.calculatorapp.core.RGB;
 import dev.merosssany.calculatorapp.core.Window;
+import dev.merosssany.calculatorapp.core.position.UIVector2Df;
+import dev.merosssany.calculatorapp.core.ui.UI;
 import dev.merosssany.calculatorapp.logging.Logger;
 import org.lwjgl.glfw.GLFW;
 import org.lwjgl.glfw.GLFWErrorCallback;
@@ -24,7 +27,7 @@ public class Main {
         while (!glfwWindowShouldClose(window.getWindow())) {
             glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT); // Clear the framebuffer
 
-            render();
+            render(window);
 
             // --- END RENDERING ---
 
@@ -33,16 +36,14 @@ public class Main {
         }
     }
 
-    public static void render() {
+    public static void render(Window window) {
         // Set the color for the display background (e.g., a lighter gray)
         glColor3f(0.9f, 0.9f, 0.9f);
-
+        UI ui = new UI(new UIVector2Df(-1f,1f),1,0.5f,new RGB(1,1,1));
         // Define the vertices of the display rectangle
+        ui.draw(window.getWidth(),window.getHeight());
         glBegin(GL_QUADS);
-        glVertex2f(-0.8f, 0.8f);  // Top-left
-        glVertex2f(0.8f, 0.8f);   // Top-right
-        glVertex2f(0.8f, 0.6f);   // Bottom-right (making it a bit shorter)
-        glVertex2f(-0.8f, 0.6f); // Bottom-left
+
         glEnd();
     }
 }

@@ -12,6 +12,12 @@ public class Window {
     private int width;
     private int height;
 
+    public int getWidth() {
+        return width;
+    }
+    public int getHeight() {
+        return height;
+    }
     public Window(int width, int height, String title) {
         this.height = height;
         this.width = width;

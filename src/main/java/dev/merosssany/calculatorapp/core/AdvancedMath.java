@@ -1,4 +1,4 @@
-package dev.merosssany.calculatorapp.core.position;
+package dev.merosssany.calculatorapp.core;
 
 public abstract class AdvancedMath {
     public static int clamp(int value,int min, int max) {
