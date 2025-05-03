@@ -10,7 +10,7 @@ import org.lwjgl.system.MemoryUtil;
 
 public class Window {
     private long window = 0;
-    private String title = "";
+    private String title;
     private int width;
     private int height;
 
@@ -18,6 +18,14 @@ public class Window {
 
     public int getHeight() {
         return height;
+    }
+
+    public String getTitle() {
+        return title;
+    }
+
+    public void setTitle(String title) {
+        this.title = title;
     }
 
     public int getWidth() {
@@ -85,5 +93,6 @@ public class Window {
             framebufferSizeCallback.free();
         }
         GLFW.glfwDestroyWindow(window);
+        GLFW.glfwTerminate();
     }
 }

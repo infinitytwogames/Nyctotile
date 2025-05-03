@@ -1,5 +1,6 @@
 package dev.merosssany.calculatorapp.core;
 
+import dev.merosssany.calculatorapp.core.event.Event;
 import dev.merosssany.calculatorapp.core.event.SubscribeEvent;
 import dev.merosssany.calculatorapp.logging.Logger;
 
@@ -11,6 +12,7 @@ public abstract class EventBus {
     private static final Logger logger = new Logger("EventBus");
 
     public static void register(Object listener) {
+        logger.log("Registering",logger.formatClassName(listener.getClass()));
         Class<?> listenerClass = listener.getClass();
         for (Method method : listenerClass.getDeclaredMethods()) {
             if (method.isAnnotationPresent(SubscribeEvent.class) &&
@@ -24,7 +26,7 @@ public abstract class EventBus {
         }
     }
 
-    public static void post(Object event) {
+    public static void post(Event event) {
         List<EventHandler> eventHandlers = handlers.get(event.getClass());
         if (eventHandlers != null) {
             for (EventHandler handler : new ArrayList<>(eventHandlers)) { // Iterate over a copy
@@ -32,36 +34,24 @@ public abstract class EventBus {
                     handler.invoke(event);
                 } catch (Exception e) {
                     logger.error(e,"Failed to call event subscriber:",handler.getClass().getName());
-                    e.printStackTrace(); // Handle exceptions appropriately
                 }
             }
         }
     }
 
-    private static class EventHandler {
-        private final Object listener;
-        private final Method method;
+    private record EventHandler(Object listener, Method method) {
 
-        public EventHandler(Object listener, Method method) {
-            this.listener = listener;
-            this.method = method;
-        }
+        public void invoke(Event event) throws Exception {
+                method.invoke(listener, event);
+            }
 
-        public void invoke(Object event) throws Exception {
-            method.invoke(listener, event);
-        }
+            @Override
+            public boolean equals(Object obj) {
+                if (this == obj) return true;
+                if (obj == null || getClass() != obj.getClass()) return false;
+                EventHandler other = (EventHandler) obj;
+                return listener.equals(other.listener) && method.equals(other.method);
+            }
 
-        @Override
-        public boolean equals(Object obj) {
-            if (this == obj) return true;
-            if (obj == null || getClass() != obj.getClass()) return false;
-            EventHandler other = (EventHandler) obj;
-            return listener.equals(other.listener) && method.equals(other.method);
-        }
-
-        @Override
-        public int hashCode() {
-            return Objects.hash(listener, method);
-        }
     }
 }

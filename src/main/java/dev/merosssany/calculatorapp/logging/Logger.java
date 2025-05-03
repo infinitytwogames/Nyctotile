@@ -32,6 +32,7 @@ public class Logger {
     }
 
     public void error(Throwable e, String ...messages) {
+        System.err.println("\033[31m"+format(LoggingLevel.ERROR,messages)+"\033[0m");
         if (e instanceof VerboseException) {
             e.printStackTrace(); // Rely on VerboseException's custom output
         } else {
@@ -39,6 +40,7 @@ public class Logger {
         }
     }
     public void error(Throwable e, Object ...objects) {
+        System.err.println("\033[31m"+formatObj(LoggingLevel.ERROR,objects)+"\033[0m");
         if (e instanceof VerboseException) {
             e.printStackTrace(); // Rely on VerboseException's custom output
         } else {
@@ -46,29 +48,33 @@ public class Logger {
         }
     }
     public void error(String ...messages) {
-        System.out.println("\033[31m"+format(LoggingLevel.ERROR,messages)+"\033[0m");
+        System.err.println("\033[31m"+format(LoggingLevel.ERROR,messages)+"\033[0m");
     }
     public void error(Object ...objects) {
-        System.out.println("\033[31m"+formatObj(LoggingLevel.ERROR,objects)+"\033[0m");
+        System.err.println("\033[31m"+formatObj(LoggingLevel.ERROR,objects)+"\033[0m");
     }
 
     public void fatal(Throwable e,String ...messages) {
+        System.err.println("\033[31m"+format(LoggingLevel.FATAL,messages)+"\033[0m");
         if (e instanceof VerboseException) {
             e.printStackTrace(); // Rely on VerboseException's custom output
         } else {
-            printStacktrace(e, LoggingLevel.ERROR); // Use Logger's formatting
+            printStacktrace(e, LoggingLevel.FATAL); // Use Logger's formatting
         }
+        CleanupManager.exit(1);
     }
     public void fatal(Throwable e,Object ...objects) {
+        System.err.println("\033[31m"+formatObj(LoggingLevel.FATAL,objects)+"\033[0m");
         if (e instanceof VerboseException) {
             e.printStackTrace(); // Rely on VerboseException's custom output
         } else {
-            printStacktrace(e, LoggingLevel.ERROR); // Use Logger's formatting
+            printStacktrace(e, LoggingLevel.FATAL); // Use Logger's formatting
         }
+        CleanupManager.exit(1);
     }
 
     public void debug(Object ...objects) {
-        System.out.println(formatObj(LoggingLevel.WARN,objects));
+        System.out.println(formatObj(LoggingLevel.DEBUG,objects));
     }
     public void debug(String ...messages) {
         System.out.println(format(LoggingLevel.DEBUG,messages));
@@ -115,6 +121,11 @@ public class Logger {
         String finalResult = "";
 
         for (Object obj : objects) {
+            if (obj == null) {
+                textResult.append("<NULL> ");
+                continue;
+            }
+
             Class<?> classFromObj = obj.getClass();
             if (!isPrimitiveClass(classFromObj)) {
                 objectResult.append("Class: ")
@@ -134,7 +145,7 @@ public class Logger {
                                 .append(" (")
                                 .append(formatClassName(field.getClass()))
                                 .append(")\" = ")
-                                .append(field.get(classFromObj))
+                                .append(field.get(obj))
                                 .append("\n")
                         ;
                     } catch (IllegalAccessException e) {
@@ -223,7 +234,7 @@ public class Logger {
         System.out.println("\033[31m"+builder.toString()+"\033[0m");
     }
 
-    protected String formatClassName(Class<?> classProvided) {
+    public String formatClassName(Class<?> classProvided) {
         String fullName =  classProvided.getName();
         String packageName = classProvided.getPackageName();
         return  fullName.replaceAll(packageName + ".","");
@@ -233,6 +244,6 @@ public class Logger {
         return classProvided.isPrimitive() || Number.class.isAssignableFrom(classProvided) || String.class.isAssignableFrom(classProvided) || Boolean.class.isAssignableFrom(classProvided);
     }
 
-    @SafeVarargs
+    @SuppressWarnings("varargs")
     public final <T extends Number> void info(T... numbers) {System.out.println(formatObj(LoggingLevel.INFO,numbers));}
 }

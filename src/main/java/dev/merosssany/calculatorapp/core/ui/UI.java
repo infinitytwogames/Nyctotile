@@ -3,22 +3,32 @@ package dev.merosssany.calculatorapp.core.ui;
 import dev.merosssany.calculatorapp.core.RGB;
 import dev.merosssany.calculatorapp.core.position.UIVector2Df;
 import dev.merosssany.calculatorapp.core.position.Vector2D;
-import org.lwjgl.assimp.AIVector2D;
-import org.lwjgl.opengl.GL;
+import dev.merosssany.calculatorapp.logging.Logger;
 
 import static org.lwjgl.opengl.GL11.*;
 
 public class UI {
     private UIVector2Df position;
-    private float width;
-    private float height;
+    private final float width;
+    private final float height;
     private RGB background;
+    private Vector2D<Float> end;
+    private final Logger logger = new Logger("UI Handler");
+
+    public void setBackgroundColor(RGB color) {
+        background = color;
+    }
 
     public UI(UIVector2Df position,float width, float height, RGB background) {
         this.height = height;
         this.width = width;
         this.position = position;
         this.background = background;
+
+        float topLeftX = position.getX();
+        float topLeftY = position.getY();
+
+        this.end = new Vector2D<>(topLeftX + width, topLeftY - height);
     }
 
     public Vector2D<Float> getPosition() {
@@ -27,22 +37,18 @@ public class UI {
 
     public void setPosition(UIVector2Df position) {
         this.position = position;
+        float topLeftX = position.getX();
+        float topLeftY = position.getY();
+
+        this.end = new Vector2D<>(topLeftX + width, topLeftY - height);
     }
 
     public float getWidth() {
         return width;
     }
 
-    public void setWidth(float width) {
-        this.width = width;
-    }
-
     public float getHeight() {
         return height;
-    }
-
-    public void setHeight(float height) {
-        this.height = height;
     }
 
     public void draw(int windowWidth, int windowHeight) {
@@ -63,5 +69,13 @@ public class UI {
         glVertex2f(topLeftX + widthNDC, topLeftY - heightNDC); // Bottom-right (assuming +Y is up in NDC)
         glVertex2f(topLeftX, topLeftY - heightNDC);      // Bottom-left
         glEnd();
+    }
+
+    public Vector2D<Float> getEnd() {
+        return end;
+    }
+
+    public Logger getLogger() {
+        return logger;
     }
 }
