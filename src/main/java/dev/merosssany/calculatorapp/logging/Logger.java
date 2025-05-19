@@ -206,7 +206,7 @@ public class Logger {
         System.out.println(formatStacktrace(e,level));
     }
 
-    private String formatStacktrace(Throwable e,LoggingLevel level) {
+    public String formatStacktrace(Throwable e,LoggingLevel level) {
         StringBuilder builder = new StringBuilder();
         builder.append(formatTime(level))
                 .append("An exception has been occurred!")

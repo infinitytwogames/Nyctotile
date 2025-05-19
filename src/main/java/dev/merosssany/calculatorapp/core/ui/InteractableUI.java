@@ -18,8 +18,6 @@ public class InteractableUI extends UI{
     public InteractableUI(UIVector2Df position, float width, float height, RGBA background, Window window) {
         super("Interactable UI", position, width, height, background);
         this.window = window;
-        HoverEventRegister.registerUI(this);
-        EventBus.register(this);
         this.original = super.getBackgroundColor();
     }
 
@@ -64,10 +62,7 @@ public class InteractableUI extends UI{
 
         Vector2D<Float> normalizedMousePos = new Vector2D<>(normalizedMouseX, normalizedMouseY);
 //        logger.log(this.getPosition(),normalizedMousePos, this.getEnd());
-        if (this.getPosition().isVectorPointIncludedIn(normalizedMousePos, this.getEnd())) {
-            return true;
-        }
-        return false;
+        return this.getPosition().isVectorPointIncludedIn(normalizedMousePos, this.getEnd());
     }
 
     @SubscribeEvent
@@ -77,7 +72,7 @@ public class InteractableUI extends UI{
     }
 
     public void onMouseHover() {
-//        getLogger().log("Mouse Hover");
+        getLogger().info("Mouse Hover");
         changeBackgroundColor(original.getRed(),original.getGreen(),original.getBlue(),original.getAlpha() - 0.3f);
     }
 
@@ -97,5 +92,16 @@ public class InteractableUI extends UI{
 
     public RGBA getCurrentColor() {
         return backgroundRGBA;
+    }
+
+    @Override
+    public void init() {
+        super.init();
+        HoverEventRegister.registerUI(this);
+        EventBus.register(this);
+    }
+
+    public Window getWindow() {
+        return window;
     }
 }

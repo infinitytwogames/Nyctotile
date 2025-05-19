@@ -189,9 +189,7 @@ public class UI {
         if (shaderProgramId != 0) {
             GL30.glUseProgram(0);
         }
-
         glDisable(GL11.GL_BLEND);
-//        logger.info(name, " drawn at position: ", position);
     }
 
     /**
@@ -208,6 +206,13 @@ public class UI {
             initialized = false;
             logger.info(name, " cleaned up. VAO ID: ", ""+vaoId);
         }
+    }
+
+    public void initShaderUniforms() {
+        // Called after shaderProgramId is set:
+        posLocation   = GL20.glGetUniformLocation(shaderProgramId, "uPosition");
+        sizeLocation  = GL20.glGetUniformLocation(shaderProgramId, "uSize");
+        colorLocation = GL20.glGetUniformLocation(shaderProgramId, "inColor"); // or another uniform
     }
 }
 

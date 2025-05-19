@@ -188,28 +188,18 @@ public abstract class AdvancedMath {
         return modelMatrix;
     }
 
-//    public static void main(String[] args) {
-//        // Example usage:
-//        float positionX = 100f;
-//        float positionY = 200f;
-//        float scaleX    = 2f;
-//        float scaleY    = 1.5f;
-//        float rotation  = 0.5f; // radians
-//
-//        Matrix4f translationMatrix = MatrixCalculator2D.translate2D(positionX, positionY);
-//        Matrix4f scalingMatrix     = MatrixCalculator2D.scale2D(scaleX, scaleY);
-//        Matrix4f rotationMatrix      = MatrixCalculator2D.rotate2D(rotation);
-//
-//        // Calculate the model matrix: Scale -> Rotate -> Translate
-//        Matrix4f modelMatrix = MatrixCalculator2D.calculateModelMatrix(translationMatrix, scalingMatrix, rotationMatrix);
-//
-//        System.out.println("Model Matrix:\n" + modelMatrix);
-//
-//        float left = 0f;
-//        float right = 800f;
-//        float bottom = 0f;
-//        float top = 600f;
-//        Matrix4f projectionMatrix = MatrixCalculator2D.orthographicProjection2D(left, right, bottom, top);
-//        System.out.println("Projection Matrix: \n" + projectionMatrix);
-//    }
+    public static Vector2D<Integer> ndcToPixel(float ndcX, float ndcY, Window window) {
+        int windowWidth = window.getWidth();
+        int windowHeight = window.getHeight();
+
+        // NDC to Normalized (0 to 1)
+        float normalizedX = (ndcX + 1.0f) / 2.0f;
+        float normalizedY = (1.0f - ndcY) / 2.0f; // <--- THIS LINE IS CRUCIAL FOR Y-INVERSION
+
+        // Normalized (0 to 1) to Pixel
+        int pixelX = (int) (normalizedX * windowWidth);
+        int pixelY = (int) (normalizedY * windowHeight);
+
+        return new Vector2D<>(pixelX, pixelY);
+    }
 }

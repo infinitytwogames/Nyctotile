@@ -1,19 +1,10 @@
-#version 330 core
+ #version 330 core
+ in vec2 texCoord;
+ out vec4 FragColor;
+ uniform sampler2D tex;
+ uniform vec4 color;
 
-// Input from vertex shader
-in vec2 vTexCoord;
-
-// Uniform variables
-uniform sampler2D uFontTexture; // The font texture atlas
-uniform vec4 uTextColor;    // The color of the text
-
-// Output
-out vec4 fragColor;
-
-void main() {
-    // Sample the font texture
-    vec4 texColor = texture(uFontTexture, vTexCoord);
-
-    // Apply text color and alpha
-    fragColor = uTextColor * texColor.a;
-}
+ void main() {
+     float alpha = texture(tex, texCoord).r;
+     FragColor = vec4(color.rgb, color.a * alpha);
+ }

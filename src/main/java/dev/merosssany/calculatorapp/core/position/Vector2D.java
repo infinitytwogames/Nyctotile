@@ -4,8 +4,8 @@ import java.util.Objects;
 import java.util.Vector;
 
 public class Vector2D<T extends Number & Comparable<T>> {
-    public T x;
-    public T y;
+    private T x;
+    private T y;
 
     public Vector2D(T x, T y) {
         this.x = x;

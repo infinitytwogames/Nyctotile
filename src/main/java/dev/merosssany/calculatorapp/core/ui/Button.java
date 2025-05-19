@@ -1,38 +1,67 @@
 package dev.merosssany.calculatorapp.core.ui;
 
-import dev.merosssany.calculatorapp.core.RGBA;
-import dev.merosssany.calculatorapp.core.Window;
+import dev.merosssany.calculatorapp.core.*;
 import dev.merosssany.calculatorapp.core.position.UIVector2Df;
 import dev.merosssany.calculatorapp.core.position.Vector2D;
+import dev.merosssany.calculatorapp.core.position.Vector2Dx2;
+import dev.merosssany.calculatorapp.core.ui.font.FontRendererGL;
 
-import java.awt.*;
-import java.io.InputStream;
+import java.io.IOException;
 
+import static dev.merosssany.calculatorapp.core.ShaderProgram.load;
 import static org.lwjgl.opengl.GL11.*;
-import static org.lwjgl.opengl.GL11.GL_BLEND;
-import static org.lwjgl.opengl.GL11.GL_ONE_MINUS_SRC_ALPHA;
-import static org.lwjgl.opengl.GL11.GL_QUADS;
-import static org.lwjgl.opengl.GL11.GL_SRC_ALPHA;
-import static org.lwjgl.opengl.GL11.glBegin;
-import static org.lwjgl.opengl.GL11.glColor4f;
-import static org.lwjgl.opengl.GL11.glDisable;
-import static org.lwjgl.opengl.GL11.glEnd;
-import static org.lwjgl.opengl.GL11.glVertex2f;
-import org.lwjgl.nanovg.*;
 
 public class Button extends InteractableUI {
+    private RGBA textColor;
+    private ShaderProgram shader;
     private boolean isPressed = false;
     private Runnable mouseClick;
     private String text;
-    private final float padding = 0;
+    private final float padding;
+    private FontRendererGL fontRenderer;
+    private float scaleDownFactor = 0.5f;
 
-    public Button(UIVector2Df position, float width, float height, RGBA background, Window window) {
+    public Button(String text, float scale, RGBA color, UIVector2Df position, float width, float height, float padding, RGBA background, Window window) throws IOException {
         super(position, width, height, background, window);
+        this.padding = padding;
+        this.text = text;
+        this.textColor = color;
+        scaleDownFactor = scale;
+        initBtn();
     }
 
-    public Button(Runnable onMouseRightClick, UIVector2Df position, float width, float height, RGBA background, Window window) {
+    public Button(String text, float scale, RGBA color, Runnable onMouseRightClick, UIVector2Df position, float width, float height, float padding, RGBA background, Window window) throws IOException {
         super(position, width, height, background, window);
+        this.padding = padding;
         this.mouseClick = onMouseRightClick;
+        this.text = text;
+        this.textColor = color;
+        scaleDownFactor = scale;
+        initBtn();
+    }
+
+    public RGBA getTextColor() {
+        return textColor;
+    }
+
+    public void setTextColor(RGBA textColor) {
+        this.textColor = textColor;
+    }
+
+    public Button(String text, RGBA color, UIVector2Df position, float width, float height, RGBA background, Window window, ButtonSettings settings) throws IOException {
+        super(position, width, height, background, window);
+        this.padding = settings.padding;
+        this.text = text;
+        this.shader = settings.program;
+        this.mouseClick = settings.onClick;
+        textColor = color;
+        initBtn();
+    }
+
+    private void initBtn() throws IOException {
+        if (shader == null)
+            shader = new ShaderProgram(load("assets/font/vertexShader.glsl"), load("assets/font/fragmentShader.glsl"));
+        fontRenderer = new FontRendererGL("src/main/resources/fonts/Main.ttf", 48.0f, shader);
     }
 
     public boolean isPressed() {
@@ -47,30 +76,40 @@ public class Button extends InteractableUI {
 
     @Override
     public void draw() {
+        // 2. Enable blending for the text
         glEnable(GL_BLEND);
         glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
-        if (backgroundRGBA != null) {
-            glColor4f(backgroundRGBA.getRed(), backgroundRGBA.getGreen(), backgroundRGBA.getBlue(), backgroundRGBA.getAlpha());
-        } else {
-            glColor4f(1.0f, 1.0f, 1.0f, 1.0f); // Default to opaque white
-        }
-        Vector2D<Float> position = this.getPosition();
+        // 3. Set the text color
+        fontRenderer.setColor(textColor.getRed(), textColor.getGreen(), textColor.getBlue(), textColor.getAlpha());
 
-        float topLeftX = position.getX();
-        float topLeftY = position.getY();
-        float widthNDC = this.getWidth();   // Assuming width is in NDC scale
-        float heightNDC = this.getHeight(); // Assuming height is in NDC scale
+        // Get the text position.
+        Vector2Dx2<Float> textScalePosition = calculatePadding();
+        float textOpenGLX = textScalePosition.getPoint1().getX();
+        float textOpenGLY = textScalePosition.getPoint1().getY();
 
-        glBegin(GL_QUADS);
-        glVertex2f(topLeftX, topLeftY);             // Top-left
-        glVertex2f(topLeftX + widthNDC, topLeftY);      // Top-right
-        glVertex2f(topLeftX + widthNDC, topLeftY - heightNDC); // Bottom-right (assuming +Y is up in NDC)
-        glVertex2f(topLeftX, topLeftY - heightNDC);      // Bottom-left
-        glEnd();
+        float baseScaleY = (1.0f / getWindow().getHeight() * getHeight()) * -5;
+        float baseScaleX = -baseScaleY;
+
+        // 4.  Calculate the text's pixel position, relative to the button's position.
+        Vector2D<Integer> buttonPixelPosition = AdvancedMath.ndcToPixel(getPosition().getX() -0.40f, getPosition().getY() + 0.35f, getWindow());
+        int textX = buttonPixelPosition.getX() + (int) (padding * getWindow().getWidth());
+        int textY = buttonPixelPosition.getY() + (int) (padding * getWindow().getHeight());
+
+        // 5. Render the text
+//        fontRenderer.renderText(
+//                text,
+//                textX,
+//                textY,
+//                baseScaleX * scaleDownFactor,
+//                baseScaleY * scaleDownFactor,
+//                getWindow()
+//        );
 
         glDisable(GL_BLEND);
+        super.draw();
     }
+
 
     public String getText() {
         return text;
@@ -82,5 +121,23 @@ public class Button extends InteractableUI {
 
     public float getPadding() {
         return padding;
+    }
+
+    private Vector2Dx2<Float> calculatePadding() {
+        Vector2D<Float> position = this.getPosition(); // This is in NDC
+        Vector2D<Float> x = new Vector2D<>(
+                position.getX() + padding, position.getY() - padding
+        );
+        Vector2D<Float> y = new Vector2D<>(
+                super.getEnd().getX() - padding, super.getEnd().getY() + padding
+        );
+
+        return new Vector2Dx2<>(x, y); // This is in NDC
+    }
+
+    @Override
+    public void cleanup() {
+        super.cleanup();
+        fontRenderer.cleanup();
     }
 }
