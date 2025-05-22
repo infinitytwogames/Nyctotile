@@ -17,6 +17,13 @@ public class RGB {
         this.blue = (float) blue / 255;
     }
 
+    public RGB add(float num) {
+        this.red = red + num;
+        this.green = green + num;
+        this.blue = blue + num;
+        return this;
+    }
+
     public float getRed() {
         return red;
     }

@@ -185,7 +185,7 @@ public class Logger {
     private String formatTime(LoggingLevel level) {
         StringBuilder result = new StringBuilder();
         LocalDateTime time = LocalDateTime.now();
-        String pattern = "yyyy-MM-dd HH:mm:ss";
+        String pattern = "yyyy-MM-dd HH:mm:ss.SSS";
 
         DateTimeFormatter formatter = DateTimeFormatter.ofPattern(pattern);
         result.append("[")

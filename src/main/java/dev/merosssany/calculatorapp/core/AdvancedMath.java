@@ -1,8 +1,11 @@
 package dev.merosssany.calculatorapp.core;
 
+import dev.merosssany.calculatorapp.core.position.UIVector2Df;
 import dev.merosssany.calculatorapp.core.position.Vector2D;
 import dev.merosssany.calculatorapp.core.render.Window;
+import dev.merosssany.calculatorapp.core.ui.font.FontRenderer;
 import org.joml.Matrix4f;
+import org.lwjgl.glfw.GLFW;
 
 public abstract class AdvancedMath {
 
@@ -203,4 +206,96 @@ public abstract class AdvancedMath {
 
         return new Vector2D<>(pixelX, pixelY);
     }
+
+    public static UIVector2Df pixelToNdc(int pixelX, int pixelY, Window window) {
+        int windowWidth = window.getWidth();
+        int windowHeight = window.getHeight();
+
+        // Pixel to Normalized (0 to 1)
+        float normalizedX = (float) pixelX / windowWidth;
+        float normalizedY = (float) pixelY / windowHeight;
+
+        // Normalized (0 to 1) to NDC
+        // Reverse: ndcX = (2.0f * normalizedX) - 1.0f
+        float ndcX = (2.0f * normalizedX) - 1.0f;
+
+        // Reverse: normalizedY = (1.0f - ndcY) / 2.0f
+        // 2.0f * normalizedY = 1.0f - ndcY
+        // ndcY = 1.0f - (2.0f * normalizedY)
+        float ndcY = 1.0f - (2.0f * normalizedY);
+
+        return new UIVector2Df(ndcX, ndcY);
+    }
+
+    /**
+     * Calculates the top-left pixel position for text to be centered within a UI element.
+     *
+     * @param uiPosition The top-left NDC position of the UI element.
+     * @param uiWidth The width of the UI element in NDC.
+     * @param uiHeight The height of the UI element in NDC.
+     * @param window The Window object for pixel conversion.
+     * @param fontRenderer The FontRenderer instance to measure text dimensions.
+     * @param text The string to be rendered.
+     * @param fontSize The font size used, for specific vertical adjustments.
+     * @return A Vector2D<Integer> representing the top-left pixel coordinates where the text should start.
+     */
+    public static Vector2D<Integer> calculateCenteredTextPosition(
+            UIVector2Df uiPosition,
+            float uiWidth,
+            float uiHeight,
+            Window window,
+            FontRenderer fontRenderer,
+            String text,
+            int fontSize
+    ) {
+        // 1. Get the UI element's center in Normalized Device Coordinates (NDC)
+        // Assuming uiPosition.getY() is the top edge, and uiHeight extends downwards in UI space
+        float uiCenterX_NDC = uiPosition.getX() + uiWidth / 2.0f;
+        float uiCenterY_NDC = uiPosition.getY() - uiHeight / 2.0f; // Subtract half height to get center Y
+
+        // 2. Convert UI element center from NDC to pixel coordinates
+        Vector2D<Integer> uiCenterPixels = ndcToPixel(
+                uiCenterX_NDC,
+                uiCenterY_NDC,
+                window
+        );
+
+        // 3. Get text dimensions in pixels using the provided FontRenderer
+        float textWidthPixels = fontRenderer.getStringWidth(text);
+        float textHeightPixels = fontRenderer.getFontHeight(); // Ensure FontRenderer has this method
+
+        // 4. Calculate the top-left pixel position for the text to be centered
+        int textXPixels = (int) (uiCenterPixels.getX() - textWidthPixels / 2.0f);
+        // Adjust for vertical centering and potential baseline offset
+        int textYPixels = (int) (uiCenterPixels.getY() - textHeightPixels / 2.0f);
+
+        // Apply your specific vertical adjustment from the original code:
+        // 'textYPixels + (fontSize / 2)'
+        // This suggests 'fontSize / 2' is some offset for the font's baseline or vertical alignment.
+        // It might be more robust to use 'textHeightPixels / 2.0f' or a specific baseline offset
+        // from your font metrics, but using fontSize / 2 is fine if it works visually.
+        return new Vector2D<>(textXPixels, textYPixels + (fontSize / 2));
+    }
+
+    public static boolean isInRange(Vector2D<?> top_left, Vector2D<?> bottom_right, Window window) {
+        double[] cursorPositionX = new double[1];
+        double[] cursorPositionY = new double[1];
+        GLFW.glfwGetCursorPos(window.getWindow(), cursorPositionX, cursorPositionY);
+        double mouseX = cursorPositionX[0];
+        double mouseY = cursorPositionY[0];
+
+        int windowWidth = window.getWidth(); // Assuming you have a getWidth() method in your Window class
+        int windowHeight = window.getHeight(); // Assuming you have a getHeight() method
+
+// Convert mouse X to normalized coordinates (-1 to 1)
+        float normalizedMouseX = (float) ((2.0 * mouseX) / windowWidth - 1.0);
+
+// Convert mouse Y to normalized coordinates (1 to -1, assuming UI y-axis goes down)
+        float normalizedMouseY = (float) (1.0 - (2.0 * mouseY) / windowHeight);
+
+        Vector2D<Float> normalizedMousePos = new Vector2D<>(normalizedMouseX, normalizedMouseY);
+//        logger.log(this.getPosition(),normalizedMousePos, this.getEnd());
+        return top_left.isVectorPointIncludedIn(normalizedMousePos, bottom_right);
+    }
 }
+

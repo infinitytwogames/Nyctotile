@@ -1,4 +1,6 @@
-package dev.merosssany.calculatorapp.core.event;
+package dev.merosssany.calculatorapp.core.event.input;
+
+import dev.merosssany.calculatorapp.core.event.Event;
 
 public class MouseButtonEvent extends Event {
     private final int button;

@@ -2,6 +2,8 @@ package dev.merosssany.calculatorapp.core.ui;
 
 import dev.merosssany.calculatorapp.core.event.EventBus;
 import dev.merosssany.calculatorapp.core.RGBA;
+import dev.merosssany.calculatorapp.core.event.input.MouseButtonEvent;
+import dev.merosssany.calculatorapp.core.event.input.MouseHoverEvent;
 import dev.merosssany.calculatorapp.core.render.Window;
 import dev.merosssany.calculatorapp.core.event.*;
 import dev.merosssany.calculatorapp.core.io.HoverEventRegister;
@@ -10,10 +12,11 @@ import dev.merosssany.calculatorapp.core.position.Vector2D;
 import dev.merosssany.calculatorapp.core.logging.Logger;
 import org.lwjgl.glfw.GLFW;
 
-public class InteractableUI extends UI{
+public abstract class InteractableUI extends UI{
     private final Window window;
     private final Logger logger = new Logger("Interactable UI");
     private RGBA original;
+    private boolean isHovered = false;
 
     public InteractableUI(UIVector2Df position, float width, float height, RGBA background, Window window) {
         super("Interactable UI", position, width, height, background);
@@ -22,24 +25,39 @@ public class InteractableUI extends UI{
     }
 
     @SubscribeEvent
-    private void onEventFired(MouseButtonEvent e) {
-        logger.info("Got event");
+    public void onEventFired(MouseButtonEvent e) {
         if (e != null) {
             int key = e.getButton();
             int action = e.getAction();
 
-            if (key == GLFW.GLFW_MOUSE_BUTTON_LEFT) {
-                if (isInRange()) onMouseRightClick();
-            }
+
+                if (isInRange()) {
+                    logger.info("CLick");
+                    if (key == GLFW.GLFW_MOUSE_BUTTON_RIGHT) {
+                        onMouseRightClick(action);
+                    } else if (key == GLFW.GLFW_MOUSE_BUTTON_LEFT) {
+                        onMouseLeftClick(action);
+                    }
+                }
+
         }
     }
+    public abstract void onMouseRightClick(int action);
+    public abstract void onMouseLeftClick(int action);
+    public abstract void onMouseHover();
+    public abstract void onMouseHoverEnded();
 
-    public void setInteractableBackgroundColor(RGBA color) {
+    private void darkenBackground() {
+        RGBA color = getBackgroundColor();
+        setBackgroundColor(color.getRed() - 0.3f,color.getGreen() - 0.3f,color.getBlue() - 0.3f,color.getAlpha());
+    }
+
+    public void setOriginalBackgroundColor(RGBA color) {
         this.original = color;
         setBackgroundColor(color);
     }
 
-    public void changeInteractableBackgroundColor(float r, float g, float b, float a) {
+    public void changeOriginalBackgroundColor(float r, float g, float b, float a) {
         this.original = new RGBA(r,g,b,a);
         setBackgroundColor(this.original);
     }
@@ -66,23 +84,20 @@ public class InteractableUI extends UI{
     }
 
     @SubscribeEvent
-    private void mouseHoverEvent(MouseHoverEvent e) {
-        if (isInRange()) onMouseHover();
-        else mouseNotHovering();
-    }
-
-    public void onMouseHover() {
-//        logger.info("Mouse Hover");
-        setBackgroundColor(original.getRed() - 0.3f,original.getGreen() - 0.3f,original.getBlue() - 0.3f,original.getAlpha());
-    }
-
-    public void mouseNotHovering() {
-//        logger.info("Mouse Not Hovering");
-        setBackgroundColor(original.getRed(),original.getGreen(),original.getBlue(),original.getAlpha());
-    }
-
-    public void onMouseRightClick() {
-//        logger.warn("Click!");
+    public void mouseHoverEvent(MouseHoverEvent e) {
+        if (isInRange()) {
+            if (!isHovered) {
+                logger.info("Hover");
+                isHovered = true;
+                onMouseHover();
+            }
+        } else {
+            if (isHovered) {
+                logger.info("End Hover");
+                isHovered = false;
+                onMouseHoverEnded();
+            }
+        }
     }
 
     @Override
@@ -90,9 +105,8 @@ public class InteractableUI extends UI{
         return original;
     }
 
-    public RGBA getCurrentColor() {
-//        return getBackground();
-        return new RGBA();
+    public RGBA getCurrentBackgroundColor() {
+        return super.getBackgroundColor();
     }
 
     @Override
@@ -104,5 +118,9 @@ public class InteractableUI extends UI{
 
     public Window getWindow() {
         return window;
+    }
+
+    public boolean isBeingHovered() {
+        return isHovered;
     }
 }

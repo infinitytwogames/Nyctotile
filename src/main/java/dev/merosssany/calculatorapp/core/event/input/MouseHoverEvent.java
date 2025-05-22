@@ -1,5 +1,6 @@
-package dev.merosssany.calculatorapp.core.event;
+package dev.merosssany.calculatorapp.core.event.input;
 
+import dev.merosssany.calculatorapp.core.event.Event;
 import dev.merosssany.calculatorapp.core.position.Vector2D;
 
 public class MouseHoverEvent extends Event {

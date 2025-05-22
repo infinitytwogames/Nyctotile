@@ -3,6 +3,7 @@ package dev.merosssany.calculatorapp.core.io;
 import dev.merosssany.calculatorapp.core.AdvancedMath;
 import dev.merosssany.calculatorapp.core.event.EventBus;
 import dev.merosssany.calculatorapp.core.event.LocalEventBus;
+import dev.merosssany.calculatorapp.core.event.input.MouseHoverEvent;
 import dev.merosssany.calculatorapp.core.render.Window;
 import dev.merosssany.calculatorapp.core.event.*;
 import dev.merosssany.calculatorapp.core.position.Vector2D;

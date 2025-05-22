@@ -3,15 +3,15 @@ package dev.merosssany.calculatorapp.core.io;
 import dev.merosssany.calculatorapp.core.event.EventBus;
 import dev.merosssany.calculatorapp.core.position.Vector2D;
 import dev.merosssany.calculatorapp.core.render.Window;
-import dev.merosssany.calculatorapp.core.event.KeyPressEvent;
-import dev.merosssany.calculatorapp.core.event.MouseButtonEvent;
+import dev.merosssany.calculatorapp.core.event.input.KeyPressEvent;
+import dev.merosssany.calculatorapp.core.event.input.MouseButtonEvent;
 import dev.merosssany.calculatorapp.core.logging.Logger;
 import org.lwjgl.glfw.GLFW;
 import org.lwjgl.glfw.GLFWKeyCallback;
 import org.lwjgl.glfw.GLFWMouseButtonCallback;
 
 public class InputHandler {
-    private final Window window;
+    private static Window window;
     private GLFWKeyCallback glfwKeyCallback;
     private GLFWMouseButtonCallback glfwMouseButtonCallback;
     private final Logger logger = new Logger("InputHandler");
@@ -22,12 +22,12 @@ public class InputHandler {
 
     public void init() {
         glfwKeyCallback = GLFW.glfwSetKeyCallback(window.getWindow(), (windowHandle, key, scancode, action, mods) -> {
-            logger.info("Posting KeyPressEvent");
+            logger.info("KeyPressEvent Callback Fired - InputHandler Instance: " + this.hashCode());
             EventBus.post(new KeyPressEvent(key, action));
         });
 
         glfwMouseButtonCallback = GLFW.glfwSetMouseButtonCallback(window.getWindow(), (windowHandle, button, action, mods) -> {
-            logger.info("Posting MouseButtonEvent");
+            logger.info("Posting MouseButtonEvent - InputHandler Instance: " + this.hashCode()); // ADD THIS
             EventBus.post(new MouseButtonEvent(button, action));
         });
     }
@@ -37,7 +37,7 @@ public class InputHandler {
         if (glfwMouseButtonCallback != null) glfwMouseButtonCallback.free();
     }
 
-    public Vector2D<Float> getMousePosition() {
+    public static Vector2D<Float> getMousePosition() {
         double[] cursorPositionX = new double[1];
         double[] cursorPositionY = new double[1];
         GLFW.glfwGetCursorPos(window.getWindow(), cursorPositionX, cursorPositionY);

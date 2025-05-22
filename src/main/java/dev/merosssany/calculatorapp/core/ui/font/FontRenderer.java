@@ -1,5 +1,7 @@
 package dev.merosssany.calculatorapp.core.ui.font;
 
+import dev.merosssany.calculatorapp.core.RGB;
+import dev.merosssany.calculatorapp.core.position.Vector2D;
 import dev.merosssany.calculatorapp.core.render.ShaderProgram;
 import org.joml.Matrix4f;
 import org.lwjgl.BufferUtils;
@@ -44,6 +46,8 @@ public class FontRenderer {
     // VAO/VBO for vertex data (x,y,s,t)
     private final int vaoId;
     private final int vboId;
+
+    private float fontHeight;
     private ShaderProgram program;
 
     /**
@@ -51,6 +55,7 @@ public class FontRenderer {
      * @param fontHeight      pixel height
      */
     public FontRenderer(String fontPath, float fontHeight) {
+        this.fontHeight = fontHeight;
         program = new ShaderProgram(
                 "#version 330 core\n" +
                 "layout(location = 0) in vec2 inPos;\n" +
@@ -185,5 +190,37 @@ public class FontRenderer {
             buf.flip();
             return buf;
         }
+    }
+
+    public float getStringWidth(String text) {
+        // We'll simulate the text rendering to get the final x position
+        float currentX = 0.0f; // Start at 0, as if rendering from the origin
+        float currentY = 0.0f; // Y doesn't affect width, but GetBakedQuad requires it
+
+        try (MemoryStack stack = MemoryStack.stackPush()) {
+            FloatBuffer xb = stack.floats(currentX);
+            FloatBuffer yb = stack.floats(currentY); // Y doesn't matter for width
+            STBTTAlignedQuad quad = STBTTAlignedQuad.mallocStack(stack);
+
+            for (char c : text.toCharArray()) {
+                if (c < FIRST_CHAR || c >= FIRST_CHAR + CHAR_COUNT) continue;
+                // The 'true' at the end means it modifies xb and yb in-place.
+                stbtt_GetBakedQuad(charData, BITMAP_W, BITMAP_H, c - FIRST_CHAR, xb, yb, quad, true);
+                // xb.get(0) now holds the x position for the next character
+            }
+            return xb.get(0) - currentX; // Return the total advance from the starting x
+        }
+    }
+
+    public void renderText(Matrix4f proj, String text, Vector2D<Integer> position, RGB color) {
+        renderText(proj,text,position.getX(),position.getY(),color.getRed(),color.getGreen(),color.getBlue());
+    }
+
+    public void renderText(Matrix4f proj, String text, int x, int y, RGB color) {
+        renderText(proj,text,x,y,color.getRed(),color.getGreen(),color.getBlue());
+    }
+
+    public float getFontHeight() {
+        return this.fontHeight;
     }
 }

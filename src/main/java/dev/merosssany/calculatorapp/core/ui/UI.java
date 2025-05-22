@@ -33,7 +33,6 @@ public class UI {
 
     public void setBackgroundColor(RGBA color) {
         backgroundRGBA = color;
-        logger.info(name, ": Background color set to ", color);
     }
 
     public RGBA getBackgroundColor() {
@@ -76,18 +75,8 @@ public class UI {
         return end;
     }
 
-    public Logger getLogger() {
-        return logger;
-    }
-
     public String getName() {
         return name;
-    }
-
-    // New method to change background color using individual components
-    public void changeBackgroundColor(float red, float green, float blue, float alpha) {
-        this.backgroundRGBA = new RGBA(red, green, blue, alpha);
-//        logger.info(name, ": Background color changed to RGBA(", red, ", ", green, ", ", blue, ", ", alpha, ")");
     }
 
     /**

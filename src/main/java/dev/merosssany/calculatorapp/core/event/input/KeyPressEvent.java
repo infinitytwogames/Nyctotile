@@ -1,6 +1,8 @@
-package dev.merosssany.calculatorapp.core.event;
+package dev.merosssany.calculatorapp.core.event.input;
 
-public class KeyPressEvent extends Event{
+import dev.merosssany.calculatorapp.core.event.Event;
+
+public class KeyPressEvent extends Event {
     private final int key;
     private final int action;
 

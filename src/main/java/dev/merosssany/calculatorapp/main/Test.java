@@ -1,20 +1,12 @@
 package dev.merosssany.calculatorapp.main;
 
 import dev.merosssany.calculatorapp.core.Core;
-import dev.merosssany.calculatorapp.core.RGBA;
-import dev.merosssany.calculatorapp.core.io.HoverEventRegister;
-import dev.merosssany.calculatorapp.core.io.InputHandler;
 import dev.merosssany.calculatorapp.core.logging.Logger;
-import dev.merosssany.calculatorapp.core.logging.LoggingLevel;
-import dev.merosssany.calculatorapp.core.position.UIVector2Df;
-import dev.merosssany.calculatorapp.core.render.CleanupManager;
-import dev.merosssany.calculatorapp.core.ui.Button;
+import dev.merosssany.calculatorapp.core.ui.input.Button;
 import dev.merosssany.calculatorapp.core.ui.InteractableUI;
 import dev.merosssany.calculatorapp.core.ui.UI;
 import dev.merosssany.calculatorapp.core.ui.font.FontRenderer;
 import org.joml.Matrix4f;
-
-import java.io.IOException;
 
 @Core
 public class Test {

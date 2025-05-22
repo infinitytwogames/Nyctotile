@@ -24,4 +24,11 @@ public class RGBA extends RGB {
     public void setAlpha(float alpha) {
         this.alpha = alpha;
     }
+
+    @Override
+    public RGBA add(float num) {
+        super.add(num);
+        this.alpha = alpha + num;
+        return this;
+    }
 }
