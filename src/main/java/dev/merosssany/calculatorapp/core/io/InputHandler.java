@@ -1,6 +1,6 @@
 package dev.merosssany.calculatorapp.core.io;
 
-import dev.merosssany.calculatorapp.core.event.EventBus;
+import dev.merosssany.calculatorapp.core.event.bus.EventBus;
 import dev.merosssany.calculatorapp.core.position.Vector2D;
 import dev.merosssany.calculatorapp.core.render.Window;
 import dev.merosssany.calculatorapp.core.event.input.KeyPressEvent;

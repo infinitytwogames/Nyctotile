@@ -20,6 +20,8 @@ public class Vector2D<T extends Number & Comparable<T>> {
         this.y = vector.get(1);
     }
 
+    public Vector2D() {}
+
     @Override
     public Vector2D<T> clone() throws CloneNotSupportedException {
         return (Vector2D<T>) super.clone();

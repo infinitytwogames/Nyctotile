@@ -10,6 +10,7 @@ import dev.merosssany.calculatorapp.core.event.SubscribeEvent;
 import dev.merosssany.calculatorapp.core.logging.Logger;
 import dev.merosssany.calculatorapp.core.position.UIVector2Df;
 import dev.merosssany.calculatorapp.core.position.Vector2D;
+import dev.merosssany.calculatorapp.core.render.UIBatchRenderer;
 import dev.merosssany.calculatorapp.core.render.Window;
 import dev.merosssany.calculatorapp.core.ui.InteractableUI;
 import dev.merosssany.calculatorapp.core.ui.font.FontRenderer;
@@ -25,8 +26,8 @@ public class Button extends InteractableUI {
     private RGB textColor;
     private final Logger logger = new Logger("Button");
 
-    public Button(String text, RGB textColor, int fontSize, String fontFilePath, float padding, Runnable onClick, UIVector2Df position, float width, float height, RGBA background, Window window) {
-        super(position, width, height, background, window);
+    public Button(UIBatchRenderer renderer, String text, RGB textColor, int fontSize, String fontFilePath, float padding, Runnable onClick, UIVector2Df position, float width, float height, RGBA background, Window window) {
+        super(renderer, position, width, height, background, window);
         this.text = text;
         this.fontSize = fontSize;
         this.padding = padding;
@@ -132,11 +133,5 @@ public class Button extends InteractableUI {
     @SubscribeEvent
     public void onClick(MouseButtonEvent e) {
         super.onEventFired(e);
-    }
-
-    @Override
-    public void cleanup() {
-        super.cleanup();
-        renderer.cleanup();
     }
 }

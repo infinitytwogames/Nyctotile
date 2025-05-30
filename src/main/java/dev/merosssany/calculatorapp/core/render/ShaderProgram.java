@@ -1,14 +1,20 @@
 package dev.merosssany.calculatorapp.core.render;
 
+import org.joml.Matrix4f;
+import org.lwjgl.BufferUtils;
+
 import java.io.IOException;
+import java.nio.FloatBuffer;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 
 import static org.lwjgl.opengl.GL20.*;
+import static org.lwjgl.opengl.GL31.GL_INVALID_INDEX;
 
 public class ShaderProgram {
     private final int programId;
+    private FloatBuffer matrixBuffer = BufferUtils.createFloatBuffer(16);
 
     public ShaderProgram(String vertexSource, String fragmentSource) {
         int vertexShader = compileShader(vertexSource, GL_VERTEX_SHADER);
@@ -66,5 +72,22 @@ public class ShaderProgram {
     public static String load(String path) throws IOException {
        Path path2 = Paths.get(path);
        return new String(Files.readAllBytes(path2));
+    }
+
+    /**
+     * Sets a mat4 uniform in the shader program.
+     * @param name The name of the uniform in the shader (e.g., "uProjection").
+     * @param matrix The JOML Matrix4f object to set.
+     */
+    public void setUniformMatrix4fv(String name, Matrix4f matrix) {
+        int location = glGetUniformLocation(programId, name);
+        if (location != GL_INVALID_INDEX) { // Check if uniform exists
+            // Get the matrix data into the FloatBuffer
+            matrix.get(matrixBuffer);
+            // Upload the matrix to the uniform location
+            glUniformMatrix4fv(location, false, matrixBuffer);
+        } else {
+            System.err.println("Warning: Uniform '" + name + "' not found in shader program " + programId);
+        }
     }
 }

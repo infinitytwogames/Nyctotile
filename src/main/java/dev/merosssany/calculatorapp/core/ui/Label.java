@@ -1,5 +1,6 @@
 package dev.merosssany.calculatorapp.core.ui;
 
+import dev.merosssany.calculatorapp.Main;
 import dev.merosssany.calculatorapp.core.AdvancedMath;
 import dev.merosssany.calculatorapp.core.RGB;
 import dev.merosssany.calculatorapp.core.RGBA;
@@ -12,40 +13,34 @@ import dev.merosssany.calculatorapp.core.ui.font.FontRenderer;
 
 public class Label extends UI {
     private final Logger logger = new Logger("Label");
-    private final String filePath;
-    private final int fontSize;
+    private int fontSize;
     private final Window window;
 
     private String text;
     private FontRenderer renderer;
     private RGB textColor;
+    private boolean isCentered;
+    private Vector2D<Integer> pos;
 
-    public Label(Window window, UIVector2Df position, String text, int fontSize, RGB color, String fontFilePath, float width, float height, RGBA background) {
-        super("Label", position, width, height, background);
+    public Label(Window window, UIVector2Df position, String text, boolean isCentered, RGB color, float width, float height, RGBA background) {
+        super(Main.getUIBatchRenderer(), "Label", position, width, height, background);
         this.text = text;
-        this.fontSize = fontSize;
-        this.filePath = fontFilePath;
         this.window = window;
         textColor = color;
+        this.isCentered = isCentered;
     }
 
     @Override
     public void init() {
         super.init();
-        renderer = new FontRenderer(filePath,fontSize);
+        renderer = Main.getFontRenderer();
+        fontSize = (int) renderer.getFontHeight();
     }
 
     @Override
     public void draw() {
         super.draw();
-        Vector2D<Integer> pos = AdvancedMath.calculateCenteredTextPosition(new UIVector2Df(getPosition()),getWidth(),getHeight(),window,renderer,text,fontSize);
-        renderer.renderText(Constants.getTextProjectionMatrix(window),text,pos,textColor);
-    }
 
-    @Override
-    public void cleanup() {
-        super.cleanup();
-        renderer.cleanup();
     }
 
     public String getText() {
@@ -66,5 +61,21 @@ public class Label extends UI {
 
     public Window getWindow() {
         return window;
+    }
+
+    public FontRenderer getFontRenderer() {
+        return renderer;
+    }
+
+    public boolean isCentered() {
+        return isCentered;
+    }
+
+    public void setCentered(boolean centered) {
+        isCentered = centered;
+    }
+
+    public Vector2D<Integer> getTextPosition() {
+        return pos;
     }
 }

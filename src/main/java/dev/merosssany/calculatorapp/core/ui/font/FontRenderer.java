@@ -1,7 +1,9 @@
 package dev.merosssany.calculatorapp.core.ui.font;
 
 import dev.merosssany.calculatorapp.core.RGB;
+import dev.merosssany.calculatorapp.core.logging.Logger;
 import dev.merosssany.calculatorapp.core.position.Vector2D;
+import dev.merosssany.calculatorapp.core.render.ShaderFiles;
 import dev.merosssany.calculatorapp.core.render.ShaderProgram;
 import org.joml.Matrix4f;
 import org.lwjgl.BufferUtils;
@@ -20,7 +22,6 @@ import java.nio.file.Paths;
 import static org.lwjgl.opengl.GL15.*;
 import static org.lwjgl.opengl.GL20.*;
 import static org.lwjgl.opengl.GL30.*;
-import static org.lwjgl.opengl.GL11.*;
 import static org.lwjgl.stb.STBTruetype.*;
 
 /**
@@ -33,51 +34,41 @@ public class FontRenderer {
     private static final int FIRST_CHAR = 32;
     private static final int CHAR_COUNT = 96;
 
-    private final int texID;
-    private final STBTTBakedChar.Buffer charData;
-    private final ByteBuffer bitmap;
+    private int texID;
+    private STBTTBakedChar.Buffer charData;
 
     // Shader and uniforms
     private final int shaderProgramId;
-    private final int locProj;
-    private final int locTextColor;
-    private final int locFontAtlas;
+    private  int locProj;
+    private  int locTextColor;
+    private  int locFontAtlas;
 
     // VAO/VBO for vertex data (x,y,s,t)
-    private final int vaoId;
-    private final int vboId;
+    private int vaoId;
+    private int vboId;
+    private String fontPath;
 
     private float fontHeight;
     private ShaderProgram program;
+    private boolean initialized = false;
+    private final Logger logger;
 
     /**
-     * @param fontPath        path to TTF file
-     * @param fontHeight      pixel height
+     * @param fontPath    path to TTF file
+     * @param height      pixel height
      */
-    public FontRenderer(String fontPath, float fontHeight) {
-        this.fontHeight = fontHeight;
-        program = new ShaderProgram(
-                "#version 330 core\n" +
-                "layout(location = 0) in vec2 inPos;\n" +
-                "layout(location = 1) in vec2 inUV;\n" +
-                "uniform mat4 uProj;\n" +
-                "out vec2 vUV;\n" +
-                "void main() {\n" +
-                "    gl_Position = uProj * vec4(inPos, 0, 1);\n" +
-                "    vUV = inUV;\n" +
-                "}\n" +
-                "\n", "#version 330 core\n" +
-                "in vec2 vUV;\n" +
-                "uniform sampler2D uFontAtlas;\n" +
-                "uniform vec3 uTextColor;\n" +
-                "out vec4 fragColor;\n" +
-                "void main(){\n" +
-                "    float alpha = texture(uFontAtlas, vUV).r;\n" +
-                "    fragColor = vec4(uTextColor, alpha);\n" +
-                "}\n");
-
+    public FontRenderer(String fontPath, float height) {
+        this.fontHeight = height;
+        program = new ShaderProgram(ShaderFiles.textVertex,ShaderFiles.textFragment);
         this.shaderProgramId = program.getProgramId();
+        this.fontPath = fontPath;
+        this.logger = new Logger("FontRenderer");
+        init();
+    }
+
+    private void init() {
         // Query uniforms once
+        logger.info("Initializing Font Renderer");
         locProj      = glGetUniformLocation(shaderProgramId, "uProj");
         locTextColor = glGetUniformLocation(shaderProgramId, "uTextColor");
         locFontAtlas = glGetUniformLocation(shaderProgramId, "uFontAtlas");
@@ -92,7 +83,7 @@ public class FontRenderer {
 
         // Bake glyphs
         charData = STBTTBakedChar.malloc(CHAR_COUNT);
-        bitmap   = BufferUtils.createByteBuffer(BITMAP_W * BITMAP_H);
+        ByteBuffer bitmap = BufferUtils.createByteBuffer(BITMAP_W * BITMAP_H); // CONVERTED
         stbtt_BakeFontBitmap(fontBuffer, fontHeight, bitmap, BITMAP_W, BITMAP_H, FIRST_CHAR, charData);
 
         // Upload texture atlas
@@ -116,12 +107,18 @@ public class FontRenderer {
         glVertexAttribPointer(1, 2, GL_FLOAT, false, 4 * Float.BYTES, 2 * Float.BYTES);
         glBindBuffer(GL_ARRAY_BUFFER, 0);
         glBindVertexArray(0);
+        logger.info("Initialized Successfully");
+        initialized = true;
     }
 
     /**
      * Render text at screen coordinates (x, y).
      */
     public void renderText(Matrix4f proj, String text, float x, float y, float r, float g, float b) {
+        if (!initialized) {
+            logger.fatal(new IllegalStateException("FontRenderer is not initialized"),"FontRenderer is not initialized");
+            return;
+        }
         glUseProgram(shaderProgramId);
         // Upload projection
         try (MemoryStack stack = MemoryStack.stackPush()) {
@@ -179,6 +176,7 @@ public class FontRenderer {
         glDeleteBuffers(vboId);
         glDeleteVertexArrays(vaoId);
         charData.free();
+        initialized = false;
     }
 
     private ByteBuffer loadFont(String path) throws IOException {
@@ -222,5 +220,47 @@ public class FontRenderer {
 
     public float getFontHeight() {
         return this.fontHeight;
+    }
+
+    public void setFontHeight(int fontHeight) {
+        this.fontHeight = fontHeight;
+        reinit();
+    }
+
+    private void reinit() {
+        cleanup();
+        init();
+    }
+
+    public STBTTBakedChar.Buffer getCharData() {
+        return charData;
+    }
+
+    public int getTextureID() {
+        return texID;
+    }
+
+    public int getBitmapWidth() {
+        return BITMAP_W;
+    }
+
+    public int getBitmapHeight() {
+        return BITMAP_H;
+    }
+
+    public int getShaderProgramId() {
+        return shaderProgramId;
+    }
+
+    public int getLocProj() {
+        return locProj;
+    }
+
+    public int getLocTextColor() {
+        return locTextColor;
+    }
+
+    public int getLocFontAtlas() {
+        return locFontAtlas;
     }
 }

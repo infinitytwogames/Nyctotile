@@ -1,7 +1,9 @@
 package dev.merosssany.calculatorapp.core.exception;
 
 public class VerboseException extends Throwable {
-    public VerboseException(String message) {
+    private String description;
+
+    public VerboseException(String message, String description) {
         super(message);
     }
 

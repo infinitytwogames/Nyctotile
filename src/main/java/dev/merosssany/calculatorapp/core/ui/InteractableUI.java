@@ -1,9 +1,10 @@
 package dev.merosssany.calculatorapp.core.ui;
 
-import dev.merosssany.calculatorapp.core.event.EventBus;
+import dev.merosssany.calculatorapp.core.event.bus.EventBus;
 import dev.merosssany.calculatorapp.core.RGBA;
 import dev.merosssany.calculatorapp.core.event.input.MouseButtonEvent;
 import dev.merosssany.calculatorapp.core.event.input.MouseHoverEvent;
+import dev.merosssany.calculatorapp.core.render.UIBatchRenderer;
 import dev.merosssany.calculatorapp.core.render.Window;
 import dev.merosssany.calculatorapp.core.event.*;
 import dev.merosssany.calculatorapp.core.io.HoverEventRegister;
@@ -18,8 +19,8 @@ public abstract class InteractableUI extends UI{
     private RGBA original;
     private boolean isHovered = false;
 
-    public InteractableUI(UIVector2Df position, float width, float height, RGBA background, Window window) {
-        super("Interactable UI", position, width, height, background);
+    public InteractableUI(UIBatchRenderer renderer, UIVector2Df position, float width, float height, RGBA background, Window window) {
+        super(renderer, "Interactable UI", position, width, height, background);
         this.window = window;
         this.original = super.getBackgroundColor();
     }

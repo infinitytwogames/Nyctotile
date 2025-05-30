@@ -227,6 +227,14 @@ public abstract class AdvancedMath {
         return new UIVector2Df(ndcX, ndcY);
     }
 
+    public static float pixelToNdc(int pixel, Window window) {
+        return pixelToNdc(pixel,0,window).getX();
+    }
+
+    public static UIVector2Df pixelToNdc(Vector2D<Integer> positionPixel, Window window) {
+        return pixelToNdc(positionPixel.getX(),positionPixel.getY(),window);
+    }
+
     /**
      * Calculates the top-left pixel position for text to be centered within a UI element.
      *
@@ -296,6 +304,39 @@ public abstract class AdvancedMath {
         Vector2D<Float> normalizedMousePos = new Vector2D<>(normalizedMouseX, normalizedMouseY);
 //        logger.log(this.getPosition(),normalizedMousePos, this.getEnd());
         return top_left.isVectorPointIncludedIn(normalizedMousePos, bottom_right);
+    }
+
+    public static Matrix4f createVirtualProjection(float virtualWidth, float virtualHeight) {
+        return new Matrix4f().ortho(0, virtualWidth, virtualHeight, 0, -1, 1);
+    }
+
+    public static Matrix4f createScaledProjection(int windowWidth, int windowHeight) {
+        final float VIRTUAL_WIDTH = 1920f;
+        final float VIRTUAL_HEIGHT = 1080f;
+
+        float windowAspect = (float) windowWidth / windowHeight;
+        float virtualAspect = VIRTUAL_WIDTH / VIRTUAL_HEIGHT;
+
+        float scale;
+        float width, height;
+
+        if (windowAspect > virtualAspect) {
+            // Window is wider than virtual — scale based on height
+            scale = (float) windowHeight / VIRTUAL_HEIGHT;
+            width = windowWidth / scale;
+            height = VIRTUAL_HEIGHT;
+        } else {
+            // Window is taller than virtual — scale based on width
+            scale = (float) windowWidth / VIRTUAL_WIDTH;
+            width = VIRTUAL_WIDTH;
+            height = windowHeight / scale;
+        }
+
+        return new Matrix4f().ortho(0, width, height, 0, -1, 1);
+    }
+
+    public static Matrix4f createVirtualProjectionNDC(float virtualWidth, float virtualHeight) {
+        return new Matrix4f().ortho(0f, virtualWidth, virtualHeight, 0f, -1f, 1f);
     }
 }
 

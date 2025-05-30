@@ -1,8 +1,9 @@
 package dev.merosssany.calculatorapp.core.io;
 
 import dev.merosssany.calculatorapp.core.AdvancedMath;
-import dev.merosssany.calculatorapp.core.event.EventBus;
-import dev.merosssany.calculatorapp.core.event.LocalEventBus;
+import dev.merosssany.calculatorapp.core.event.bus.EventBus;
+import dev.merosssany.calculatorapp.core.event.bus.LocalEventBus;
+import dev.merosssany.calculatorapp.core.event.input.MouseCoordinatesEvent;
 import dev.merosssany.calculatorapp.core.event.input.MouseHoverEvent;
 import dev.merosssany.calculatorapp.core.render.Window;
 import dev.merosssany.calculatorapp.core.event.*;

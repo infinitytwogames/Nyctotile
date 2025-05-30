@@ -1,5 +1,7 @@
 package dev.merosssany.calculatorapp.core.render;
 
+import dev.merosssany.calculatorapp.core.event.bus.EventBus;
+import dev.merosssany.calculatorapp.core.event.state.WindowResizedEvent;
 import org.lwjgl.glfw.GLFW;
 import org.lwjgl.glfw.GLFWFramebufferSizeCallback;
 import org.lwjgl.glfw.GLFWVidMode;
@@ -51,11 +53,13 @@ public class Window {
             throw new RuntimeException("Failed to create the GLFW window");
         }
 
+        Window instance = this;
         GLFW.glfwSetFramebufferSizeCallback(window, framebufferSizeCallback = new GLFWFramebufferSizeCallback() {
             @Override
             public void invoke(long window, int newWidth, int newHeight) {
                 width = newWidth;
                 height = newHeight;
+                EventBus.post(new WindowResizedEvent(width,height,instance));
                 GL11.glViewport(0, 0, width, height);
             }
         });
