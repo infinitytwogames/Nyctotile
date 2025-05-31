@@ -1,10 +1,12 @@
 package dev.merosssany.calculatorapp.core.constants;
 
-import dev.merosssany.calculatorapp.core.render.Window;
+import dev.merosssany.calculatorapp.core.AdvancedMath;
+import dev.merosssany.calculatorapp.core.Window;
 import org.joml.Matrix4f;
 
 public abstract class Constants {
-    public static final String fontFilePath = "src/main/resources/fonts/Main.ttf";
+    public static final String fontFilePath = "src/main/resources/assets/fonts/Main.ttf";
+    public static final Matrix4f uiProjectionMatrix = AdvancedMath.createVirtualProjection(1920,1080);
 
     public static Matrix4f getTextProjectionMatrix(Window window) {
          return new Matrix4f().ortho2D(0, window.getWidth(), window.getHeight(), 0);

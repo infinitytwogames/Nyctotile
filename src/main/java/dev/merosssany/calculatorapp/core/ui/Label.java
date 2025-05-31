@@ -4,12 +4,14 @@ import dev.merosssany.calculatorapp.Main;
 import dev.merosssany.calculatorapp.core.AdvancedMath;
 import dev.merosssany.calculatorapp.core.RGB;
 import dev.merosssany.calculatorapp.core.RGBA;
-import dev.merosssany.calculatorapp.core.constants.Constants;
 import dev.merosssany.calculatorapp.core.logging.Logger;
 import dev.merosssany.calculatorapp.core.position.UIVector2Df;
 import dev.merosssany.calculatorapp.core.position.Vector2D;
-import dev.merosssany.calculatorapp.core.render.Window;
+import dev.merosssany.calculatorapp.core.render.TextBatchRenderer;
+import dev.merosssany.calculatorapp.core.Window;
 import dev.merosssany.calculatorapp.core.ui.font.FontRenderer;
+
+import static org.lwjgl.opengl.GL11.*;
 
 public class Label extends UI {
     private final Logger logger = new Logger("Label");
@@ -17,7 +19,7 @@ public class Label extends UI {
     private final Window window;
 
     private String text;
-    private FontRenderer renderer;
+    private TextBatchRenderer renderer;
     private RGB textColor;
     private boolean isCentered;
     private Vector2D<Integer> pos;
@@ -28,19 +30,13 @@ public class Label extends UI {
         this.window = window;
         textColor = color;
         this.isCentered = isCentered;
+        init();
     }
 
     @Override
     public void init() {
-        super.init();
-        renderer = Main.getFontRenderer();
-        fontSize = (int) renderer.getFontHeight();
-    }
-
-    @Override
-    public void draw() {
-        super.draw();
-
+        renderer = Main.getFontBatchRenderer();
+        fontSize = (int) renderer.getFontRenderer().getFontHeight();
     }
 
     public String getText() {
@@ -64,6 +60,10 @@ public class Label extends UI {
     }
 
     public FontRenderer getFontRenderer() {
+        return renderer.getFontRenderer();
+    }
+
+    public TextBatchRenderer getTextBatchRenderer() {
         return renderer;
     }
 
@@ -77,5 +77,20 @@ public class Label extends UI {
 
     public Vector2D<Integer> getTextPosition() {
         return pos;
+    }
+
+    @Override
+    public void draw() {
+        if (isCentered) pos = AdvancedMath.calculateCenteredTextPosition(new UIVector2Df(getPosition()),getWidth(),getHeight(), getFontRenderer(),text,fontSize);
+        else {
+            float centerXNDC = getPosition().getX() / 2;
+        }
+        glDisable(GL_DEPTH_TEST);
+        glEnable(GL_BLEND);
+        super.draw();
+        getUIBatchRenderer().flush();
+        renderer.getFontRenderer().renderText(AdvancedMath.createScaledProjection(window.getWidth(),window.getHeight()),text,pos,textColor);
+        getUIBatchRenderer().begin();
+
     }
 }

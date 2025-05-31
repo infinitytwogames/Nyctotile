@@ -222,10 +222,10 @@ public class UI {
 //        glEnable(GL_SRC_ALPHA);
 //        glBlendFunc(GL11.GL_SRC_ALPHA, GL11.GL_ONE_MINUS_SRC_ALPHA);
 //        // OpenGL states for 2D UI rendering
-//        glDisable(GL_CULL_FACE); // Don't cull 2D UI
-//        glDisable(GL_DEPTH_TEST);
-////        glEnable(GL_BLEND);
-//
+        glDisable(GL_CULL_FACE); // Don't cull 2D UI
+        glDisable(GL_DEPTH_TEST);
+//        glEnable(GL_BLEND);
+
 //        if (backgroundRGBA != null) {
 //            GL11.glColor4f(backgroundRGBA.getRed(), backgroundRGBA.getGreen(), backgroundRGBA.getBlue(), backgroundRGBA.getAlpha());
 //        } else {
@@ -267,6 +267,10 @@ public class UI {
 
     public void setBackgroundColor(float r, float g, float b, float a) {
         this.backgroundRGBA = new RGBA(r,g,b,a);
+    }
+
+    public UIBatchRenderer getUIBatchRenderer() {
+        return renderer;
     }
 }
 

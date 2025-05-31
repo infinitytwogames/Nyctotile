@@ -1,51 +1,45 @@
 package dev.merosssany.calculatorapp.core.ui;
 
-import dev.merosssany.calculatorapp.Main;
+import dev.merosssany.calculatorapp.core.RGB;
 import dev.merosssany.calculatorapp.core.render.ShaderProgram;
+import dev.merosssany.calculatorapp.core.render.TextBatchRenderer;
 import dev.merosssany.calculatorapp.core.render.UIBatchRenderer;
-import dev.merosssany.calculatorapp.core.render.Window;
+import dev.merosssany.calculatorapp.core.Window;
 
-public class Screen extends UIBatchRenderer {
-    private String title = "Screen";
+import java.util.ArrayList;
+
+public class Screen {
+    private ShaderProgram textShader;
+    private final ShaderProgram uiShader;
+    private final String name;
+    private final UIBatchRenderer uiBatchRenderer;
+    private final TextBatchRenderer fontBatchRenderer;
+    private final ArrayList<UI> uis;
+    private RGB fontColor;
     private final Window window;
 
-    public Screen(int shaderProgramId, String title) {
-        super(shaderProgramId);
-        this.title = title;
-        this.window = Main.getWindow();
-    }
-
-    public Screen(ShaderProgram program, String title) {
-        super(program);
-        this.title = title;
-        this.window = Main.getWindow();
-    }
-
-    public Screen(String title) {
-        this.title = title;
-        this.window = Main.getWindow();
-    }
-
-    public Screen() {
-        this.window = Main.getWindow();
-    }
-
-    public Screen(int shaderProgramId, Window window, String title) {
-        super(shaderProgramId);
+    public Screen(ShaderProgram textShader, ShaderProgram uiShader, UIBatchRenderer uiBatchRenderer, TextBatchRenderer fontBatchRenderer, String name, RGB fontColor, Window window) {
+        this.textShader = textShader;
+        this.uiShader = uiShader;
+        this.uiBatchRenderer = uiBatchRenderer;
+        this.fontBatchRenderer = fontBatchRenderer;
+        this.name = name;
+        this.fontColor = fontColor;
         this.window = window;
-        this.title = title;
+        this.uis = new ArrayList<>();
     }
 
-    public Screen(ShaderProgram program, Window window, String title) {
-        super(program);
-        this.window = window;
-        this.title = title;
+    public void register(UI ui) {
+        if (!uis.contains(ui)) {
+            uis.add(ui);
+        }
     }
 
-    public Screen(Window window, String title) {
-        this.window = window;
-        this.title = title;
+    public void draw() {
+        uiBatchRenderer.begin();
+        for (UI ui : uis) {
+            ui.draw();
+        }
+        uiBatchRenderer.flush();
     }
-
-
 }

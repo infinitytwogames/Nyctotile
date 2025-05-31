@@ -1,4 +1,4 @@
-package dev.merosssany.calculatorapp.core; // Or wherever you want to put utility classes
+package dev.merosssany.calculatorapp.core.intervals; // Or wherever you want to put utility classes
 
 public class Interval {
     private long lastActionTime; // Stores System.nanoTime() when the action last occurred

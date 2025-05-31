@@ -3,7 +3,7 @@ package dev.merosssany.calculatorapp.core.ui.font;
 import dev.merosssany.calculatorapp.core.RGB;
 import dev.merosssany.calculatorapp.core.logging.Logger;
 import dev.merosssany.calculatorapp.core.position.Vector2D;
-import dev.merosssany.calculatorapp.core.render.ShaderFiles;
+import dev.merosssany.calculatorapp.core.constants.ShaderFiles;
 import dev.merosssany.calculatorapp.core.render.ShaderProgram;
 import org.joml.Matrix4f;
 import org.lwjgl.BufferUtils;
@@ -58,7 +58,7 @@ public class FontRenderer {
      * @param height      pixel height
      */
     public FontRenderer(String fontPath, float height) {
-        this.fontHeight = height;
+        this.fontHeight = height * 2;
         program = new ShaderProgram(ShaderFiles.textVertex,ShaderFiles.textFragment);
         this.shaderProgramId = program.getProgramId();
         this.fontPath = fontPath;
@@ -134,6 +134,7 @@ public class FontRenderer {
         glActiveTexture(GL_TEXTURE0);
         glBindTexture(GL_TEXTURE_2D, texID);
         glEnable(GL_BLEND);
+        glDisable(GL_DEPTH_TEST);
         glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
         // Build dynamic vertex buffer

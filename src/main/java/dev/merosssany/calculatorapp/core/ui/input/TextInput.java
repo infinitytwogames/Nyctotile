@@ -11,23 +11,22 @@ import dev.merosssany.calculatorapp.core.event.input.MouseButtonEvent;
 import dev.merosssany.calculatorapp.core.logging.Logger;
 import dev.merosssany.calculatorapp.core.position.UIVector2Df;
 import dev.merosssany.calculatorapp.core.render.UIBatchRenderer;
-import dev.merosssany.calculatorapp.core.render.Window;
+import dev.merosssany.calculatorapp.core.Window;
 import dev.merosssany.calculatorapp.core.ui.Cursor;
 import dev.merosssany.calculatorapp.core.ui.Label;
 import org.lwjgl.glfw.GLFW;
-import org.slf4j.LoggerFactory;
 
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 
+@Deprecated
 public class TextInput extends Label {
-    private static final org.slf4j.Logger log = LoggerFactory.getLogger(TextInput.class);
     private boolean isInputting = false;
     private final StringBuilder builder = new StringBuilder();
     private final Method method;
     private final Object obj;
     private final Logger logger = new Logger("TextInput");
-    private final Cursor cursor;
+//    private final Cursor cursor;
     private final int fontHeight;
 
     public TextInput(UIBatchRenderer screen, Window window, Method method, Object obj, UIVector2Df position, RGB color, float width, float height, RGBA background) {
@@ -35,7 +34,7 @@ public class TextInput extends Label {
         this.method = method;
         this.obj = obj;
         fontHeight = (int) Main.getFontRenderer().getFontHeight();
-        this.cursor = new Cursor(screen, new UIVector2Df(0,0), AdvancedMath.pixelToNdc(fontHeight,0,window).getX(), new RGBA(1f,1f,1f,1f));
+//        this.cursor = new Cursor(screen, new UIVector2Df(0,0), AdvancedMath.pixelToNdc(fontHeight,0,window).getX(), new RGBA(1f,1f,1f,1f));
     }
 
     public static String convertGlfwKeyToLetterOrDigit(int glfwKeyCode) {
@@ -82,12 +81,12 @@ public class TextInput extends Label {
 
     private void release() {
         isInputting = false;
-        cursor.stop();
+//        cursor.stop();
     }
 
     private void focus() {
         isInputting = true;
-        cursor.start();
+//        cursor.start();
     }
 
     @SubscribeEvent
@@ -101,11 +100,11 @@ public class TextInput extends Label {
 
     private void updateCursorPosition() {
         UIVector2Df textPosition = AdvancedMath.pixelToNdc(getTextPosition(),getWindow());
-        cursor.setHeight(AdvancedMath.pixelToNdc(fontHeight,getWindow()));
-        UIVector2Df newPosition = new UIVector2Df(textPosition.getX() + AdvancedMath.pixelToNdc((int) getFontRenderer().getStringWidth(getText()), getWindow()) + getWidth(), textPosition.getY());
+//        cursor.setHeight(AdvancedMath.pixelToNdc(fontHeight,getWindow()));
+//        UIVector2Df newPosition = new UIVector2Df(textPosition.getX() + AdvancedMath.pixelToNdc((int) getFontRenderer().getStringWidth(getText()), getWindow()) + getWidth(), textPosition.getY());
 
-        cursor.setPosition(newPosition);
-        logger.info(newPosition);
+//        cursor.setPosition(newPosition);
+//        logger.info(newPosition);
     }
 
 
@@ -122,12 +121,6 @@ public class TextInput extends Label {
     public void init() {
         super.init();
         EventBus.register(this);
-        cursor.init();
-    }
-
-    @Override
-    public void draw() {
-        super.draw();
-        cursor.draw();
+//        cursor.init();
     }
 }

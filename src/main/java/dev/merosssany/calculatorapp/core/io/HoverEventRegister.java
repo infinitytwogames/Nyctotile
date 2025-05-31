@@ -5,7 +5,7 @@ import dev.merosssany.calculatorapp.core.event.bus.EventBus;
 import dev.merosssany.calculatorapp.core.event.bus.LocalEventBus;
 import dev.merosssany.calculatorapp.core.event.input.MouseCoordinatesEvent;
 import dev.merosssany.calculatorapp.core.event.input.MouseHoverEvent;
-import dev.merosssany.calculatorapp.core.render.Window;
+import dev.merosssany.calculatorapp.core.Window;
 import dev.merosssany.calculatorapp.core.event.*;
 import dev.merosssany.calculatorapp.core.position.Vector2D;
 import dev.merosssany.calculatorapp.core.ui.UI;

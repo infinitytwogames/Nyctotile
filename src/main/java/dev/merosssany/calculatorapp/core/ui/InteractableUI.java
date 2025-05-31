@@ -5,7 +5,7 @@ import dev.merosssany.calculatorapp.core.RGBA;
 import dev.merosssany.calculatorapp.core.event.input.MouseButtonEvent;
 import dev.merosssany.calculatorapp.core.event.input.MouseHoverEvent;
 import dev.merosssany.calculatorapp.core.render.UIBatchRenderer;
-import dev.merosssany.calculatorapp.core.render.Window;
+import dev.merosssany.calculatorapp.core.Window;
 import dev.merosssany.calculatorapp.core.event.*;
 import dev.merosssany.calculatorapp.core.io.HoverEventRegister;
 import dev.merosssany.calculatorapp.core.position.UIVector2Df;

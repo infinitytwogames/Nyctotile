@@ -1,6 +1,7 @@
 package dev.merosssany.calculatorapp.core.render;
 
 import dev.merosssany.calculatorapp.core.RGBA;
+import dev.merosssany.calculatorapp.core.constants.ShaderFiles;
 import dev.merosssany.calculatorapp.core.ui.UI;
 import org.joml.Matrix4f;
 import org.lwjgl.opengl.GL11;
@@ -36,6 +37,7 @@ public class UIBatchRenderer {
 
     public UIBatchRenderer() {
         this.shaderProgramId = new ShaderProgram(ShaderFiles.uiVertex,ShaderFiles.uiFragment).getProgramId();
+        init();
     }
 
     private void init() {
@@ -88,6 +90,10 @@ public class UIBatchRenderer {
         vertexDataIndex += quad.length;
     }
 
+    public void begin() {
+        vertexDataIndex = 0;
+    }
+
     public void flush() {
         if (vertexDataIndex == 0) return;
 
@@ -101,12 +107,12 @@ public class UIBatchRenderer {
         GL20.glUseProgram(shaderProgramId);
 
         // Set projection matrix uniform
-//        int locProj = GL20.glGetUniformLocation(shaderProgramId, "uProjection");
-//        try (var stack = org.lwjgl.system.MemoryStack.stackPush()) {
-//            FloatBuffer fb = stack.mallocFloat(16);
-//            projection.get(fb);
-//            GL20.glUniformMatrix4fv(locProj, false, fb);
-//        }
+        int locProj = GL20.glGetUniformLocation(shaderProgramId, "uProjection");
+        try (var stack = org.lwjgl.system.MemoryStack.stackPush()) {
+            FloatBuffer fb = stack.mallocFloat(16);
+            projection.get(fb);
+            GL20.glUniformMatrix4fv(locProj, false, fb);
+        }
 
         GL11.glEnable(GL11.GL_BLEND);
         GL11.glBlendFunc(GL11.GL_SRC_ALPHA, GL11.GL_ONE_MINUS_SRC_ALPHA);

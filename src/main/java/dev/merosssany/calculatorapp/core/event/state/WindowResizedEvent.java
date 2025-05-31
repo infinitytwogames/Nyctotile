@@ -1,7 +1,7 @@
 package dev.merosssany.calculatorapp.core.event.state;
 
 import dev.merosssany.calculatorapp.core.event.Event;
-import dev.merosssany.calculatorapp.core.render.Window;
+import dev.merosssany.calculatorapp.core.Window;
 
 public class WindowResizedEvent extends Event {
     public int width, height;

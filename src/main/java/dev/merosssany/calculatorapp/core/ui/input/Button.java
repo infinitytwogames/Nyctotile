@@ -11,7 +11,7 @@ import dev.merosssany.calculatorapp.core.logging.Logger;
 import dev.merosssany.calculatorapp.core.position.UIVector2Df;
 import dev.merosssany.calculatorapp.core.position.Vector2D;
 import dev.merosssany.calculatorapp.core.render.UIBatchRenderer;
-import dev.merosssany.calculatorapp.core.render.Window;
+import dev.merosssany.calculatorapp.core.Window;
 import dev.merosssany.calculatorapp.core.ui.InteractableUI;
 import dev.merosssany.calculatorapp.core.ui.font.FontRenderer;
 import org.lwjgl.glfw.GLFW;
@@ -96,8 +96,8 @@ public class Button extends InteractableUI {
 
         Vector2D<Integer> buttonCenterPixels = AdvancedMath.ndcToPixel(
                 getPosition().getX() + getWidth() / 2, // Center X in NDC
-                getPosition().getY() - getHeight() / 2, // Center Y in NDC
-                getWindow()
+                getPosition().getY() - getHeight() / 2 // Center Y in NDC
+//                getWindow()
         );
         float textWidthPixels = renderer.getStringWidth(text);
 

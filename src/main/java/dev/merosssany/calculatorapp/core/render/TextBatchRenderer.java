@@ -1,6 +1,7 @@
 package dev.merosssany.calculatorapp.core.render;
 
 import dev.merosssany.calculatorapp.core.RGB;
+import dev.merosssany.calculatorapp.core.logging.Logger;
 import dev.merosssany.calculatorapp.core.ui.font.FontRenderer;
 import org.jetbrains.annotations.NotNull;
 import org.joml.Matrix4f;
@@ -22,6 +23,7 @@ public class TextBatchRenderer {
     private final FloatBuffer vertexBuffer;
     private final int vaoId, vboId;
     private int glyphCount = 0;
+    private Logger logger = new Logger("TextBatchRenderer");
 
     public TextBatchRenderer(FontRenderer font, float scale) {
         this.font = font;
@@ -111,5 +113,9 @@ public class TextBatchRenderer {
     public void cleanup() {
         glDeleteBuffers(vboId);
         glDeleteVertexArrays(vaoId);
+    }
+
+    public FontRenderer getFontRenderer() {
+        return font;
     }
 }

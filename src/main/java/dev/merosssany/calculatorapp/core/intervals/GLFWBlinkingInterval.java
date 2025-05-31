@@ -1,13 +1,14 @@
-package dev.merosssany.calculatorapp.core; // Or wherever you want to put utility classes
+package dev.merosssany.calculatorapp.core.intervals; // Or wherever you want to put utility classes
 
+import dev.merosssany.calculatorapp.Main; // Import your Main class for dispatching
 import dev.merosssany.calculatorapp.core.event.Event;
 import dev.merosssany.calculatorapp.core.event.bus.LocalEventBus;
 import dev.merosssany.calculatorapp.core.event.SubscribeEvent;
 
-public class BlinkingInterval {
+public class GLFWBlinkingInterval {
     // volatile ensures changes to this flag are immediately visible across threads
     private volatile boolean isRunning = false;
-    private Thread eventThread; // Use final for fields set only in constructor
+    private Thread eventThread; // Correctly not final, as it can be reassigned
     private final Runnable action;
     private final long activeDurationNanos;   // Time for the "on" phase in nanoseconds
     private final long inactiveDurationNanos; // Time for the "off" phase in nanoseconds
@@ -20,14 +21,16 @@ public class BlinkingInterval {
      *
      * @param action The {@code Runnable} to execute when the active phase begins.
      * WARNING: This action will run on a background thread. If it touches UI,
-     * it MUST be dispatched back to the main thread.
+     * it MUST be dispatched back to the main thread (which is now handled internally).
      * @param activeMillis The duration (in milliseconds) for which the interval is "active".
      * @param inactiveMillis The duration (in milliseconds) for which the interval is "inactive".
      */
-    public BlinkingInterval(Runnable action, long activeMillis, long inactiveMillis) {
+    public GLFWBlinkingInterval(Runnable action, long activeMillis, long inactiveMillis) {
         if (action == null) {
             throw new IllegalArgumentException("Action cannot be null.");
         }
+        // Ensure durations are non-negative by taking absolute value if negative.
+        // Or, you could throw IllegalArgumentException here for strictly positive input.
         if (activeMillis < 0) {
             activeMillis = -activeMillis;
         }
@@ -40,19 +43,20 @@ public class BlinkingInterval {
         this.inactiveDurationNanos = inactiveMillis * 1_000_000L;
         this.isCurrentlyActive = true; // Start in the active phase
 
-        this.eventBus = new LocalEventBus("BlinkingInterval");
+        this.eventBus = new LocalEventBus("GLFWBlinkingInterval"); // Changed bus name for consistency
         eventBus.register(this); // Register this instance to handle its own events
 
         // Initialize the thread but don't start it yet
-        this.eventThread = new Thread(this::threadCode, "BlinkingInterval-Thread");
+        this.eventThread = new Thread(this::threadCode, "GLFWBlinkingInterval-Thread"); // Changed thread name
     }
 
     private void threadCode() {
         long lastPhaseChangeTime = System.nanoTime(); // Use real time for accurate timing
 
-         if (isCurrentlyActive) {
-             eventBus.post(new IntervalRun());
-         }
+        // Post initial event if starting in active phase
+        if (isCurrentlyActive) {
+            eventBus.post(new IntervalRun());
+        }
 
         while (isRunning) { // Loop will continue as long as isRunning is true
             long currentTime = System.nanoTime();
@@ -75,10 +79,10 @@ public class BlinkingInterval {
             long timeUntilNextChange = phaseDuration - (System.nanoTime() - lastPhaseChangeTime);
             long sleepMillis = timeUntilNextChange / 1_000_000L; // Convert nanoseconds to milliseconds
 
-            // Only sleep if there's a significant time left to avoid very small sleeps
+            // Only sleep if there's a significant time left to avoid very small sleeps or negative sleep times.
             if (sleepMillis > 0) {
                 try {
-                    Thread.sleep(sleepMillis);
+                    Thread.sleep(0);
                 } catch (InterruptedException e) {
                     // Thread was interrupted (e.g., by end() call)
                     Thread.currentThread().interrupt(); // Restore interrupt status
@@ -86,7 +90,7 @@ public class BlinkingInterval {
                 }
             } else {
                 // If sleepMillis is 0 or negative, it means the phase change is due or past due.
-                // Yield control to other threads to avoid tight loop.
+                // Yield control to other threads to avoid tight loop, especially if a very short duration.
                 Thread.yield();
             }
         }
@@ -105,12 +109,11 @@ public class BlinkingInterval {
                 eventThread.start();
             } else if (eventThread.getState() == Thread.State.TERMINATED) {
                 // If the thread terminated previously, create a new one to restart
-                this.eventThread = new Thread(this::threadCode, "BlinkingInterval-Thread");
+                this.eventThread = new Thread(this::threadCode, "GLFWBlinkingInterval-Thread"); // Changed thread name
                 eventThread.start();
             }
             // If it's already running (RUNNABLE, TIMED_WAITING, etc.), do nothing.
-            // When started, implicitly reset the timer.
-            // If you need a hard reset every time you call start(), then also call reset() here.
+            // Consider calling reset() here if 'start()' should always reset the timer.
         }
     }
 
@@ -123,9 +126,10 @@ public class BlinkingInterval {
             isRunning = false; // Signal the thread to stop
             eventThread.interrupt(); // Interrupt to break out of sleep/yield
             try {
-                eventThread.join(500); // Wait up to 500ms for the thread to actually die
+                // Wait briefly for the thread to actually die, making shutdown more robust.
+                eventThread.join(500);
             } catch (InterruptedException e) {
-                Thread.currentThread().interrupt();
+                Thread.currentThread().interrupt(); // Restore interrupt status if interrupted during join
             }
         }
     }
@@ -139,8 +143,8 @@ public class BlinkingInterval {
         if (wasRunning) {
             end(); // Stop it gracefully first
         }
-        this.isCurrentlyActive = true; // Reset state
-        // The lastPhaseChangeTime will be reset in threadCode() when start() is called
+        this.isCurrentlyActive = true; // Reset state to active
+        // The lastPhaseChangeTime will be reset inside threadCode() when start() is called
         if (wasRunning) {
             start(); // Start again to re-initialize time and loop
         }
@@ -157,18 +161,14 @@ public class BlinkingInterval {
 
     /**
      * Event handler that gets called when the IntervalRun event is posted.
-     * WARNING: This method runs on the BlinkingInterval's dedicated background thread.
-     * If 'action.run()' performs any UI updates (OpenGL, GLFW, UI component manipulation),
-     * you MUST ensure it is safely dispatched back to your main application thread.
-     * Example of dispatching (conceptual, depends on your main loop):
-     * YourMainApplication.invokeLater(() -> {
-     * // Perform UI updates here on the main thread
-     * });
+     * This method runs on the GLFWBlinkingInterval's dedicated background thread.
+     * The `action` is immediately dispatched to the main application thread for safe UI updates.
      * @param e The IntervalRun event.
      */
     @SubscribeEvent
     private void eventHandler(IntervalRun e) {
-        action.run(); // Execute the user-provided action
+        // Dispatch the user-provided action to the main application thread for safe execution.
+        Main.dispatchTask(action);
     }
 
     // Event class for internal use
