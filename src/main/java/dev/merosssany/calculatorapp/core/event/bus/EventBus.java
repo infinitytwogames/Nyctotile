@@ -8,7 +8,6 @@ import java.lang.reflect.Modifier;
 import java.util.*;
 
 public abstract class EventBus {
-
     private static final Map<Class<?>, List<ListenerMethod>> listeners = new HashMap<>();
 
     public static void register(Object listenerInstance) {

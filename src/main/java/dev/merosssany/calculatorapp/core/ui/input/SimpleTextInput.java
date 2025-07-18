@@ -11,16 +11,13 @@ import dev.merosssany.calculatorapp.core.event.input.CharacterInputEvent;
 import dev.merosssany.calculatorapp.core.event.input.KeyPressEvent;
 import dev.merosssany.calculatorapp.core.event.input.MouseButtonEvent;
 import dev.merosssany.calculatorapp.core.intervals.Interval;
-import dev.merosssany.calculatorapp.core.position.UIVector2Df;
 import dev.merosssany.calculatorapp.core.render.TextBatchRenderer;
 import dev.merosssany.calculatorapp.core.Window;
 import dev.merosssany.calculatorapp.core.ui.Label;
+import org.joml.Vector2i;
 import org.lwjgl.glfw.GLFW;
 
 import java.util.concurrent.atomic.AtomicBoolean;
-
-import static dev.merosssany.calculatorapp.core.AdvancedMath.clamp;
-import static dev.merosssany.calculatorapp.core.AdvancedMath.isInRange;
 
 public class SimpleTextInput extends Label {
     private final Interval interval;
@@ -31,7 +28,7 @@ public class SimpleTextInput extends Label {
     private final LocalEventBus eventBus;
     private int cursorPosition = 0;
 
-    public SimpleTextInput(TextBatchRenderer textBatchRenderer, Window window, UIVector2Df position, RGB color, float width, float height, RGBA background) {
+    public SimpleTextInput(Window window, Vector2i position, RGB color, float width, float height, RGBA background) {
         super(window, position, "", false, color, width, height, background);
         interval = new Interval(400,this::update);
         eventBus = new LocalEventBus("TextInput");
@@ -43,20 +40,10 @@ public class SimpleTextInput extends Label {
     }
 
     @Override
-    public void draw() {
-        StringBuilder display = new StringBuilder(text);
-        if (isFocused.get() && isBlinking.get()) display.insert(cursorPosition, "|");
-        super.setText(display.toString());
-        super.draw();
-        interval.update();
-    }
-
-    @Override
     public String getText() {
         return text.toString();
     }
 
-    @Override
     public void init() {
         interval.start();
         EventBus.register(this);
@@ -74,6 +61,10 @@ public class SimpleTextInput extends Label {
     public void onMouseButtonPressed(MouseButtonEvent e) {
         if (e.getAction() == GLFW.GLFW_RELEASE) if(isInRange(getPosition(), getEnd(), getWindow())) focus();
         else unfocus();
+    }
+
+    private boolean isInRange(Vector2i position, Vector2i end, Window window) {
+        return false;
     }
 
     private void unfocus() {

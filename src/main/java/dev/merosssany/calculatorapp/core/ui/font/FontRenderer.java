@@ -2,10 +2,10 @@ package dev.merosssany.calculatorapp.core.ui.font;
 
 import dev.merosssany.calculatorapp.core.RGB;
 import dev.merosssany.calculatorapp.core.logging.Logger;
-import dev.merosssany.calculatorapp.core.position.Vector2D;
 import dev.merosssany.calculatorapp.core.constants.ShaderFiles;
 import dev.merosssany.calculatorapp.core.render.ShaderProgram;
 import org.joml.Matrix4f;
+import org.joml.Vector2i;
 import org.lwjgl.BufferUtils;
 import org.lwjgl.stb.STBTTAlignedQuad;
 import org.lwjgl.stb.STBTTBakedChar;
@@ -211,8 +211,8 @@ public class FontRenderer {
         }
     }
 
-    public void renderText(Matrix4f proj, String text, Vector2D<Integer> position, RGB color) {
-        renderText(proj,text,position.getX(),position.getY(),color.getRed(),color.getGreen(),color.getBlue());
+    public void renderText(Matrix4f proj, String text, Vector2i position, RGB color) {
+        renderText(proj,text,position.x(),position.y(),color.getRed(),color.getGreen(),color.getBlue());
     }
 
     public void renderText(Matrix4f proj, String text, int x, int y, RGB color) {

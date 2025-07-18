@@ -38,7 +38,7 @@ public class Screen {
     public void draw() {
         uiBatchRenderer.begin();
         for (UI ui : uis) {
-            ui.draw();
+            uiBatchRenderer.queue(ui);
         }
         uiBatchRenderer.flush();
     }

@@ -4,8 +4,6 @@ public abstract class ShaderFiles {
     public static final String uiVertex = """
 #version 330 core
 
-// --- Input Vertex Attributes (from your VAO/VBO setup) ---
-// aPos will now contain the pre-transformed virtual pixel coordinates (e.g., 0-1920, 0-1080 scaled)
 layout (location = 0) in vec2 aPos;      // Position (x, y)
 layout (location = 1) in vec4 aColor;    // Color (r, g, b, a)
 layout (location = 2) in vec2 aTexCoord; // Texture coordinates (u, v)
@@ -44,13 +42,10 @@ void main() {
                 void main() {
                     vec4 finalColor;
 
-                    if (u_useTexture) {
-                        // If u_useTexture is true, sample the texture and multiply by vertex color for tinting/alpha
-                        finalColor = texture(u_texture, vTexCoord) * vColor;
-                    } else {
+                    
                         // Otherwise, just use the interpolated vertex color (for solid colored UI elements)
                         finalColor = vColor;
-                    }
+                    
 
                     // You generally want blending enabled for UI (e.g., glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA))
                     // to handle transparency correctly.

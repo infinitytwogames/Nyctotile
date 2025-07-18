@@ -8,12 +8,12 @@ import dev.merosssany.calculatorapp.core.event.input.MouseButtonEvent;
 import dev.merosssany.calculatorapp.core.event.input.MouseHoverEvent;
 import dev.merosssany.calculatorapp.core.event.SubscribeEvent;
 import dev.merosssany.calculatorapp.core.logging.Logger;
-import dev.merosssany.calculatorapp.core.position.UIVector2Df;
-import dev.merosssany.calculatorapp.core.position.Vector2D;
 import dev.merosssany.calculatorapp.core.render.UIBatchRenderer;
 import dev.merosssany.calculatorapp.core.Window;
 import dev.merosssany.calculatorapp.core.ui.InteractableUI;
 import dev.merosssany.calculatorapp.core.ui.font.FontRenderer;
+import org.joml.Vector2f;
+import org.joml.Vector2i;
 import org.lwjgl.glfw.GLFW;
 
 public class Button extends InteractableUI {
@@ -26,8 +26,8 @@ public class Button extends InteractableUI {
     private RGB textColor;
     private final Logger logger = new Logger("Button");
 
-    public Button(UIBatchRenderer renderer, String text, RGB textColor, int fontSize, String fontFilePath, float padding, Runnable onClick, UIVector2Df position, float width, float height, RGBA background, Window window) {
-        super(renderer, position, width, height, background, window);
+    public Button(UIBatchRenderer renderer, String text, RGB textColor, int fontSize, String fontFilePath, float padding, Runnable onClick, Vector2i position, float width, float height, RGBA background, Window window) {
+        super(window);
         this.text = text;
         this.fontSize = fontSize;
         this.padding = padding;
@@ -78,35 +78,6 @@ public class Button extends InteractableUI {
     public void init() {
         super.init();
         renderer = new FontRenderer(path,fontSize);
-    }
-
-    @Override
-    public void draw() {
-        super.draw();
-        renderer.renderText(Constants.getTextProjectionMatrix(getWindow()),text,calculatePadding(),textColor);
-    }
-
-    public Vector2D<Integer> calculatePadding() {
-        Vector2D<Float> x = new Vector2D<>(
-                getPosition().getX() + padding, getPosition().getY() - padding
-        );
-        Vector2D<Float> y = new Vector2D<>(
-                super.getEnd().getX() - padding, super.getEnd().getY() + padding
-        );
-
-        Vector2D<Integer> buttonCenterPixels = AdvancedMath.ndcToPixel(
-                getPosition().getX() + getWidth() / 2, // Center X in NDC
-                getPosition().getY() - getHeight() / 2 // Center Y in NDC
-//                getWindow()
-        );
-        float textWidthPixels = renderer.getStringWidth(text);
-
-        // Calculate the top-left pixel position for the text to be centered
-        int textXPixels = (int) (buttonCenterPixels.getX() - textWidthPixels / 2.0f);
-        int textYPixels = (int) (buttonCenterPixels.getY() - (float) fontSize / 2.0f); // Adjust for font baseline if needed
-
-//        return AdvancedMath.ndcToPixel(x.getX(), getEnd().getY() / 2,getWindow());
-        return new Vector2D<>(textXPixels,textYPixels + (fontSize / 2) );
     }
 
     public String getText() {

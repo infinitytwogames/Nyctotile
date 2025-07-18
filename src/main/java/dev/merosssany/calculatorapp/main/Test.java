@@ -29,7 +29,6 @@ public class Test {
     }
 
     public static void init() {
-        topLeftHalfElement.init();
         t.init();
     }
 }

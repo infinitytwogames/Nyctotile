@@ -2,7 +2,6 @@ package dev.merosssany.calculatorapp.core.logging;
 
 import dev.merosssany.calculatorapp.Main;
 import dev.merosssany.calculatorapp.core.RGB;
-import dev.merosssany.calculatorapp.core.position.Vector2D;
 import dev.merosssany.calculatorapp.core.render.CleanupManager;
 import dev.merosssany.calculatorapp.core.exception.VerboseException;
 import dev.merosssany.calculatorapp.core.ui.UI;
@@ -127,50 +126,10 @@ public class Logger {
                         .append(classFromObj.getName())
                         .append(" (")
                         .append(formatClassName(classFromObj))
-                        .append(")");
-
-                if (classFromObj.getFields().length == 0) continue;
-                // Fields
-                for (Field field : classFromObj.getFields()) {
-                    try {
-                        objectResult.append("    Field:\"")
-                                .append(field.getName())
-                                .append("\", Type:\"")
-                                .append(field.getType())
-                                .append(" (")
-                                .append(formatClassName(field.getClass()))
-                                .append(")\" = ")
-                                .append(field.get(obj))
-                                .append("\n")
-                        ;
-                    } catch (IllegalAccessException e) {
-                        objectResult.append("    Field:\"")
-                                .append(field.getName())
-                                .append("\", Type:\"")
-                                .append(field.getType())
-                                .append(" (")
-                                .append(formatClassName(field.getClass()))
-                                .append(")\" = <IllegalAccessStateException>");
-                    }
-                }
-//                // Methods
-//                for (Method method : classFromObj.getMethods()) {
-//                    objectResult.append("    Method: ")
-//                            .append(method.getName())
-//                            .append("(");
-//                    for (Parameter parameter : method.getParameters()) {
-//                        objectResult.append(formatClassName(parameter.getType()))
-//                                .append(" ")
-//                                .append(parameter.getName())
-//                                .append(" ");
-//                    }
-//                    objectResult.append(")\n");
-//                }
+                        .append(")\n")
+                        .append(obj)
+                ;
             } else {
-                if (isSupported(classFromObj)) {
-                    textResult.append(formatSupported(obj,level)).append(" ");
-                    continue;
-                }
                 textResult.append(obj).append(" ");
             }
         }
@@ -247,46 +206,9 @@ public class Logger {
     }
 
     private static boolean isSupported(Class<?> clazz) {
-        if (clazz.isAssignableFrom(Vector2D.class)) {
-            return true;
-        } else if (clazz.isAssignableFrom(RGB.class)) return true;
+        if (clazz.isAssignableFrom(RGB.class)) return true;
         else if (clazz.isAssignableFrom(UI.class)) return true;
         return false;
-    }
-
-    private String formatSupported(Object obj, LoggingLevel level) {
-        if (isSupported(obj.getClass())) {
-            StringBuilder builder = new StringBuilder();
-            Class<?> provided = obj.getClass();
-
-            if (provided.isAssignableFrom(Vector2D.class)) builder.append(formatVector2D(obj));
-
-            else if (provided.isAssignableFrom(RGB.class)) builder.append(formatRGB(obj));
-
-            else if (provided.isAssignableFrom(UI.class)) {
-                try {
-                    Object vec = provided.getDeclaredMethod("getPosition").invoke(obj);
-
-                    builder.append("UI Element of class: ")
-                            .append(provided.getName())
-                            .append("\n  UI Name:").append(provided.getDeclaredMethod("getName").invoke(obj))
-                            .append("\n  Position: ")
-                            .append(formatVector2D(vec))
-                            .append("\n  Background Color: ")
-                            .append(formatRGB(provided.getDeclaredMethod("getBackgroundColor").invoke(obj)))
-                            .append("\n  Width: ").append(provided.getDeclaredMethod("getWidth").invoke(obj))
-                            .append("\n  Height: ").append(provided.getDeclaredMethod("getHeight").invoke(obj));
-                } catch (NoSuchMethodException e) {
-                    throw new RuntimeException(e);
-                } catch (InvocationTargetException e) {
-                    throw new RuntimeException(e);
-                } catch (IllegalAccessException e) {
-                    throw new RuntimeException(e);
-                }
-
-            }
-        }
-        return formatObj(level,new Object[]{obj});
     }
 
     private String formatRGB(Object obj) {
@@ -307,30 +229,6 @@ public class Logger {
             builder.append("Could not access ")
                     .append(provided.getName())
                     .append("'s method")
-                    .append("\n").append(formatStacktrace(e))
-            ;
-        }
-        return builder.toString();
-    }
-
-    private String formatVector2D(Object obj) {
-        StringBuilder builder = new StringBuilder();
-        Class<?> provided = obj.getClass();
-        try {
-            builder.append(Vector2D.class.getName())
-                    .append("\n    X: ")
-                    .append(provided.getDeclaredMethod("getX").invoke(obj))
-                    .append("\n    Y: ")
-                    .append(provided.getDeclaredMethod("getY").invoke(obj));
-
-        } catch (NoSuchMethodException e) {
-            builder.append("[Logger] Failed to access object ").append(provided.getName()).append("\n").append(formatStacktrace(e));
-        } catch (InvocationTargetException e) {
-            builder.append("[Logger] Failed to format supported\n")
-                    .append(formatStacktrace(e))
-            ;
-        } catch (IllegalAccessException e) {
-            builder.append("[Logger] Cannot access a method provided by: ").append(provided.getName())
                     .append("\n").append(formatStacktrace(e))
             ;
         }

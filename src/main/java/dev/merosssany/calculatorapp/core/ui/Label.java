@@ -5,11 +5,10 @@ import dev.merosssany.calculatorapp.core.AdvancedMath;
 import dev.merosssany.calculatorapp.core.RGB;
 import dev.merosssany.calculatorapp.core.RGBA;
 import dev.merosssany.calculatorapp.core.logging.Logger;
-import dev.merosssany.calculatorapp.core.position.UIVector2Df;
-import dev.merosssany.calculatorapp.core.position.Vector2D;
 import dev.merosssany.calculatorapp.core.render.TextBatchRenderer;
 import dev.merosssany.calculatorapp.core.Window;
 import dev.merosssany.calculatorapp.core.ui.font.FontRenderer;
+import org.joml.Vector2i;
 
 import static org.lwjgl.opengl.GL11.*;
 
@@ -22,21 +21,14 @@ public class Label extends UI {
     private TextBatchRenderer renderer;
     private RGB textColor;
     private boolean isCentered;
-    private Vector2D<Integer> pos;
+    private Vector2i pos;
 
-    public Label(Window window, UIVector2Df position, String text, boolean isCentered, RGB color, float width, float height, RGBA background) {
-        super(Main.getUIBatchRenderer(), "Label", position, width, height, background);
+    public Label(Window window, Vector2i position, String text, boolean isCentered, RGB color, float width, float height, RGBA background) {
+//        super(Main.getUIBatchRenderer(), "Label", position, width, height, background);
         this.text = text;
         this.window = window;
         textColor = color;
         this.isCentered = isCentered;
-        init();
-    }
-
-    @Override
-    public void init() {
-        renderer = Main.getFontBatchRenderer();
-        fontSize = (int) renderer.getFontRenderer().getFontHeight();
     }
 
     public String getText() {
@@ -75,22 +67,7 @@ public class Label extends UI {
         isCentered = centered;
     }
 
-    public Vector2D<Integer> getTextPosition() {
+    public Vector2i getTextPosition() {
         return pos;
-    }
-
-    @Override
-    public void draw() {
-        if (isCentered) pos = AdvancedMath.calculateCenteredTextPosition(new UIVector2Df(getPosition()),getWidth(),getHeight(), getFontRenderer(),text,fontSize);
-        else {
-            float centerXNDC = getPosition().getX() / 2;
-        }
-        glDisable(GL_DEPTH_TEST);
-        glEnable(GL_BLEND);
-        super.draw();
-        getUIBatchRenderer().flush();
-        renderer.getFontRenderer().renderText(AdvancedMath.createScaledProjection(window.getWidth(),window.getHeight()),text,pos,textColor);
-        getUIBatchRenderer().begin();
-
     }
 }

@@ -12,4 +12,10 @@ public class WindowResizedEvent extends Event {
         this.height = height;
         this.window = window;
     }
+
+    public WindowResizedEvent(Window window) {
+        this.width = window.getWidth();
+        this.height = window.getHeight();
+        this.window = window;
+    }
 }

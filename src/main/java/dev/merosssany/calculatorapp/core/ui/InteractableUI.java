@@ -7,10 +7,9 @@ import dev.merosssany.calculatorapp.core.event.input.MouseHoverEvent;
 import dev.merosssany.calculatorapp.core.render.UIBatchRenderer;
 import dev.merosssany.calculatorapp.core.Window;
 import dev.merosssany.calculatorapp.core.event.*;
-import dev.merosssany.calculatorapp.core.io.HoverEventRegister;
-import dev.merosssany.calculatorapp.core.position.UIVector2Df;
-import dev.merosssany.calculatorapp.core.position.Vector2D;
 import dev.merosssany.calculatorapp.core.logging.Logger;
+import org.joml.Vector2f;
+import org.joml.Vector2i;
 import org.lwjgl.glfw.GLFW;
 
 public abstract class InteractableUI extends UI{
@@ -19,10 +18,8 @@ public abstract class InteractableUI extends UI{
     private RGBA original;
     private boolean isHovered = false;
 
-    public InteractableUI(UIBatchRenderer renderer, UIVector2Df position, float width, float height, RGBA background, Window window) {
-        super(renderer, "Interactable UI", position, width, height, background);
+    public InteractableUI(Window window) {
         this.window = window;
-        this.original = super.getBackgroundColor();
     }
 
     @SubscribeEvent
@@ -79,9 +76,9 @@ public abstract class InteractableUI extends UI{
 // Convert mouse Y to normalized coordinates (1 to -1, assuming UI y-axis goes down)
         float normalizedMouseY = (float) (1.0 - (2.0 * mouseY) / windowHeight);
 
-        Vector2D<Float> normalizedMousePos = new Vector2D<>(normalizedMouseX, normalizedMouseY);
+        Vector2f normalizedMousePos = new Vector2f(normalizedMouseX, normalizedMouseY);
 //        logger.log(this.getPosition(),normalizedMousePos, this.getEnd());
-        return this.getPosition().isVectorPointIncludedIn(normalizedMousePos, this.getEnd());
+        return false; // TODO: FIX LOGIC
     }
 
     @SubscribeEvent
@@ -110,10 +107,7 @@ public abstract class InteractableUI extends UI{
         return super.getBackgroundColor();
     }
 
-    @Override
     public void init() {
-        super.init();
-        HoverEventRegister.registerUI(this);
         EventBus.register(this);
     }
 

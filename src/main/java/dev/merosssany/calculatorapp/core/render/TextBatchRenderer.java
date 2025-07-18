@@ -1,6 +1,10 @@
 package dev.merosssany.calculatorapp.core.render;
 
+import dev.merosssany.calculatorapp.Main;
 import dev.merosssany.calculatorapp.core.RGB;
+import dev.merosssany.calculatorapp.core.event.SubscribeEvent;
+import dev.merosssany.calculatorapp.core.event.bus.EventBus;
+import dev.merosssany.calculatorapp.core.event.state.WindowResizedEvent;
 import dev.merosssany.calculatorapp.core.logging.Logger;
 import dev.merosssany.calculatorapp.core.ui.font.FontRenderer;
 import org.jetbrains.annotations.NotNull;
@@ -23,10 +27,13 @@ public class TextBatchRenderer {
     private final FloatBuffer vertexBuffer;
     private final int vaoId, vboId;
     private int glyphCount = 0;
-    private Logger logger = new Logger("TextBatchRenderer");
+    private final Logger logger = new Logger("TextBatchRenderer");
+    private final Matrix4f proj = new Matrix4f();
+    private RGB color;
 
     public TextBatchRenderer(FontRenderer font, float scale) {
         this.font = font;
+        EventBus.register(this);
 
         vaoId = glGenVertexArrays();
         vboId = glGenBuffers();
@@ -41,25 +48,14 @@ public class TextBatchRenderer {
         glBindVertexArray(0);
 
         vertexBuffer = BufferUtils.createFloatBuffer(4096 * 6 * 4); // Max 4096 glyphs per frame
+
+        onWindowResize(new WindowResizedEvent(Main.getWindow()));
     }
 
-    public void begin(Matrix4f proj, RGB color) {
+    public void begin(RGB color) {
         glyphCount = 0;
         vertexBuffer.clear();
-
-        glUseProgram(font.getShaderProgramId());
-        try (MemoryStack stack = MemoryStack.stackPush()) {
-            FloatBuffer mat = stack.mallocFloat(16);
-            proj.get(mat);
-            glUniformMatrix4fv(font.getLocProj(), false, mat);
-        }
-        glUniform3f(font.getLocTextColor(), color.getRed(), color.getGreen(), color.getBlue());
-        glUniform1i(font.getLocFontAtlas(), 0);
-
-        glActiveTexture(GL_TEXTURE0);
-        glBindTexture(GL_TEXTURE_2D, font.getTextureID());
-        glEnable(GL_BLEND);
-        glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+        this.color = color;
     }
 
     public void queue(@NotNull String text, float x, float y) {
@@ -96,18 +92,65 @@ public class TextBatchRenderer {
         }
     }
 
+    @SubscribeEvent
+    public void onWindowResize(WindowResizedEvent e) {
+        // Update current window dimensions (important for the projection calculation)
+        // You'll need to store these in your Display class or pass them around
+        // Assuming Display.width and Display.height are updated before this event fires.
+        float currentWindowWidth = e.width;
+        float currentWindowHeight = e.height;
+
+        // Calculate the dynamic virtual width based on "Fit to Height" strategy
+        // UI_DESIGN_HEIGHT is a fixed height you design your UI for (e.g., 1080.0f)
+        // Let's assume UI_DESIGN_HEIGHT is 1080.0f for consistency.
+        // You need to define this constant somewhere, perhaps in UIManager or a Constants class.
+        final float UI_DESIGN_HEIGHT = 1080.0f; // Example design height
+
+        float currentVirtualWidth = (currentWindowWidth / currentWindowHeight) * UI_DESIGN_HEIGHT;
+//        System.out.println(currentVirtualWidth);
+
+        // Set the orthographic projection matrix
+        // (0,0) top-left, Y increases downwards, mapping to (currentVirtualWidth, UI_DESIGN_HEIGHT)
+        proj.setOrtho(
+                0.0f,               // Left
+                currentVirtualWidth, // Right
+                UI_DESIGN_HEIGHT,   // Bottom (max Y)
+                0.0f,               // Top (min Y)
+                -1.0f,              // Near
+                1.0f                // Far
+        );
+    }
+
     public void flush() {
         vertexBuffer.flip();
+
+        glDisable(GL_DEPTH_TEST);
+        glEnable(GL_BLEND);
+
+        glUseProgram(font.getShaderProgramId());
+        try (MemoryStack stack = MemoryStack.stackPush()) {
+            FloatBuffer mat = stack.mallocFloat(16);
+            proj.get(mat);
+            glUniformMatrix4fv(font.getLocProj(), false, mat);
+        }
+        glUniform3f(font.getLocTextColor(), color.getRed(), color.getGreen(), color.getBlue());
+        glUniform1i(font.getLocFontAtlas(), 0);
+
+        glActiveTexture(GL_TEXTURE0);
+        glBindTexture(GL_TEXTURE_2D, font.getTextureID());
+
         glBindVertexArray(vaoId);
         glBindBuffer(GL_ARRAY_BUFFER, vboId);
         glBufferSubData(GL_ARRAY_BUFFER, 0, vertexBuffer);
         glDrawArrays(GL_TRIANGLES, 0, glyphCount * 6);
         glBindBuffer(GL_ARRAY_BUFFER, 0);
         glBindVertexArray(0);
+        glDepthFunc(GL_LESS);
 
         glBindTexture(GL_TEXTURE_2D, 0);
         glUseProgram(0);
         glDisable(GL_BLEND);
+//        glDisable(GL_DEPTH_TEST);
     }
 
     public void cleanup() {

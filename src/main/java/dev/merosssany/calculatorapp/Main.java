@@ -2,19 +2,15 @@ package dev.merosssany.calculatorapp;
 
 import dev.merosssany.calculatorapp.core.*;
 import dev.merosssany.calculatorapp.core.constants.Constants;
-import dev.merosssany.calculatorapp.core.constants.ShaderFiles;
 import dev.merosssany.calculatorapp.core.event.bus.EventBus;
-import dev.merosssany.calculatorapp.core.event.input.MouseHoverEvent;
-import dev.merosssany.calculatorapp.core.io.HoverEventRegister;
-import dev.merosssany.calculatorapp.core.position.UIVector2Df;
+import dev.merosssany.calculatorapp.core.event.state.WindowResizedEvent;
 import dev.merosssany.calculatorapp.core.render.*;
-import dev.merosssany.calculatorapp.core.ui.Cursor;
 import dev.merosssany.calculatorapp.core.ui.Label;
-import dev.merosssany.calculatorapp.core.ui.Screen;
 import dev.merosssany.calculatorapp.core.ui.UI;
 import dev.merosssany.calculatorapp.core.ui.font.FontRenderer;
 import dev.merosssany.calculatorapp.core.logging.Logger;
 import org.joml.Matrix4f;
+import org.joml.Vector2i;
 import org.lwjgl.glfw.GLFWErrorCallback;
 
 import java.util.concurrent.ConcurrentLinkedQueue;
@@ -27,16 +23,11 @@ public class Main {
     private static FontRenderer fontRenderer;
     private static ConcurrentLinkedQueue<Runnable> queuedTasks;
     private static Window window;
-    private static HoverEventRegister hover;
-    private static Cursor cursor;
-//    private static TextInput input;
     private static UI topLeftHalfElement;
     private static Matrix4f textProj;
-    private static Matrix4f uiProjectionMatrix;
     private static Label tets;
     private static UIBatchRenderer screen;
     private static TextBatchRenderer textRenderer;
-    private static Screen testScreen;
 
     private static final int VIRTUAL_UI_WIDTH = 1280;
     private static final int VIRTUAL_UI_HEIGHT = 720;
@@ -87,27 +78,64 @@ public class Main {
     }
 
     private static void construction() {
+        Display.init();
+        Display.onWindowResize(new WindowResizedEvent(window));
+        ShaderProgram program = new ShaderProgram(
+                """
+                        #version 330 core
+                        // Layouts
+                        layout (location = 0) in vec2 aPos;
+                        layout (location = 1) in vec4 aColor;
+                        layout (location = 2) in vec2 aTexturePos;
+                        
+                        // Uniform
+                        uniform mat4 projection;
+                        
+                        // Output
+                        out vec4 color;
+                        out vec2 texCoords;
+                        
+                        void main() {
+                            gl_Position = projection * vec4(aPos, 0.0, 1.0);
+                            color = aColor;
+                            texCoords = aTexturePos;
+                        }
+                        """,
+                """
+                        #version 330 core
+                        // Input
+                        in vec4 color;
+                        in vec2 texCoords;
+                        
+                        // Uniform
+                        uniform sampler2D uTexture;
+                        uniform bool useTexture;
+                        
+                        // Output
+                        out vec4 FragColor;
+                        
+                        void main() {
+                            if (useTexture) {
+                                FragColor = texture(uTexture, texCoords) * color;
+                            } else {
+                                FragColor = color;
+                            }
+                        }
+                        """
+        );
         // IMPORTANT CONSTRUCTION
         EventBus.register(Main.class);
-        String vertexSource = ShaderFiles.uiVertex;
-        String fragmentSource = ShaderFiles.uiFragment;
         fontRenderer = new FontRenderer(Constants.fontFilePath,32);
         textRenderer = new TextBatchRenderer(fontRenderer, 1);
-        screen = new UIBatchRenderer();
-        hover = new HoverEventRegister(window);
+        screen = new UIBatchRenderer(program);
         textProj = Constants.uiProjectionMatrix;
         logger.info("Constructing...");
         window.setWindowIcon("src/main/resources/assets/icon/icon.png");
-
-        // UI
-//        cursor = new Cursor(screen, new UIVector2Df(-1f,1f), 0.1f, new RGBA(1f,1f,1f,1f));
-        topLeftHalfElement = new UI(screen, "Test",new UIVector2Df(0f,0f),2f,0.5f,new RGBA(0,1f,0f,0.5f));
         queuedTasks = new ConcurrentLinkedQueue<>();
-        tets = new Label(window,new UIVector2Df(0f,0f),"!@#$%^&*()_+|\\=-",true, new RGB(1f,1f,1f),180,180,new RGBA(0f,0f,1f,0.5f));
-        topLeftHalfElement = new UI(screen, "Test",new UIVector2Df(0f,0f),2f,1f,new RGBA(0,1f,0f,1f));
-
+        tets = new Label(window,new Vector2i(0,0),"!@#$%^&*()_+|\\=-",true, new RGB(1f,1f,1f),180,180,new RGBA(0f,0f,1f,0.5f));
+//        topLeftHalfElement = new UI(screen, "Test",new UIVector2Df(0f,0f),2f,1f,new RGBA(0,1f,0f,1f));
 //        try {
-////            input = new TextInput(screen, window,Main.class.getDeclaredMethod("tesst",String.class),null,new UIVector2Df(0,0), new RGB(1f,1f,1f), 2f,0.5f,new RGBA(1f,0.5f,0.5f,1f));
+//            input = new TextInput(screen, window,Main.class.getDeclaredMethod("tesst",String.class),null,new UIVector2Df(0,0), new RGB(1f,1f,1f), 2f,0.5f,new RGBA(1f,0.5f,0.5f,1f));
 //        } catch (NoSuchMethodException e) {
 //            CleanupManager.createPopup(logger.formatStacktrace(e));
 //        }
@@ -117,25 +145,16 @@ public class Main {
     }
 
     private static void render() {
-        textRenderer.begin(AdvancedMath.createScaledProjection(window.getWidth(),window.getHeight()), new RGB(1f,1f,1f));
-//        textRenderer.begin(AdvancedMath.createScaledProjection(window.getWidth(),window.getHeight()),);
-        screen.begin(AdvancedMath.createScaledProjection(window.getWidth(),window.getHeight()));
-//        textRenderer.queue("Hello World",128,128);
-//        topLeftHalfElement.draw();
-        tets.draw();
-//        input.draw();
-        textRenderer.flush();
+        screen.begin();
+        textRenderer.begin(new RGB(1f,0,0));
+//        screen.queue(topLeftHalfElement);
+        textRenderer.queue("Hello World",150,50);
         screen.flush();
-
-//        textRenderer.begin(AdvancedMath.createScaledProjection(window.getWidth(),window.getHeight()),new RGB(1f,1f,1f));
-//        textRenderer.queue("Hello",0,138);
-//        textRenderer.flush();
-        EventBus.post(new MouseHoverEvent());
+        textRenderer.flush();
     }
 
     public static void cleanup() {
         fontRenderer.cleanup();
-        hover.shutdown();
         screen.cleanup();
         window.cleanup();
 

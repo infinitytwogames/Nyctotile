@@ -7,7 +7,7 @@ import dev.merosssany.calculatorapp.core.event.input.MouseButtonEvent;
 import dev.merosssany.calculatorapp.core.event.state.WindowResizedEvent;
 import dev.merosssany.calculatorapp.core.io.ResourceLoader;
 import dev.merosssany.calculatorapp.core.logging.Logger;
-import dev.merosssany.calculatorapp.core.position.Vector2D;
+import org.joml.Vector2f;
 import org.lwjgl.glfw.*;
 import org.lwjgl.opengl.GL;
 import org.lwjgl.opengl.GLCapabilities;
@@ -94,6 +94,8 @@ public class Window {
         GLFW.glfwSwapInterval(1);
         GLFW.glfwShowWindow(window);
 
+        EventBus.post(new WindowResizedEvent(width,height,this));
+
         glfwKeyCallback = GLFW.glfwSetKeyCallback(window, (windowHandle, key, scancode, action, mods) -> {
             logger.info("KeyPressEvent Callback Fired - InputHandler Instance: " + this.hashCode());
             if (isFocused()) EventBus.post(new KeyPressEvent(key, action));
@@ -131,7 +133,7 @@ public class Window {
         GLFW.glfwTerminate();
     }
 
-    public Vector2D<Float> getMousePosition() {
+    public Vector2f getMousePosition() {
         double[] cursorPositionX = new double[1];
         double[] cursorPositionY = new double[1];
         GLFW.glfwGetCursorPos(window, cursorPositionX, cursorPositionY);
@@ -140,7 +142,7 @@ public class Window {
         float normalizedMouseX = (float) ((2.0 * mouseX) / width - 1.0);
         float normalizedMouseY = (float) (1.0 - (2.0 * mouseY) / height);
 
-        return new Vector2D<>(normalizedMouseX,normalizedMouseY);
+        return new Vector2f(normalizedMouseX,normalizedMouseY);
     }
 
     /**
