@@ -17,7 +17,7 @@ repositories {
 }
 
 application {
-    mainClass = 'org.infinitytwo.umbralore.core.Main'
+    mainClass = "org.infinitytwo.umbralore.Main"
 }
 
 dependencies {
@@ -30,6 +30,12 @@ dependencies {
     implementation "org.lwjgl:lwjgl-nanovg:${lwjglVersion}"
     implementation 'org.joml:joml:1.10.6'
     implementation 'org.reflections:reflections:0.10.2'
+    implementation 'com.github.Vatuu:discord-rpc:1.6.2'
+    implementation 'com.personthecat:fastnoise:0.10'
+    implementation 'com.moandjiezana.toml:toml4j:0.7.2'
+    implementation 'org.json:json:20240303'
+    implementation 'com.nimbusds:nimbus-jose-jwt:9.37'
+    implementation 'com.fasterxml.jackson.core:jackson-databind:2.17.1'
 
 //    runtimeOnly platform("org.lwjgl:lwjgl-bom:${lwjglVersion}:natives-${os}")
     runtimeOnly "org.lwjgl:lwjgl::natives-${os}"
