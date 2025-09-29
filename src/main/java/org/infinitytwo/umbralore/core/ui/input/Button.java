@@ -12,7 +12,7 @@ import org.infinitytwo.umbralore.core.ui.position.Pivot;
 import org.joml.Vector2i;
 
 public abstract class Button extends Label {
-    protected RGBA original = new RGBA(0,0,1,1);
+    protected RGBA original;
 
     public Button(Screen renderer, FontRenderer fontRenderer, RGB color, String s) {
         super(renderer, fontRenderer, color);
@@ -49,5 +49,11 @@ public abstract class Button extends Label {
     @Override
     public void onMouseHoverEnded() {
         super.setBackgroundColor(original);
+    }
+
+    public static class ButtonBuilder<T extends Button> extends LabelBuilder<T> {
+        public ButtonBuilder(UIBatchRenderer renderer, T element) {
+            super(renderer, element);
+        }
     }
 }

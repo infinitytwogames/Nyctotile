@@ -6,12 +6,12 @@ import org.infinitytwo.umbralore.core.renderer.UIBatchRenderer;
 import org.infinitytwo.umbralore.core.ui.UI;
 
 public class Rectangle extends UI {
-    public RectBuilder builder(UIBatchRenderer renderer, String name) {
-        return new RectBuilder(renderer,name);
+    public RectBuilder builder(UIBatchRenderer renderer) {
+        return new RectBuilder(renderer);
     }
 
-    public Rectangle(UIBatchRenderer renderer, String name) {
-        super(renderer, name);
+    public Rectangle(UIBatchRenderer renderer) {
+        super(renderer);
     }
 
     @Override
@@ -37,8 +37,8 @@ public class Rectangle extends UI {
     public static class RectBuilder {
         public final Rectangle rectangle;
 
-        public RectBuilder(UIBatchRenderer renderer, String name) {
-            rectangle = new Rectangle(renderer,name);
+        public RectBuilder(UIBatchRenderer renderer) {
+            rectangle = new Rectangle(renderer);
         }
     }
 }

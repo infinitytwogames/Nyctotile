@@ -10,7 +10,6 @@ import org.infinitytwo.umbralore.core.ui.position.Pivot;
 import org.joml.Vector2i;
 
 public abstract class UI {
-    protected final String name;
     protected final UIBatchRenderer renderer;
     protected RGBA backgroundColor = new RGBA();
 
@@ -26,9 +25,8 @@ public abstract class UI {
     protected Vector2i offset = new Vector2i();
     protected UI parent;
 
-    public UI(UIBatchRenderer renderer, String name) {
+    public UI(UIBatchRenderer renderer) {
         this.renderer = renderer;
-        this.name = name;
     }
 
     public boolean isHovering() {
@@ -148,10 +146,6 @@ public abstract class UI {
         this.texture = texture;
     }
 
-    public String getName() {
-        return name;
-    }
-
     public void draw() { // Can be used as "update"
         renderer.queue(this);
     }
@@ -168,6 +162,4 @@ public abstract class UI {
     public abstract void onMouseHover(MouseHoverEvent e);
     public abstract void onMouseHoverEnded();
     public abstract void cleanup();
-
-
 }

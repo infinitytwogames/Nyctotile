@@ -14,21 +14,20 @@ import org.joml.Vector2i;
 
 import java.util.concurrent.atomic.AtomicInteger;
 
-import static org.infinitytwo.umbralore.core.AdvancedMath.clamp;
-import static org.infinitytwo.umbralore.core.AdvancedMath.lerp;
-
-public class ProgressBar extends UpdatableUI {
+public class TextProgressBar extends Label {
     protected AtomicInteger total = new AtomicInteger(100);
     protected AtomicInteger current = new AtomicInteger(0);
     protected Rectangle bar;
 
     protected int percentage = 0;
-    protected float speed = 10;
 
-    public ProgressBar(Screen renderer, FontRenderer textRenderer, RGB text, int max) {
-        super(renderer.getUIBatchRenderer());
+    public TextProgressBar(Screen renderer, FontRenderer textRenderer, RGB text, int max) {
+        super(renderer,textRenderer,text);
         bar = new Rectangle(renderer.getUIBatchRenderer());
         total.set(max);
+
+        setText("0%");
+        setTextPosition(new Anchor(0.5f,0.5f), new Pivot(0.5f,0.5f), new Vector2i());
 
         bar.setBackgroundColor(new RGBA(1,0,1f,1));
         bar.setPosition(new Anchor(0,0.5f), new Pivot(0,0.5f));
@@ -51,14 +50,6 @@ public class ProgressBar extends UpdatableUI {
         return current.get();
     }
 
-    public void setSpeed(float speed) {
-        this.speed = speed;
-    }
-
-    public float getSpeed() {
-        return speed;
-    }
-
     public void setCurrent(int current) {
         if (current <= total.get()) this.current.set(current);
         else this.current.set(total.get());
@@ -69,6 +60,11 @@ public class ProgressBar extends UpdatableUI {
         current.incrementAndGet();
     }
 
+    public void update() {
+        percentage = (int)(((float) current.get() / total.get()) * 100);
+        setText(percentage+"%");
+    }
+
     @Override
     public void setHeight(int height) {
         super.setHeight(height);
@@ -77,32 +73,35 @@ public class ProgressBar extends UpdatableUI {
 
     @Override
     public void draw() {
+        update();
+        bar.setWidth((int) (width * (percentage /100f)));
         super.draw();
         bar.draw();
     }
 
     @Override
-    public void onMouseClicked(MouseButtonEvent e) {}
+    public void onMouseClicked(MouseButtonEvent e) {
 
-    @Override
-    public void onMouseHover(MouseHoverEvent e) {}
-
-    @Override
-    public void onMouseHoverEnded() {}
-
-    @Override
-    public void cleanup() {}
-
-    @Override
-    public void update(float delta) {
-        percentage = (int)(((float) current.get() / total.get()) * 100);
-        float targetWidth = width * ((float) current.get() / total.get());
-        bar.setWidth((int) clamp(lerp(bar.getWidth(), targetWidth,delta * speed),0,width));
     }
 
-    public static class ProgressBarBuilder extends UIBuilder<ProgressBar> {
+    @Override
+    public void onMouseHover(MouseHoverEvent e) {
+
+    }
+
+    @Override
+    public void onMouseHoverEnded() {
+
+    }
+
+    @Override
+    public void cleanup() {
+
+    }
+
+    public static class ProgressBarBuilder extends UIBuilder<TextProgressBar> {
         public ProgressBarBuilder(Screen renderer, FontRenderer fontRenderer, RGB color) {
-            super(renderer.getUIBatchRenderer(), new ProgressBar(renderer, fontRenderer, color, 10));
+            super(renderer.getUIBatchRenderer(), new TextProgressBar(renderer, fontRenderer, color, 10));
         }
 
         public ProgressBarBuilder max(int max) {
@@ -126,4 +125,3 @@ public class ProgressBar extends UpdatableUI {
         }
     }
 }
-

@@ -4,14 +4,21 @@ import org.infinitytwo.umbralore.core.RGBA;
 import org.infinitytwo.umbralore.core.event.input.MouseButtonEvent;
 import org.infinitytwo.umbralore.core.event.input.MouseHoverEvent;
 import org.infinitytwo.umbralore.core.renderer.UIBatchRenderer;
+import org.infinitytwo.umbralore.core.ui.builder.UIBuilder;
+
+import javax.swing.text.Caret;
 
 public class Cursor extends UpdatableUI {
     private float blinkTimer = 0f;
     private boolean visible = true;
     private boolean active = true;
 
+    public static CaretBuilder builder(UIBatchRenderer renderer, int height) {
+        return new CaretBuilder(renderer,height);
+    }
+
     public Cursor(UIBatchRenderer renderer, int height) {
-        super(renderer, "Cursor");
+        super(renderer);
         setWidth(5);
         setHeight(height);
         setBackgroundColor(new RGBA(1,1,1,1));
@@ -62,6 +69,22 @@ public class Cursor extends UpdatableUI {
 
     public void setActive(boolean active) {
         this.active = active;
+    }
+
+    public static class CaretBuilder extends UIBuilder<Cursor> {
+        public CaretBuilder(UIBatchRenderer renderer, int height) {
+            super(renderer, new Cursor(renderer, height));
+        }
+
+        public CaretBuilder active(boolean active) {
+            ui.setActive(active);
+            return this;
+        }
+
+        @Override
+        public CaretBuilder applyDefault() {
+            return this;
+        }
     }
 }
 

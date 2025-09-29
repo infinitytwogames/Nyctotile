@@ -3,13 +3,11 @@ package org.infinitytwo.umbralore.core;
 import org.infinitytwo.umbralore.core.constants.Constants;
 import org.infinitytwo.umbralore.core.event.bus.EventBus;
 import org.infinitytwo.umbralore.core.event.input.MouseButtonEvent;
-import org.infinitytwo.umbralore.core.event.input.MouseHoverEvent;
 import org.infinitytwo.umbralore.core.event.state.WindowResizedEvent;
 import org.infinitytwo.umbralore.core.renderer.*;
 import org.infinitytwo.umbralore.core.ui.*;
 import org.infinitytwo.umbralore.core.logging.Logger;
 import org.infinitytwo.umbralore.core.ui.input.Button;
-import org.infinitytwo.umbralore.core.ui.input.TextInput;
 import org.infinitytwo.umbralore.core.ui.position.Anchor;
 import org.infinitytwo.umbralore.core.ui.position.Pivot;
 import org.joml.Matrix4f;
@@ -35,7 +33,7 @@ public class Main {
 
     private static final int VIRTUAL_UI_WIDTH = 1280;
     private static final int VIRTUAL_UI_HEIGHT = 720;
-    public static ProgressBar bar;
+    public static TextProgressBar bar;
 
     public static void dispatchTask(Runnable task) {
         if (task == null) return;
@@ -137,13 +135,6 @@ public class Main {
         logger.info("Constructing...");
         window.setWindowIcon("src/main/resources/assets/icon/icon.png");
         queuedTasks = new ConcurrentLinkedQueue<>();
-//        tets = new Label();
-//        topLeftHalfElement = new UI(screen, "Test",new UIVector2Df(0f,0f),2f,1f,new RGBA(0,1f,0f,1f));
-//        try {
-//            input = new TextInput(screen, window,Main.class.getDeclaredMethod("tesst",String.class),null,new UIVector2Df(0,0), new RGB(1f,1f,1f), 2f,0.5f,new RGBA(1f,0.5f,0.5f,1f));
-//        } catch (NoSuchMethodException e) {
-//            CleanupManager.createPopup(logger.formatStacktrace(e));
-//        }
     }
 
     private static void init() {
@@ -152,7 +143,7 @@ public class Main {
         Button ti = new Button(screen,renderer1,new RGB(1,1,1), "Hello :)") {
             @Override
             public void onMouseClicked(MouseButtonEvent e) {
-                bar.incrementCurrent();
+                if (e.action == GLFW_PRESS) bar.incrementCurrent();
             }
         };
         ti.setBackgroundColor(new RGBA(0,0,1,0.6f));
@@ -160,7 +151,7 @@ public class Main {
         ti.setHeight(150);
         ti.setPosition(new Anchor(0.5f,0.5f),new Pivot(0.5f,0.5f));
 
-        bar = new ProgressBar(screen,fontRenderer,new RGB(1,1,1),10);
+        bar = new TextProgressBar(screen,fontRenderer,new RGB(1,1,1),100);
         bar.setPosition(new Anchor(0.5f,1f),new Pivot(0,0.5f),new Vector2i(0,-150));
         bar.setBackgroundColor(0,0,0.25f,1);
         bar.setHeight(150);

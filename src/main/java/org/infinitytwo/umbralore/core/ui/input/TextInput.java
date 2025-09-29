@@ -9,9 +9,11 @@ import org.infinitytwo.umbralore.core.event.input.KeyPressEvent;
 import org.infinitytwo.umbralore.core.event.input.MouseButtonEvent;
 import org.infinitytwo.umbralore.core.event.input.MouseHoverEvent;
 import org.infinitytwo.umbralore.core.renderer.FontRenderer;
+import org.infinitytwo.umbralore.core.renderer.UIBatchRenderer;
 import org.infinitytwo.umbralore.core.ui.Cursor;
 import org.infinitytwo.umbralore.core.ui.Label;
 import org.infinitytwo.umbralore.core.ui.Screen;
+import org.infinitytwo.umbralore.core.ui.builder.UIBuilder;
 import org.infinitytwo.umbralore.core.ui.position.Anchor;
 import org.infinitytwo.umbralore.core.ui.position.Pivot;
 import org.joml.Vector2i;
@@ -25,10 +27,11 @@ public final class TextInput extends Label {
     private boolean input;
     private final StringBuilder builder = new StringBuilder();
     private boolean submitted;
-    private String overlap = "...";
-    private int startSelection;
-    private int endSelection;
     private boolean disabled;
+
+    public static TextInputBuilder builder(FontRenderer renderer1, Screen screen, RGB color) {
+        return new TextInputBuilder(screen,renderer1,color);
+    }
 
     public TextInput(FontRenderer renderer1, Screen screen, RGB color) {
         super(screen, renderer1, color);
@@ -126,51 +129,6 @@ public final class TextInput extends Label {
         updateCursorPosition();
     }
 
-    public String getVisibleText(FontRenderer renderer, String fullText, int caretIndex, int maxWidth) {
-        String ellipsis = "...";
-        int ellipsisWidth = (int) renderer.getStringWidth(ellipsis);
-
-        if ((int) renderer.getStringWidth(fullText) <= maxWidth)
-            return fullText;
-
-        int left = caretIndex;
-        int right = caretIndex;
-
-        while (true) {
-            int addLeft = (left > 0) ? 1 : 0;
-            int addRight = (right < fullText.length()) ? 1 : 0;
-
-            int newLeft = left - addLeft;
-            int newRight = right + addRight;
-
-            String candidate = fullText.substring(newLeft, newRight);
-            boolean needsLeftEllipsis = newLeft > 0;
-            boolean needsRightEllipsis = newRight < fullText.length();
-
-            String withEllipsis = (needsLeftEllipsis ? ellipsis : "") + candidate + (needsRightEllipsis ? ellipsis : "");
-            int candidateWidth = (int) renderer.getStringWidth(withEllipsis);
-
-            if (candidateWidth > maxWidth) break;
-
-            left = newLeft;
-            right = newRight;
-
-            // Stop if both sides reached the limits
-            if (addLeft == 0 && addRight == 0) break;
-        }
-
-        String finalText = fullText.substring(left, right);
-        if (left > 0) finalText = ellipsis + finalText;
-        if (right < fullText.length()) finalText = finalText + ellipsis;
-
-        return finalText;
-    }
-
-    public void select(int start, int end) {
-        startSelection = start;
-        endSelection = end;
-    }
-
     public int getCaretIndexAtMouse(float mouseX, float textX) {
         float x = textX;
 
@@ -264,5 +222,26 @@ public final class TextInput extends Label {
 
     public void setDisabled(boolean disabled) {
         this.disabled = disabled;
+    }
+
+    public static class TextInputBuilder extends UIBuilder<TextInput> {
+        public TextInputBuilder(Screen renderer, FontRenderer fontRenderer, RGB color) {
+            super(renderer.getUIBatchRenderer(), new TextInput(fontRenderer,renderer,color));
+        }
+
+        public TextInputBuilder ellipsis(String ellipsis) {
+            ui.ellipsis = ellipsis;
+            return this;
+        }
+
+        public TextInputBuilder disabled(boolean disabled) {
+            ui.setDisabled(disabled);
+            return this;
+        }
+
+        @Override
+        public UIBuilder<TextInput> applyDefault() {
+            return this;
+        }
     }
 }
