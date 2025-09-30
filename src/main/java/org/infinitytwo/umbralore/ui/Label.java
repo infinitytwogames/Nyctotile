@@ -3,7 +3,7 @@ package org.infinitytwo.umbralore.ui;
 import org.infinitytwo.umbralore.RGB;
 import org.infinitytwo.umbralore.renderer.FontRenderer;
 import org.infinitytwo.umbralore.renderer.UIBatchRenderer;
-import org.infinitytwo.umbralore.ui.font.Text;
+import org.infinitytwo.umbralore.ui.component.Text;
 import org.infinitytwo.umbralore.ui.position.Anchor;
 import org.infinitytwo.umbralore.ui.position.Pivot;
 import org.infinitytwo.umbralore.ui.builder.UIBuilder;

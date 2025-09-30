@@ -4,9 +4,7 @@ import org.infinitytwo.umbralore.model.Cube;
 import org.infinitytwo.umbralore.model.Model;
 import org.infinitytwo.umbralore.world.GridMap;
 
-import java.nio.FloatBuffer;
 import java.util.ArrayList;
-import java.util.List;
 
 public class ModelBuilder implements Builder<Model> {
     private final Model model = new Model();
@@ -20,14 +18,14 @@ public class ModelBuilder implements Builder<Model> {
         switch (face) {
             case NORTH -> { // -Z
                 // tri 1
-                vertices.add(0f+x); vertices.add(0f+y); vertices.add(0f+z); vertices.add(u0); vertices.add(v0); vertices.add(0.9f);
-                vertices.add(1f+x); vertices.add(0f+y); vertices.add(0f+z); vertices.add(u1); vertices.add(v0); vertices.add(0.9f);
-                vertices.add(1f+x); vertices.add(1f+y); vertices.add(0f+z); vertices.add(u1); vertices.add(v1); vertices.add(0.9f);
+                vertices.add(0f+x); vertices.add(0f+y); vertices.add(0f+z); vertices.add(u0); vertices.add(v0); vertices.add(0.7f);
+                vertices.add(1f+x); vertices.add(0f+y); vertices.add(0f+z); vertices.add(u1); vertices.add(v0); vertices.add(0.7f);
+                vertices.add(1f+x); vertices.add(1f+y); vertices.add(0f+z); vertices.add(u1); vertices.add(v1); vertices.add(0.7f);
 
                 // tri 2
-                vertices.add(0f+x); vertices.add(0f+y); vertices.add(0f+z); vertices.add(u0); vertices.add(v0); vertices.add(0.9f);
-                vertices.add(1f+x); vertices.add(1f+y); vertices.add(0f+z); vertices.add(u1); vertices.add(v1); vertices.add(0.9f);
-                vertices.add(0f+x); vertices.add(1f+y); vertices.add(0f+z); vertices.add(u0); vertices.add(v1); vertices.add(0.9f);
+                vertices.add(0f+x); vertices.add(0f+y); vertices.add(0f+z); vertices.add(u0); vertices.add(v0); vertices.add(0.7f);
+                vertices.add(1f+x); vertices.add(1f+y); vertices.add(0f+z); vertices.add(u1); vertices.add(v1); vertices.add(0.7f);
+                vertices.add(0f+x); vertices.add(1f+y); vertices.add(0f+z); vertices.add(u0); vertices.add(v1); vertices.add(0.7f);
             }
             case SOUTH -> { // +Z
                 // tri 1
@@ -42,9 +40,9 @@ public class ModelBuilder implements Builder<Model> {
             }
             case WEST -> { // -X
                 // tri 1
-                vertices.add(0f+x); vertices.add(0f+y); vertices.add(1f+z); vertices.add(u0); vertices.add(v0); vertices.add(0.8f);
-                vertices.add(0f+x); vertices.add(0f+y); vertices.add(0f+z); vertices.add(u1); vertices.add(v0); vertices.add(0.8f);
-                vertices.add(0f+x); vertices.add(1f+y); vertices.add(0f+z); vertices.add(u1); vertices.add(v1); vertices.add(0.8f);
+                vertices.add(0f+x); vertices.add(0f+y); vertices.add(1f+z); vertices.add(u0); vertices.add(v0); vertices.add(0.7f);
+                vertices.add(0f+x); vertices.add(0f+y); vertices.add(0f+z); vertices.add(u1); vertices.add(v0); vertices.add(0.7f);
+                vertices.add(0f+x); vertices.add(1f+y); vertices.add(0f+z); vertices.add(u1); vertices.add(v1); vertices.add(0.7f);
 
                 // tri 2
                 vertices.add(0f+x); vertices.add(0f+y); vertices.add(1f+z); vertices.add(u0); vertices.add(v0); vertices.add(0.7f);
@@ -53,25 +51,25 @@ public class ModelBuilder implements Builder<Model> {
             }
             case EAST -> { // +X
                 // tri 1
-                vertices.add(1f+x); vertices.add(0f+y); vertices.add(0f+z); vertices.add(u0); vertices.add(v0); vertices.add(0.7f);
-                vertices.add(1f+x); vertices.add(0f+y); vertices.add(1f+z); vertices.add(u1); vertices.add(v0); vertices.add(0.7f);
-                vertices.add(1f+x); vertices.add(1f+y); vertices.add(1f+z); vertices.add(u1); vertices.add(v1); vertices.add(0.7f);
+                vertices.add(1f+x); vertices.add(0f+y); vertices.add(0f+z); vertices.add(u0); vertices.add(v0); vertices.add(0.8f);
+                vertices.add(1f+x); vertices.add(0f+y); vertices.add(1f+z); vertices.add(u1); vertices.add(v0); vertices.add(0.8f);
+                vertices.add(1f+x); vertices.add(1f+y); vertices.add(1f+z); vertices.add(u1); vertices.add(v1); vertices.add(0.8f);
 
                 // tri 2
-                vertices.add(1f+x); vertices.add(0f+y); vertices.add(0f+z); vertices.add(u0); vertices.add(v0); vertices.add(0.7f);
-                vertices.add(1f+x); vertices.add(1f+y); vertices.add(1f+z); vertices.add(u1); vertices.add(v1); vertices.add(0.7f);
-                vertices.add(1f+x); vertices.add(1f+y); vertices.add(0f+z); vertices.add(u0); vertices.add(v1); vertices.add(0.7f);
+                vertices.add(1f+x); vertices.add(0f+y); vertices.add(0f+z); vertices.add(u0); vertices.add(v0); vertices.add(0.8f);
+                vertices.add(1f+x); vertices.add(1f+y); vertices.add(1f+z); vertices.add(u1); vertices.add(v1); vertices.add(0.8f);
+                vertices.add(1f+x); vertices.add(1f+y); vertices.add(0f+z); vertices.add(u0); vertices.add(v1); vertices.add(0.8f);
             }
             case UP -> { // +Y
                 // tri 1
-                vertices.add(0f+x); vertices.add(1f+y); vertices.add(0f+z); vertices.add(u0); vertices.add(v0); vertices.add(0.9f);
-                vertices.add(1f+x); vertices.add(1f+y); vertices.add(0f+z); vertices.add(u1); vertices.add(v0); vertices.add(0.9f);
-                vertices.add(1f+x); vertices.add(1f+y); vertices.add(1f+z); vertices.add(u1); vertices.add(v1); vertices.add(0.9f);
+                vertices.add(0f+x); vertices.add(1f+y); vertices.add(0f+z); vertices.add(u0); vertices.add(v0); vertices.add(0.8f);
+                vertices.add(1f+x); vertices.add(1f+y); vertices.add(0f+z); vertices.add(u1); vertices.add(v0); vertices.add(0.8f);
+                vertices.add(1f+x); vertices.add(1f+y); vertices.add(1f+z); vertices.add(u1); vertices.add(v1); vertices.add(0.8f);
 
                 // tri 2
-                vertices.add(0f+x); vertices.add(1f+y); vertices.add(0f+z); vertices.add(u0); vertices.add(v0); vertices.add(0.9f);
-                vertices.add(1f+x); vertices.add(1f+y); vertices.add(1f+z); vertices.add(u1); vertices.add(v1); vertices.add(0.9f);
-                vertices.add(0f+x); vertices.add(1f+y); vertices.add(1f+z); vertices.add(u0); vertices.add(v1); vertices.add(0.9f);
+                vertices.add(0f+x); vertices.add(1f+y); vertices.add(0f+z); vertices.add(u0); vertices.add(v0); vertices.add(0.8f);
+                vertices.add(1f+x); vertices.add(1f+y); vertices.add(1f+z); vertices.add(u1); vertices.add(v1); vertices.add(0.8f);
+                vertices.add(0f+x); vertices.add(1f+y); vertices.add(1f+z); vertices.add(u0); vertices.add(v1); vertices.add(0.8f);
             }
             case DOWN -> { // -Y
                 // tri 1
@@ -96,6 +94,7 @@ public class ModelBuilder implements Builder<Model> {
         if (map.isTransparent(x, y, z-1)) addFace(Model.Face.NORTH, x, y, z, uvs,vertices);
     }
 
+    @Deprecated
     public static void fullCube(int x, int y, int z, float[] uvs, ArrayList<Float> vertices) {
         addFace(Model.Face.UP, x, y, z, uvs,vertices);
         addFace(Model.Face.DOWN, x, y, z, uvs,vertices);

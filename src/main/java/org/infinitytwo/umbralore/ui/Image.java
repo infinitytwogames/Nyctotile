@@ -1,4 +1,4 @@
 package org.infinitytwo.umbralore.ui;
 
-public class Texture {
+public class Image {
 }

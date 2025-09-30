@@ -9,7 +9,7 @@ layout (location = 1) in vec4 aColor;    // Color (r, g, b, a)
 layout (location = 2) in vec2 aTexCoord; // Texture coordinates (u, v)
 
 // --- Uniforms ---
-uniform mat4 u_projection; // Projection matrix: maps scaled virtual space to screen (NDC)
+uniform mat4 projection; // Projection matrix: maps scaled virtual space to screen (NDC)
 
 // --- Output Varyings ---
 out vec4 vColor;
@@ -18,7 +18,7 @@ out vec2 vTexCoord;
 void main() {
     // gl_Position is directly calculated using the pre-transformed aPos and the projection matrix.
     // The z-component is 0.0, and w-component is 1.0 for a 2D position.
-    gl_Position = u_projection * vec4(aPos.x, aPos.y, 0.0, 1.0);
+    gl_Position = projection * vec4(aPos.x, aPos.y, 0.0, 1.0);
 
     vColor = aColor;
     vTexCoord = aTexCoord;

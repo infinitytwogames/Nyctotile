@@ -1,4 +1,4 @@
-package org.infinitytwo.umbralore.ui.font;
+package org.infinitytwo.umbralore.ui.component;
 
 import org.infinitytwo.umbralore.Display;
 import org.infinitytwo.umbralore.RGB;
@@ -10,7 +10,7 @@ import org.infinitytwo.umbralore.ui.position.Pivot;
 import org.jetbrains.annotations.NotNull;
 import org.joml.Vector2i;
 
-public class Text {
+public class Text implements Component {
     protected Anchor anchor = new Anchor();
     protected Pivot pivot = new Pivot(0, 0);
     protected Vector2i offset = new Vector2i();

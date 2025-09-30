@@ -1,9 +1,11 @@
 package org.infinitytwo.umbralore.renderer;
 
+import org.infinitytwo.umbralore.Display;
 import org.infinitytwo.umbralore.RGB;
 import org.infinitytwo.umbralore.event.bus.EventBus;
 import org.infinitytwo.umbralore.logging.Logger;
 import org.infinitytwo.umbralore.constants.ShaderFiles;
+import org.joml.Matrix4f;
 import org.joml.Vector2i;
 import org.lwjgl.BufferUtils;
 import org.lwjgl.stb.STBTTAlignedQuad;
@@ -113,10 +115,7 @@ public class FontRenderer {
         initialized = true;
     }
 
-    /**
-     * Render text at screen coordinates (x, y).
-     */
-    public void renderText(String text, float x, float y, float r, float g, float b) {
+    public void renderText(Matrix4f projView, String text, float x, float y, float r, float g, float b) {
         if (!initialized) {
             logger.fatal(new IllegalStateException("FontRenderer is not initialized"),"FontRenderer is not initialized");
             return;
@@ -125,7 +124,7 @@ public class FontRenderer {
         // Upload projection
         try (MemoryStack stack = MemoryStack.stackPush()) {
             FloatBuffer mat = stack.mallocFloat(16);
-            projection.get(mat);
+            projView.get(mat);
             glUniformMatrix4fv(locProj, false, mat);
         }
         // Color & sampler
@@ -171,6 +170,13 @@ public class FontRenderer {
         glDisable(GL_BLEND);
         glBindTexture(GL_TEXTURE_2D, 0);
         glUseProgram(0);
+    }
+
+    /**
+     * Render text at screen coordinates (x, y).
+     */
+    public void renderText(String text, float x, float y, float r, float g, float b) {
+        renderText(projection,text,x,y,r,g,b);
     }
 
     /** Cleanup GPU resources */
@@ -219,6 +225,10 @@ public class FontRenderer {
 
     public void renderText(String text, int x, int y, RGB color) {
         renderText(text,x,y,color.getRed(),color.getGreen(),color.getBlue());
+    }
+
+    public void renderText(Matrix4f projView, String text, Vector2i pos, RGB color) {
+        renderText(projView,text,pos.x,pos.y,color.red,color.green,color.blue);
     }
 
     public float getFontHeight() {

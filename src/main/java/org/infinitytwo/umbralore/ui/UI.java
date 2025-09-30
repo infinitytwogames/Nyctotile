@@ -19,7 +19,7 @@ public abstract class UI {
 
     protected boolean hovering = false;
 
-    protected Texture texture = null;
+    protected Image texture = null;
     protected Anchor anchor = new Anchor();
     protected Pivot pivot = new Pivot(0,0);
     protected Vector2i offset = new Vector2i();
@@ -138,11 +138,11 @@ public abstract class UI {
         this.backgroundColor.set(r,g,b,a);
     }
 
-    public Texture getTexture() {
+    public Image getTexture() {
         return texture;
     }
 
-    public void setTexture(Texture texture) {
+    public void setTexture(Image texture) {
         this.texture = texture;
     }
 

@@ -3,7 +3,7 @@ package org.infinitytwo.umbralore.ui.builder;
 import org.infinitytwo.umbralore.IBuilder;
 import org.infinitytwo.umbralore.RGBA;
 import org.infinitytwo.umbralore.renderer.UIBatchRenderer;
-import org.infinitytwo.umbralore.ui.Texture;
+import org.infinitytwo.umbralore.ui.Image;
 import org.infinitytwo.umbralore.ui.UI;
 import org.infinitytwo.umbralore.ui.position.Anchor;
 import org.infinitytwo.umbralore.ui.position.Pivot;
@@ -51,7 +51,7 @@ public abstract class UIBuilder<T extends UI> implements IBuilder<T> {
         return this;
     }
 
-    public UIBuilder<T> texture(Texture texture) {
+    public UIBuilder<T> texture(Image texture) {
         ui.setTexture(texture);
         return this;
     }

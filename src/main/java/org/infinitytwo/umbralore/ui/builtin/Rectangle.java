@@ -4,6 +4,7 @@ import org.infinitytwo.umbralore.event.input.MouseButtonEvent;
 import org.infinitytwo.umbralore.event.input.MouseHoverEvent;
 import org.infinitytwo.umbralore.renderer.UIBatchRenderer;
 import org.infinitytwo.umbralore.ui.UI;
+import org.infinitytwo.umbralore.ui.builder.UIBuilder;
 
 public class Rectangle extends UI {
     public RectBuilder builder(UIBatchRenderer renderer) {
@@ -34,11 +35,18 @@ public class Rectangle extends UI {
 
     }
 
-    public static class RectBuilder {
-        public final Rectangle rectangle;
-
+    public static class RectBuilder extends UIBuilder<Rectangle> {
         public RectBuilder(UIBatchRenderer renderer) {
-            rectangle = new Rectangle(renderer);
+            super(renderer, new Rectangle(renderer));
+        }
+
+        @Override
+        public UIBuilder<Rectangle> applyDefault() {
+            return this;
+        }
+
+        public Rectangle build() {
+            return ui;
         }
     }
 }

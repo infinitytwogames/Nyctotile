@@ -150,15 +150,6 @@ public class Chunk {
                     if (type instanceof ServerBlockType) throw new RuntimeException("ServerBlockType is not supported!");
                     type.buildModel(gridMap, worldPos,atlas, registry, combinedVertices);
                     int added = combinedVertices.size() - before;
-                    if (added != 0) {
-                        // sanity checks
-                        if (added % 6 != 0) {
-                            System.err.println("Weird vertex size (not multiple of 6) for block id=" + id + " at " + worldPos + " added=" + added);
-                        }
-                        if (added > 36) {
-                            System.err.println("Suspiciously large vertex contribution for block id=" + id + " at " + worldPos + " added=" + added);
-                        }
-                    }
                 }
             }
         }
