@@ -99,6 +99,10 @@ public class Screen {
         }
     }
 
+    public Window getWindow() {
+        return window;
+    }
+
     public void run(Runnable runnable) {
         runs.add(runnable);
     }

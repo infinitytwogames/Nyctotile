@@ -2,11 +2,10 @@ package org.infinitytwo.umbralore.network.server;
 
 import org.infinitytwo.umbralore.Players;
 import org.infinitytwo.umbralore.constants.LogicalSide;
-import org.infinitytwo.umbralore.entity.Player;
+import org.infinitytwo.umbralore.data.PlayerData;
 import org.infinitytwo.umbralore.event.bus.LocalEventBus;
 import org.infinitytwo.umbralore.network.NetworkThread;
 import org.infinitytwo.umbralore.security.Authentication;
-import org.joml.Vector2i;
 
 import javax.crypto.Cipher;
 import javax.crypto.KeyGenerator;
@@ -179,9 +178,9 @@ public final class ServerNetworkThread extends NetworkThread {
             return false;
         }
         
-        Player player = Players.getPlayerById(uuid);
+        PlayerData playerData = Players.getPlayerById(uuid);
 
-        if (player == null) {
+        if (playerData == null) {
             System.out.println("Unknown player UUID: " + uuid);
             return false;
         }
@@ -248,12 +247,12 @@ public final class ServerNetworkThread extends NetworkThread {
 
             System.out.println("User authenticated. Assigned UUID: " + playerId);
 
-            Players.join(new Player(
+            Players.join(new PlayerData(
                     packet.address(),
                     "Test", // Placeholder name for now
                     playerId,
                     tokenId,
-                    new Vector2i(), // Placeholder position
+                    // Placeholder position
                     !tokenId.isEmpty() // isOnline check
             ));
 

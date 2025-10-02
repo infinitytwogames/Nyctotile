@@ -20,20 +20,18 @@ import org.joml.Vector2i;
 import static org.infinitytwo.umbralore.AdvancedMath.*;
 import static org.lwjgl.glfw.GLFW.*;
 
-public final class TextInput extends Label {
+public abstract class TextInput extends Label {
     private int index = 0;
     private final Cursor caret;
     private boolean input;
     private final StringBuilder builder = new StringBuilder();
     private boolean submitted;
     private boolean disabled;
-
-    public static TextInputBuilder builder(FontRenderer renderer1, Screen screen, RGB color) {
-        return new TextInputBuilder(screen,renderer1,color);
-    }
+    private final Screen screen;
 
     public TextInput(FontRenderer renderer1, Screen screen, RGB color) {
         super(screen, renderer1, color);
+        this.screen = screen;
 
         caret = new Cursor(screen.getUIBatchRenderer(), (int) this.textRenderer.getFontHeight() + 3);
         caret.setActive(false);
@@ -51,7 +49,7 @@ public final class TextInput extends Label {
             submitted = false;
         }
 
-        index = getCaretIndexAtMouse(transformWindowToVirtual(Main.getWindow(),e.x,e.y).x,getPosition().x+5);
+        index = getCaretIndexAtMouse(transformWindowToVirtual(screen.getWindow(),e.x,e.y).x,getPosition().x+5);
         focus();
     }
 
@@ -211,9 +209,7 @@ public final class TextInput extends Label {
         builder.setLength(0);
     }
 
-    public void submit(String data) {
-        System.out.println(data);
-    }
+    public abstract void submit(String data);
 
     public boolean isDisabled() {
         return disabled;
@@ -221,26 +217,5 @@ public final class TextInput extends Label {
 
     public void setDisabled(boolean disabled) {
         this.disabled = disabled;
-    }
-
-    public static class TextInputBuilder extends UIBuilder<TextInput> {
-        public TextInputBuilder(Screen renderer, FontRenderer fontRenderer, RGB color) {
-            super(renderer.getUIBatchRenderer(), new TextInput(fontRenderer,renderer,color));
-        }
-
-        public TextInputBuilder ellipsis(String ellipsis) {
-            ui.ellipsis = ellipsis;
-            return this;
-        }
-
-        public TextInputBuilder disabled(boolean disabled) {
-            ui.setDisabled(disabled);
-            return this;
-        }
-
-        @Override
-        public UIBuilder<TextInput> applyDefault() {
-            return this;
-        }
     }
 }

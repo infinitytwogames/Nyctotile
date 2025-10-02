@@ -1,26 +1,104 @@
 package org.infinitytwo.umbralore.entity;
 
-import org.joml.Vector2i;
+import org.infinitytwo.umbralore.Window;
+import org.infinitytwo.umbralore.data.AABB;
+import org.infinitytwo.umbralore.data.PlayerData;
+import org.infinitytwo.umbralore.debug.Main;
+import org.infinitytwo.umbralore.renderer.Camera;
+import org.infinitytwo.umbralore.renderer.Outline;
+import org.infinitytwo.umbralore.renderer.ShaderProgram;
+import org.infinitytwo.umbralore.world.GridMap;
+import org.joml.Vector3f;
+import org.lwjgl.glfw.GLFW;
 
-import java.net.InetAddress;
-import java.util.UUID;
+import static org.infinitytwo.umbralore.AdvancedMath.lerp;
 
-public class Player {
-    public final InetAddress address;
-    public Vector2i position;
+public class Player extends Entity {
+    protected PlayerData data;
+    protected Camera camera;
+    private boolean e;
+    private final Vector3f color = new Vector3f(1,1,1);
+    private final Outline outline = new Outline(new ShaderProgram(
+            """
+                    #version 330 core
+                    layout (location = 0) in vec3 position;
+                    uniform mat4 model, view, projection;
+                    void main() {
+                        gl_Position = projection * view * model * vec4(position, 1.0);
+                    }
+                    """,
+            """
+                    #version 330 core
+                    out vec4 FragColor;
+                    uniform vec3 outlineColor;
+                    void main() {
+                        FragColor = vec4(outlineColor, 1.0);
+                    }
+                    """
+    ));
 
-    public final String name;
-    public final UUID id;
-    public final String token;
+    public Player(PlayerData data, GridMap map, Camera camera, Window window) {
+        super("player", map, window);
+        this.data = data;
+        this.camera = camera;
 
-    public final boolean authenticated;
+        hitbox = new AABB(0,0,0,0.6f,1.8f,0.6f);
+        camera.setPosition(position.x, position.y, position.z);
+    }
 
-    public Player(InetAddress address, String name, UUID id, String token, Vector2i position, boolean authenticated) {
-        this.address = address;
-        this.name = name;
-        this.id = id;
-        this.token = token;
-        this.position = position;
-        this.authenticated = authenticated;
+    public Player(String id, GridMap map, Window window, Camera camera) {
+        super(id, map, window);
+        this.camera = camera;
+
+        // Example hitbox: 0.6x1.8 blocks
+        this.hitbox = new AABB(-0.3f, 0, -0.3f, 0.3f, 1.8f, 0.3f);
+    }
+
+    public void handleInput(float delta) {
+        Vector3f forward = camera.getDirection();
+        forward.y = 0; // ignore pitch for walking
+        forward.normalize();
+
+        Vector3f right = new Vector3f(forward).cross(new Vector3f(0, 1, 0)).normalize();
+
+        Vector3f move = new Vector3f();
+
+        if (Main.isKeyPressed(GLFW.GLFW_KEY_W)) move.add(forward);
+        if (Main.isKeyPressed(GLFW.GLFW_KEY_S)) move.sub(forward);
+        if (Main.isKeyPressed(GLFW.GLFW_KEY_D)) move.add(right);
+        if (Main.isKeyPressed(GLFW.GLFW_KEY_A)) move.sub(right);
+
+        // Apply movement
+        if (move.lengthSquared() > 0) {
+            move.normalize().mul(movementSpeed);
+            velocity.x = move.x;
+            velocity.z = move.z;
+        } else {
+            velocity.x = lerp(velocity.x, 0, delta * 8f);
+            velocity.z = lerp(velocity.z, 0, delta * 8f);
+        }
+
+        // Jump
+        if (Main.isKeyPressed(GLFW.GLFW_KEY_SPACE) && isGrounded()) {
+            velocity.y = jumpStrength;
+        }
+    }
+
+    public void adjust() {
+        for (int y = 0; y < 128; y++) {
+            if (world.getBlock((int) position.x, y, (int) position.z) == null) {
+                position.y = y+1;
+                break;
+            }
+        }
+    }
+
+    @Override
+    public void draw() {
+        outline.renderAABB(hitbox.offset(position),camera,window,color);
+    }
+
+    public void changeCam() {
+        e = !e;
     }
 }

@@ -1,6 +1,6 @@
 package org.infinitytwo.umbralore.block;
 
-import org.infinitytwo.umbralore.model.Model;
+import org.infinitytwo.umbralore.data.AABB;
 import org.infinitytwo.umbralore.model.TextureAtlas;
 import org.infinitytwo.umbralore.registry.BlockRegistry;
 import org.infinitytwo.umbralore.world.GridMap;
@@ -11,11 +11,12 @@ import java.util.List;
 
 public abstract class BlockType {
     public int textureIndex;
-    protected Model model;
+    protected AABB[] hitboxes = {new AABB(0, 0, 0, 1, 1, 1)};
     public List<Float> vertex;
     protected final String material;
     protected final boolean invisible;
     protected final String id;
+    protected boolean collidable = true;
 
     public BlockType(String material, boolean invisible, String name, int textureIndex) {
         this.textureIndex = textureIndex;
@@ -30,8 +31,8 @@ public abstract class BlockType {
 
     public abstract void buildModel(GridMap map, int x, int y, int z, TextureAtlas atlas, BlockRegistry registry, ArrayList<Float> buffer);
 
-    public Model getModel() {
-        return model;
+    public AABB[] getBoundingBox() {
+        return hitboxes;
     }
 
     public String getMaterial() { return material; }
@@ -86,5 +87,13 @@ public abstract class BlockType {
         verts.add(x4); verts.add(y4); verts.add(z4);
         verts.add(u4); verts.add(v4);
         verts.add(brightness);
+    }
+
+    public boolean isCollidable() {
+        return collidable;
+    }
+
+    public AABB[] getBoundingBoxes() {
+        return hitboxes;
     }
 }

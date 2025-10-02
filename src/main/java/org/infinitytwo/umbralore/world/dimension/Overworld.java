@@ -3,7 +3,7 @@ package org.infinitytwo.umbralore.world.dimension;
 import org.infinitytwo.umbralore.constants.Biomes;
 import org.infinitytwo.umbralore.context.ClientContext;
 import org.infinitytwo.umbralore.context.ServerContext;
-import org.infinitytwo.umbralore.entity.Player;
+import org.infinitytwo.umbralore.data.PlayerData;
 import org.infinitytwo.umbralore.registry.BlockRegistry;
 import org.infinitytwo.umbralore.world.ServerGridMap;
 import org.infinitytwo.umbralore.world.ServerProcedureGridMap;
@@ -36,12 +36,12 @@ public class Overworld extends Dimension {
 
 
     @Override
-    public void playerEntered(ServerContext context, Player player) {
+    public void playerEntered(ServerContext context, PlayerData playerData) {
 
     }
 
     @Override
-    public void playerLeave(Player player) {
+    public void playerLeave(PlayerData playerData) {
 
     }
 

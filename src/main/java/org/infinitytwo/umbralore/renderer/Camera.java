@@ -3,6 +3,7 @@ package org.infinitytwo.umbralore.renderer;
 import org.infinitytwo.umbralore.AdvancedMath;
 import org.joml.Matrix4f;
 import org.joml.Vector3f;
+import org.joml.Vector3i;
 
 public class Camera {
     private Vector3f position = new Vector3f(0, 0, 3);
@@ -28,7 +29,7 @@ public class Camera {
             yaw = lerp(yaw, targetYaw, rotateSpeed * delta);
 
             // Smoothly interpolate position
-            position.lerp(targetPosition, moveSpeed * delta);
+//            position.lerp(targetPosition, moveSpeed * delta);
         } else {
             pitch = targetPitch;
             yaw = targetYaw;
@@ -130,5 +131,21 @@ public class Camera {
 
     public void setRotateSpeed(float rotateSpeed) {
         this.rotateSpeed = rotateSpeed;
+    }
+
+    public void setPosition(Vector3f position) {
+        this.position.set(
+                position.x,
+                position.y,
+                position.z
+        );
+    }
+
+    public void setPosition(float x, float y, float z) {
+        this.position.set(x,y,z);
+    }
+
+    public void follow(Vector3f position, Vector3f offset) {
+        this.position.set(position).add(offset);
     }
 }

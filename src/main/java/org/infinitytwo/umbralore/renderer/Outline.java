@@ -1,6 +1,7 @@
 package org.infinitytwo.umbralore.renderer;
 
 import org.infinitytwo.umbralore.Window;
+import org.infinitytwo.umbralore.data.AABB;
 import org.joml.Matrix4f;
 import org.joml.Vector3f;
 import org.lwjgl.opengl.*;
@@ -70,6 +71,42 @@ public class Outline {
 
         GL11.glPolygonMode(GL11.GL_FRONT_AND_BACK, GL11.GL_FILL);
 //        GL11.glEnable(GL11.GL_DEPTH_TEST);
+    }
+
+    public void renderAABB(AABB box, Camera camera, Window window, Vector3f color) {
+        GL11.glPolygonMode(GL11.GL_FRONT_AND_BACK, GL11.GL_LINE);
+        GL11.glLineWidth(2.0f);
+
+        shader.bind();
+
+        // Compute translation & scale
+        Vector3f translation = new Vector3f((float) box.minX, (float) box.minY, (float) box.minZ);
+        Vector3f scale = new Vector3f(
+                (float) (box.maxX - box.minX),
+                (float) (box.maxY - box.minY),
+                (float) (box.maxZ - box.minZ)
+        );
+
+        Matrix4f model = new Matrix4f()
+                .translate(translation)
+                .scale(scale);
+
+        shader.setUniformMatrix4fv("model", model);
+        shader.setUniformMatrix4fv("view", camera.getViewMatrix());
+        shader.setUniformMatrix4fv("projection", new Matrix4f().perspective(
+                (float) Math.toRadians(camera.getFov()),
+                (float) window.getWidth() / window.getHeight(),
+                0.1f, 1024f));
+
+        shader.setUniform3f("outlineColor", color);
+
+        GL30.glBindVertexArray(vaoId);
+        GL11.glDrawArrays(GL11.GL_LINES, 0, 24);
+        GL30.glBindVertexArray(0);
+
+        shader.unbind();
+
+        GL11.glPolygonMode(GL11.GL_FRONT_AND_BACK, GL11.GL_FILL);
     }
 
     public void cleanup() {

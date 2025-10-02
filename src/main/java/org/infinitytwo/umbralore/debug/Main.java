@@ -4,9 +4,13 @@ import com.moandjiezana.toml.Toml;
 import org.infinitytwo.umbralore.*;
 import org.infinitytwo.umbralore.block.*;
 import org.infinitytwo.umbralore.data.ChunkData;
+import org.infinitytwo.umbralore.data.PlayerData;
+import org.infinitytwo.umbralore.entity.Player;
 import org.infinitytwo.umbralore.event.SubscribeEvent;
 import org.infinitytwo.umbralore.event.bus.LocalEventBus;
+import org.infinitytwo.umbralore.event.input.CharacterInputEvent;
 import org.infinitytwo.umbralore.event.input.KeyPressEvent;
+import org.infinitytwo.umbralore.event.input.MouseButtonEvent;
 import org.infinitytwo.umbralore.event.state.WindowResizedEvent; // ADDED: Import for the explicit resize call
 import org.infinitytwo.umbralore.exception.IllegalChunkAccessExecption;
 import org.infinitytwo.umbralore.logging.Logger;
@@ -17,7 +21,7 @@ import org.infinitytwo.umbralore.registry.BlockRegistry;
 import org.infinitytwo.umbralore.renderer.*;
 import org.infinitytwo.umbralore.ui.Screen;
 import org.infinitytwo.umbralore.ui.builtin.Background;
-import org.infinitytwo.umbralore.ui.builtin.Rectangle;
+import org.infinitytwo.umbralore.ui.input.TextInput;
 import org.infinitytwo.umbralore.ui.position.Anchor;
 import org.infinitytwo.umbralore.ui.position.Pivot;
 import org.infinitytwo.umbralore.world.GridMap;
@@ -64,9 +68,11 @@ public class Main {
     private static ServerThread serverThread;
     private static ClientNetworkThread networkThread;
     private static LocalEventBus eventBus = new LocalEventBus("Network");
-    private static boolean locked;
+    private static boolean locked = false;
     private static UIBatchRenderer renderer;
     private static Screen pauseScreen;
+    private static Player player;
+    private static boolean setPosition;
 
     public static void main(String[] args) {
         Display.enable();
@@ -90,7 +96,8 @@ public class Main {
 
         double lastTime = glfwGetTime();
         Mouse mouse = new Mouse();
-        locked = true; // Initial state: Locked (Cursor visible, Menu often shows on start)
+        locked = false; // Initial state: Locked (Cursor visible, Menu often shows on start)
+        glfwSetInputMode(window.getWindowHandle(), GLFW_CURSOR, GLFW_CURSOR_DISABLED);
 
         while (!glfwWindowShouldClose(window.getWindowHandle())) {
             glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
@@ -99,6 +106,17 @@ public class Main {
             double current = glfwGetTime();
             delta = current - lastTime;
             lastTime = current;
+
+            accumulator += delta;
+
+            // --- fixed-step physics loop (run here, not in render) ---
+            while (accumulator >= fixedDelta) {
+                applyPhysics(fixedDelta);
+                accumulator -= fixedDelta;
+            }
+
+            // --- interpolation factor for rendering ---
+            float alpha = (float) (accumulator / fixedDelta);
 
             // --- ESC TOGGLE LOGIC (Kept as is, it's correct) ---
             boolean escIsDown = glfwGetKey(window.getWindowHandle(), GLFW_KEY_ESCAPE) == GLFW_PRESS;
@@ -172,13 +190,17 @@ public class Main {
             // 3. Player Movement (Gated inside handleInput now)
             handleInput(locked);
 
-            camera.update((float) delta);
-            render();
+            render(alpha);
 
             glfwPollEvents();
             glfwSwapBuffers(window.getWindowHandle());
         }
         cleanup();
+    }
+
+    private static void applyPhysics(double fixedDelta) {
+        player.savePrevPosition();              // store previous for interpolation
+        player.update((float) fixedDelta);
     }
 
     private static void earlySetup() {
@@ -191,6 +213,8 @@ public class Main {
         Display.onWindowResize(new WindowResizedEvent(window));
     }
 
+    private static Screen setPos;
+
     private static void construction() {
         atlas = new TextureAtlas(2, 4);
         registry = new BlockRegistry();
@@ -198,8 +222,48 @@ public class Main {
 
         renderer = new UIBatchRenderer();
         pauseScreen = new Screen(renderer, window);
+        setPos = new Screen(renderer, window);
+        TextInput input = new TextInput(textRenderer, setPos, new RGB(1, 1, 1)) {
+            @Override
+            public void submit(String data) {
+                String[] pos = data.split(" ");
+                Vector3f p = new Vector3f(Float.parseFloat(pos[0]), Float.parseFloat(pos[1]), Float.parseFloat(pos[2]));
+                player.setPosition(p);
+                System.out.println(p);
+            }
 
-        pauseScreen.register(new Background.Builder(renderer).applyDefault().backgroundColor(0,0,0,0.5f).build());
+            @SubscribeEvent
+            @Override
+            public void onMouseClicked(MouseButtonEvent e) {
+                super.onMouseClicked(e);
+            }
+
+            @SubscribeEvent
+            @Override
+            public void onKeyPress(KeyPressEvent e) {
+                super.onKeyPress(e);
+            }
+
+            @SubscribeEvent
+            @Override
+            public void onMouseClickedA(MouseButtonEvent e) {
+                super.onMouseClickedA(e);
+            }
+
+            @SubscribeEvent
+            @Override
+            public void onCharacterPressed(CharacterInputEvent e) {
+                super.onCharacterPressed(e);
+            }
+        };
+
+        input.setPosition(new Anchor(0, 1), new Pivot(0, 0), new Vector2i(5, -255));
+        input.setWidth(Display.width - 10);
+        input.setHeight(250);
+        input.setBackgroundColor(new RGBA(0, 0, 0, 0.5f));
+
+        pauseScreen.register(new Background.Builder(renderer).applyDefault().backgroundColor(0, 0, 0, 0.5f).build());
+        setPos.register(input);
 
         try {
             registry.register(new GrassBlockType(atlas.addTexture("src/main/resources/grass_side.png")));
@@ -213,7 +277,7 @@ public class Main {
 
         reader = new BlockDataReader(registry);
 
-        overworld = new Overworld(486486,registry);
+        overworld = new Overworld(486486, registry);
 
         shaderProgram = new ShaderProgram(
                 """
@@ -221,14 +285,14 @@ public class Main {
                         layout (location = 0) in vec3 aPos;
                         layout (location = 1) in vec2 aTexCoord;
                         layout (location = 2) in float aBrightness;
-
+                        
                         out vec2 TexCoord;
                         out float Brightness;
-
+                        
                         uniform mat4 model;
                         uniform mat4 view;
                         uniform mat4 projection;
-
+                        
                         void main() {
                             TexCoord = aTexCoord;
                             Brightness = aBrightness;
@@ -239,11 +303,11 @@ public class Main {
                         #version 330 core
                         in vec2 TexCoord;
                         in float Brightness;
-
+                        
                         uniform sampler2D ourTexture;
-
+                        
                         out vec4 FragColor;
-
+                        
                         void main() {
                             vec4 texColor = texture(ourTexture, TexCoord);
                             FragColor = vec4(texColor.rgb * Brightness, texColor.a);
@@ -305,6 +369,8 @@ public class Main {
 //                atlas
 //        );
 
+        player = new Player(PlayerData.shell(""), map, camera, window);
+        player.setPosition(0, 150, 0);
     }
 
 
@@ -314,18 +380,21 @@ public class Main {
         // [FIXED: Removed cursor management from here]
 
         // Only allow movement if UNPAUSED (!locked)
-        if (!locked) {
-            if (isKeyPressed(GLFW_KEY_W)) camera.moveForward((float) delta);
-            if (isKeyPressed(GLFW_KEY_S)) camera.moveBackward((float) delta);
-            if (isKeyPressed(GLFW_KEY_A)) camera.moveLeft((float) delta);
-            if (isKeyPressed(GLFW_KEY_D)) camera.moveRight((float) delta);
-            if (isKeyPressed(GLFW_KEY_LEFT)) camera.rotate((float) (-delta) * 50, 0);
-            if (isKeyPressed(GLFW_KEY_RIGHT)) camera.rotate((float) (delta) * 50, 0);
-            if (isKeyPressed(GLFW_KEY_UP)) camera.rotate(0, (float) delta * 50);
-            if (isKeyPressed(GLFW_KEY_DOWN)) camera.rotate(0, (float) -delta * 50);
-            if (isKeyPressed(GLFW_KEY_SPACE)) camera.moveUp((float) delta);
-            if (isKeyPressed(GLFW_KEY_LEFT_SHIFT)) camera.moveDown((float) delta);
+//        if (!locked) {
+        if (isKeyPressed(GLFW_KEY_E)) {
+            pauseGame();
         }
+        if (isKeyPressed(GLFW_KEY_W)) camera.moveForward((float) delta);
+        if (isKeyPressed(GLFW_KEY_S)) camera.moveBackward((float) delta);
+        if (isKeyPressed(GLFW_KEY_A)) camera.moveLeft((float) delta);
+        if (isKeyPressed(GLFW_KEY_D)) camera.moveRight((float) delta);
+        if (isKeyPressed(GLFW_KEY_LEFT)) camera.rotate((float) (-delta) * 50, 0);
+        if (isKeyPressed(GLFW_KEY_RIGHT)) camera.rotate((float) (delta) * 50, 0);
+        if (isKeyPressed(GLFW_KEY_UP)) camera.rotate(0, (float) delta * 50);
+        if (isKeyPressed(GLFW_KEY_DOWN)) camera.rotate(0, (float) -delta * 50);
+        if (isKeyPressed(GLFW_KEY_SPACE)) camera.moveUp((float) delta);
+        if (isKeyPressed(GLFW_KEY_LEFT_SHIFT)) camera.moveDown((float) delta);
+//        }
     }
 
     // This method handles the state flip and cursor management correctly.
@@ -339,14 +408,16 @@ public class Main {
         }
     }
 
-    private static void render() {
+    private static double fixedDelta = 1.0 / 60.0, // 60Hz physics
+            accumulator = 0.0;
+
+    private static void render(float alpha) {
         glEnable(GL_DEPTH_TEST);
         update();
         env.render(camera, window);
 //        test.draw(camera, window, 5);
 
         map.draw(camera, window, 16);
-
         GridMap.RaycastResult hit = map.raycast(camera.getPosition(), camera.getDirection(), 6);
         if (hit != null) {
 
@@ -375,9 +446,26 @@ public class Main {
 //            textRenderer.renderText(ortho, "Block Id: "+registry.getId(map.getBlock(hit.blockPos().x,hit.blockPos().y,hit.blockPos().z).getType().getId()), new Vector2i(0, 196+16), new RGB(1f,1f,1f));
         }
 
+        camera.update((float) delta);
+        player.handleInput((float) delta);
+        player.draw();
+
+        Vector3f interpolated = new Vector3f(player.getPrevPosition())
+                .lerp(player.getPosition(), alpha);
+
+        // Place camera at center of player hitbox
+        Vector3f camPos = new Vector3f(interpolated).add(player.getHitbox().maxX * 0.5f, player.getHitbox().maxY - 0.2f, player.getHitbox().maxZ * 0.5f);
+
+        camera.setPosition(camPos);
+
+
         GL20.glUseProgram(0);
         Display.prepare2d();
-        if (locked) pauseScreen.draw();
+
+        if (locked) {
+            setPos.draw();
+        }
+
         Display.prepare3d();
     }
 
@@ -407,7 +495,7 @@ public class Main {
         dispatchTask(() -> {
             Chunk chunk = null;
             try {
-                chunk = Chunk.of(data,map,shaderProgram,atlas,registry);
+                chunk = Chunk.of(data, map, shaderProgram, atlas, registry);
             } catch (IllegalChunkAccessExecption e) {
 
             }
@@ -421,14 +509,17 @@ public class Main {
         networkThread.shutdown();
     }
 
-    private static boolean isKeyPressed(int keyCode) {
+    public static boolean isKeyPressed(int keyCode) {
         return keyStates.getOrDefault(keyCode, false);
     }
 
     @SubscribeEvent
     public static void onKeyPress(KeyPressEvent event) {
+        System.exit(0);
         if (event.getAction() == GLFW_PRESS) {
-            if (event.getKey() == GLFW_KEY_ESCAPE) {
+            if (event.getKey() == GLFW_KEY_ESCAPE ||
+                    event.getKey() == GLFW_KEY_E
+            ) {
                 locked = !locked;
             }
         } else keyStates.put(event.getKey(), event.getAction() == GLFW_PRESS || event.getAction() == GLFW_REPEAT);

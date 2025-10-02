@@ -6,7 +6,6 @@ import org.infinitytwo.umbralore.event.bus.EventBus;
 import org.infinitytwo.umbralore.event.state.WindowResizedEvent;
 import org.joml.Vector2i;
 
-// NOTE: Assuming 'Component' is defined elsewhere, likely with a draw() method.
 public class AspectRatio implements Component {
     private int width;
     private int height;

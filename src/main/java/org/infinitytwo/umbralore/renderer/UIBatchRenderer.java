@@ -136,7 +136,6 @@ public class UIBatchRenderer {
     }
 
     public void flush() {
-        System.out.println("Flush called. Vertex Data Count: " + vertexDataIndex);
         if (vertexDataIndex == 0) return; // Nothing to draw
 
         // Prepare vertex buffer for upload
@@ -160,7 +159,6 @@ public class UIBatchRenderer {
             projection.get(fb); // Get matrix data into FloatBuffer
             glUniformMatrix4fv(locProj, false, fb); // Upload to shader
         }
-        System.out.println("DEBUG: 2D Projection Uniform Location: " + locProj);
 
         // 2. Set useTexture uniform (NEW)
         int locUseTexture = glGetUniformLocation(shaderProgramId, "useTexture");

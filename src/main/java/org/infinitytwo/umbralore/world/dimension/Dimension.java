@@ -2,7 +2,7 @@ package org.infinitytwo.umbralore.world.dimension;
 
 import org.infinitytwo.umbralore.context.ClientContext;
 import org.infinitytwo.umbralore.context.ServerContext;
-import org.infinitytwo.umbralore.entity.Player;
+import org.infinitytwo.umbralore.data.PlayerData;
 import org.infinitytwo.umbralore.world.ServerGridMap;
 import org.infinitytwo.umbralore.world.ServerProcedureGridMap;
 import org.infinitytwo.umbralore.world.generation.Biome;
@@ -16,15 +16,15 @@ public abstract class Dimension {
     protected final String name;
     protected final String id;
     protected final ServerProcedureGridMap world;
-    protected final List<Player> players;
+    protected final List<PlayerData> playerData;
     protected final Biome[] biomes;
 
-    public Dimension(String name, String id, NoiseGenerationSettings settings, ServerProcedureGridMap world, List<Player> players) {
+    public Dimension(String name, String id, NoiseGenerationSettings settings, ServerProcedureGridMap world, List<PlayerData> playerData) {
         this.name = name;
         this.id = id;
         this.settings = settings;
         this.world = world;
-        this.players = players;
+        this.playerData = playerData;
         this.biomes = settings.biomes;
     }
 
@@ -44,8 +44,8 @@ public abstract class Dimension {
         return world;
     }
 
-    public List<Player> getPlayers() {
-        return Collections.unmodifiableList(players);
+    public List<PlayerData> getPlayers() {
+        return Collections.unmodifiableList(playerData);
     }
 
     @Override
@@ -54,8 +54,8 @@ public abstract class Dimension {
     }
 
     public abstract void generate(ServerGridMap.ChunkPos chunk);
-    public abstract void playerEntered(ServerContext context, Player player);
-    public abstract void playerLeave(Player player);
+    public abstract void playerEntered(ServerContext context, PlayerData playerData);
+    public abstract void playerLeave(PlayerData playerData);
 //    public abstract SpawnLocation playerDied(Player player);
     public abstract void tick(ServerContext context);
     public abstract void draw(ClientContext context);

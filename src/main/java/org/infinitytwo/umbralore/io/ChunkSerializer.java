@@ -1,5 +1,6 @@
-package org.infinitytwo.umbralore.data;
+package org.infinitytwo.umbralore.io;
 
+import org.infinitytwo.umbralore.data.ChunkData;
 import org.joml.Vector2i;
 
 import java.io.*;

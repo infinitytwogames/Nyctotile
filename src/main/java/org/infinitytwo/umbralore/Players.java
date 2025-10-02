@@ -1,28 +1,28 @@
 package org.infinitytwo.umbralore;
 
-import org.infinitytwo.umbralore.entity.Player;
+import org.infinitytwo.umbralore.data.PlayerData;
 
 import java.net.InetAddress;
 import java.util.*;
 
 public final class Players {
-    private static final List<Player> players = Collections.synchronizedList(new ArrayList<>());
+    private static final List<PlayerData> PLAYER_DATA = Collections.synchronizedList(new ArrayList<>());
 
-    public static Player getPlayerByAddress(InetAddress address) {
-        for (Player player : players) {
-            if (player.address.equals(address)) return player;
+    public static PlayerData getPlayerByAddress(InetAddress address) {
+        for (PlayerData playerData : PLAYER_DATA) {
+            if (playerData.address.equals(address)) return playerData;
         }
         return null;
     }
 
-    public static Player getPlayerById(UUID id) {
-        for (Player player : players) {
-            if (Objects.equals(player.id, id)) return player;
+    public static PlayerData getPlayerById(UUID id) {
+        for (PlayerData playerData : PLAYER_DATA) {
+            if (Objects.equals(playerData.id, id)) return playerData;
         }
         return null;
     }
 
-    public static void join(Player player) {
-        players.add(player);
+    public static void join(PlayerData playerData) {
+        PLAYER_DATA.add(playerData);
     }
 }
