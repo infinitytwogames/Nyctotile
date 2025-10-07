@@ -3,6 +3,8 @@ package org.infinitytwo.umbralore.entity;
 import org.infinitytwo.umbralore.Window;
 import org.infinitytwo.umbralore.block.Block;
 import org.infinitytwo.umbralore.data.AABB;
+import org.infinitytwo.umbralore.data.Inventory;
+import org.infinitytwo.umbralore.item.Item;
 import org.infinitytwo.umbralore.world.GridMap;
 import org.joml.Vector3f;
 
@@ -14,16 +16,34 @@ public abstract class Entity {
     protected Vector3f position = new Vector3f();
     protected float gravity = -22.7f; // Increased gravity for a more noticeable effect (original -0.08f was too small)
     protected GridMap world;
+    protected Inventory inventory;
     private boolean isGrounded = false;
     protected AABB currentHitbox = hitbox;
     private Vector3f prevPos = position;
     protected float movementSpeed = 7;
     protected float jumpStrength = 7.2f;
 
-    protected Entity(String id, GridMap map, Window window) {
+    protected Entity(String id, GridMap map, Window window, Inventory inventory) {
         this.id = id;
         this.world = map;
         this.window = window;
+        this.inventory = inventory;
+    }
+
+    public Inventory getInventory() {
+        return inventory;
+    }
+
+    public int giveItem(Item item) {
+        return inventory.add(item);
+    }
+
+    public void removeItem(int slot) {
+        inventory.remove(slot);
+    }
+
+    public void addItem(int slot, int change) {
+        inventory.add(slot,change);
     }
 
     public abstract void draw();

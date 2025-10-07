@@ -1,11 +1,14 @@
 package org.infinitytwo.umbralore.ui;
 
+import org.infinitytwo.umbralore.data.TextComponent;
 import org.infinitytwo.umbralore.event.SubscribeEvent;
 import org.infinitytwo.umbralore.event.bus.EventBus;
 import org.infinitytwo.umbralore.event.input.MouseButtonEvent;
 import org.infinitytwo.umbralore.event.input.MouseHoverEvent;
+import org.infinitytwo.umbralore.renderer.FontRenderer;
 import org.infinitytwo.umbralore.renderer.UIBatchRenderer;
 import org.infinitytwo.umbralore.Window;
+import org.infinitytwo.umbralore.ui.builtin.Tooltip;
 import org.joml.Vector2f;
 import org.joml.Vector2i;
 
@@ -21,11 +24,16 @@ public class Screen {
     private long lastFrameTime = System.nanoTime(); // nanoseconds
     private float delta; // in seconds
     private final ConcurrentLinkedQueue<Runnable> runs = new ConcurrentLinkedQueue<>();
+    private final FontRenderer renderer;
+    private final Tooltip tooltip = new Tooltip(this);
+    private boolean showTooltip = false;
 
     public Screen(UIBatchRenderer uiBatchRenderer, Window window) {
         this.uiBatchRenderer = uiBatchRenderer;
         this.window = window;
         this.uis = new ArrayList<>();
+
+        renderer = new FontRenderer("src/main/resources/font.tff",32);
 
         EventBus.register(this);
     }
@@ -77,6 +85,7 @@ public class Screen {
             }
             ui.draw();
         }
+        tooltip.draw();
         uiBatchRenderer.flush();
 
         // --- Run deferred runnables ---
@@ -103,5 +112,18 @@ public class Screen {
 
     public void run(Runnable runnable) {
         runs.add(runnable);
+    }
+
+    public FontRenderer getFontRenderer() {
+        return renderer;
+    }
+
+    public void showTooltip(TextComponent text) {
+        showTooltip = true;
+        tooltip.setText(text);
+    }
+
+    public void hideTooltip() {
+        showTooltip = false;
     }
 }

@@ -36,24 +36,34 @@ public abstract class Grid extends UI {
         return padding;
     }
 
-    public int put(UI ui, int row, int column) {
-        if (row >= rows || column >= columns)
-            throw new IllegalArgumentException("Row/Column position out of bounds.");
+    public UI get(int row, int column) {
+        return get(row * columns + column);
+    }
 
-        ui.anchor = anchor;
-        ui.pivot = new Pivot(0, 0);
-        ui.offset = new Vector2i(padding);
-        ui.parent = this;
+    public UI get(int index) {
+        int i = 0;
+        for (UI ui : uis.keySet()) {
+            if (i++ == index)
+                return ui;
+        }
+        return null;
+    }
 
-        uis.put(ui, new Cell(column, row)); // column = x, row = y
-        return uis.size() - 1;
+    private boolean layoutDirty = true;
+
+    @Override
+    public void setSize(int width, int height) {
+        super.setSize(width, height);
+        layoutDirty = true;
     }
 
     @Override
     public void draw() {
-        updateSize();
+        if (layoutDirty) {
+            updateSize();
+            layoutDirty = false;
+        }
         super.draw();
-
         for (Map.Entry<UI, Cell> entry : uis.entrySet()) {
             UI ui = entry.getKey();
             Cell cell = entry.getValue();
@@ -68,16 +78,24 @@ public abstract class Grid extends UI {
         }
     }
 
+    public int put(UI ui, int row, int column) {
+        if (row >= rows || column >= columns)
+            throw new IllegalArgumentException("Row/Column position out of bounds.");
+
+        ui.anchor = anchor;
+        ui.pivot = new Pivot(0, 0);
+        ui.offset = new Vector2i(padding);
+        ui.parent = this;
+
+        uis.put(ui, new Cell(column, row)); // column = x, row = y
+        return uis.size() - 1;
+    }
+
     private void updateSize() {
         super.setSize(
                 (columns * (cellSize + margin)) + (padding * 2),
                 (rows * (cellSize + margin)) + (padding * 2)
         );
-    }
-
-    @Override
-    public void setSize(int width, int height) {
-        updateSize();
     }
 
     protected record Cell(int x, int y) {}

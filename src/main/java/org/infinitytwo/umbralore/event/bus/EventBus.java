@@ -49,7 +49,7 @@ public abstract class EventBus {
     public static void post(Event event) {
         List<ListenerMethod> methods = listeners.get(event.getClass());
         if (methods != null) {
-            for (ListenerMethod lm : methods) {
+            for (ListenerMethod lm : new ArrayList<>(methods)) {
                 try {
                     lm.method.invoke(lm.instance, event);
                 } catch (Exception e) {
@@ -58,6 +58,15 @@ public abstract class EventBus {
             }
         }
     }
+
+    public static void unregister(Object listenerInstance) {
+        if (listenerInstance == null) return;
+
+        for (List<ListenerMethod> methods : listeners.values()) {
+            methods.removeIf(lm -> lm.instance == listenerInstance);
+        }
+    }
+
 
     private record ListenerMethod(Object instance, Method method) {}
 }

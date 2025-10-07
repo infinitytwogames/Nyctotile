@@ -11,7 +11,7 @@ import java.util.List;
 import java.util.Map;
 
 public class LocalEventBus {
-    private static final Map<Class<?>, List<ListenerMethod>> listeners = new HashMap<>();
+    private final Map<Class<?>, List<ListenerMethod>> listeners = new HashMap<>();
     private final Logger logger;
 
     public LocalEventBus(String name) {
@@ -34,10 +34,18 @@ public class LocalEventBus {
         }
     }
 
+    public void unregister(Object listenerInstance) {
+        if (listenerInstance == null) return;
+
+        for (List<ListenerMethod> methods : listeners.values()) {
+            methods.removeIf(lm -> lm.instance == listenerInstance);
+        }
+    }
+
     public void post(Event event) {
         List<ListenerMethod> methods = listeners.get(event.getClass());
         if (methods != null) {
-            for (ListenerMethod lm : methods) {
+            for (ListenerMethod lm : new ArrayList<>(methods)) {
                 try {
                     lm.method.invoke(lm.instance, event);
                 } catch (Exception e) {

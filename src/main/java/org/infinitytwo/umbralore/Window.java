@@ -4,6 +4,7 @@ import org.infinitytwo.umbralore.event.bus.EventBus;
 import org.infinitytwo.umbralore.event.input.CharacterInputEvent;
 import org.infinitytwo.umbralore.event.input.KeyPressEvent;
 import org.infinitytwo.umbralore.event.input.MouseButtonEvent;
+import org.infinitytwo.umbralore.event.input.MouseScrollEvent;
 import org.infinitytwo.umbralore.event.state.WindowResizedEvent;
 import org.infinitytwo.umbralore.io.ResourceLoader;
 import org.infinitytwo.umbralore.logging.Logger;
@@ -16,6 +17,7 @@ import org.lwjgl.opengl.GL11;
 import org.lwjgl.stb.STBImage;
 import org.lwjgl.system.MemoryStack;
 import org.lwjgl.system.MemoryUtil;
+import org.lwjgl.system.libffi.FFICIF;
 
 import java.io.IOException;
 import java.nio.ByteBuffer;
@@ -35,6 +37,7 @@ public class Window {
     private GLFWKeyCallback glfwKeyCallback;
     private GLFWMouseButtonCallback glfwMouseButtonCallback;
     private GLFWCharCallback glfwCharCallback;
+    private GLFWScrollCallback scrollCallback;
 
     public int getHeight() {
         return height;
@@ -85,6 +88,13 @@ public class Window {
                 height = newHeight;
                 EventBus.post(new WindowResizedEvent(width,height,instance));
                 GL11.glViewport(0, 0, width, height);
+            }
+        });
+
+        GLFW.glfwSetScrollCallback(window, scrollCallback = new GLFWScrollCallback(){
+            @Override
+            public void invoke(long handle, double x, double y) {
+                EventBus.post(new MouseScrollEvent(instance, (int) x, (int) y));
             }
         });
 

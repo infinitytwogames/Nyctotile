@@ -2,22 +2,57 @@ package org.infinitytwo.umbralore.registry;
 
 import org.infinitytwo.umbralore.data.ItemType;
 import org.infinitytwo.umbralore.exception.UnknownRegistryException;
+import org.infinitytwo.umbralore.model.TextureAtlas;
 
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
 public class ItemRegistry {
-    protected final Map<Integer, ItemType> idToItem = new ConcurrentHashMap<>();
-    protected final Map<String, ItemType> nameToItem = new ConcurrentHashMap<>();
+    private final Map<Integer, ItemType> idToItem = new ConcurrentHashMap<>();
+    private final Map<String, ItemType> nameToItem = new ConcurrentHashMap<>();
+    private final Map<Integer, Integer> idToTexture = new ConcurrentHashMap<>();
 
-    public void register(ItemType item) {
-        idToItem.put(idToItem.size(),item);
-        nameToItem.put(item.getName().toString(),item);
+    private static final TextureAtlas atlas = new TextureAtlas(12, 10);
+    private static final ItemRegistry registry = new ItemRegistry();
+
+    public static TextureAtlas getTextureAtlas() {
+        return atlas;
+    }
+
+    public static ItemRegistry getMainRegistry() {
+        return registry;
+    }
+
+    public int register(ItemType item, int textureIndex) {
+        int index = idToItem.size();
+        item.setIndex(index);
+
+        idToItem.put(index, item);
+        nameToItem.put(item.getName().toString(), item);
+        idToTexture.put(index, textureIndex);
+
+        return index;
     }
 
     public ItemType get(int id) throws UnknownRegistryException {
-        ItemType type = idToItem.getOrDefault(id, null);
-        if (type == null) throw new UnknownRegistryException("Couldn't find item with id "+id+".");
-        else return type;
+        ItemType type = idToItem.get(id);
+        if (type == null)
+            throw new UnknownRegistryException("Couldn't find item with id " + id + ".");
+        return type;
+    }
+
+    public ItemType get(String name) throws UnknownRegistryException {
+        ItemType type = nameToItem.get(name);
+        if (type == null)
+            throw new UnknownRegistryException("Couldn't find item with name " + name + ".");
+        return type;
+    }
+
+    public int getTextureIndex(int id) {
+        return idToTexture.getOrDefault(id, -1);
+    }
+
+    public int size() {
+        return idToItem.size();
     }
 }

@@ -74,8 +74,8 @@ public class Main {
     private static UIBatchRenderer renderer;
     private static Screen pauseScreen;
     private static Player player;
-    private static boolean setPosition;
     private static TextureAtlas itemAtlas;
+    private static Mouse mouse;
 
     public static void main(String[] args) {
         Display.enable();
@@ -98,7 +98,7 @@ public class Main {
         logger.info("Initialization completed!");
 
         double lastTime = glfwGetTime();
-        Mouse mouse = new Mouse();
+        mouse = new Mouse(window);
         locked = false; // Initial state: Locked (Cursor visible, Menu often shows on start)
         glfwSetInputMode(window.getWindowHandle(), GLFW_CURSOR, GLFW_CURSOR_DISABLED);
 
@@ -145,7 +145,7 @@ public class Main {
                 mouseStates.put(button, glfwGetMouseButton(window.getWindowHandle(), button) == GLFW_PRESS);
             }
 
-            mouse.update(window.getWindowHandle());
+            mouse.update();
 
             // --- GAME LOGIC GATED BY PAUSE STATE ---
             if (!locked) {
@@ -545,5 +545,13 @@ public class Main {
 
     public static BlockRegistry getBlockRegistry() {
         return registry;
+    }
+
+    public static Mouse getMouse() {
+        return mouse;
+    }
+
+    public static Screen getCurrentScreen() {
+        return pauseScreen;
     }
 }

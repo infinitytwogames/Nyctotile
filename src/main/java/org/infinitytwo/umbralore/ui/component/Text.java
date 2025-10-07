@@ -113,4 +113,17 @@ public class Text implements Component {
     public void draw() {
         screen.run(() -> renderer.renderText(text, getPosition(), color));
     }
+
+    public void setPosition(Anchor anchor, Pivot pivot) {
+        setAnchor(anchor);
+        setPivot(pivot);
+    }
+
+    public int getTextSize(String string) {
+        return (int) renderer.getStringWidth(string);
+    }
+
+    public void setOffset(int x, int y) {
+        offset.set(x,y);
+    }
 }

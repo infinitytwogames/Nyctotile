@@ -13,14 +13,26 @@ public class Scale implements Component {
         this.xRatio = xRatio;
         this.yRatio = yRatio;
 
+        updateSize(); // initialize once
         EventBus.register(this);
+    }
+
+    private void updateSize() {
+        width = (int) (Display.width * xRatio);
+        height = (int) (Display.height * yRatio);
+    }
+
+    public void setRatios(float xRatio, float yRatio) {
+        this.xRatio = xRatio;
+        this.yRatio = yRatio;
+        updateSize();
     }
 
     @SubscribeEvent
     public void windowResize(WindowResizedEvent e) {
-        width = (int) (Display.width * xRatio);
-        height = (int) (Display.height * yRatio);
+        updateSize();
     }
+
 
     @Override
     public void draw() {

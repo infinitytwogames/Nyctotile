@@ -2,6 +2,7 @@ package org.infinitytwo.umbralore.entity;
 
 import org.infinitytwo.umbralore.Window;
 import org.infinitytwo.umbralore.data.AABB;
+import org.infinitytwo.umbralore.data.Inventory;
 import org.infinitytwo.umbralore.data.PlayerData;
 import org.infinitytwo.umbralore.debug.Main;
 import org.infinitytwo.umbralore.renderer.Camera;
@@ -14,7 +15,7 @@ import org.lwjgl.glfw.GLFW;
 import static org.infinitytwo.umbralore.AdvancedMath.lerp;
 
 public class Player extends Entity {
-    protected PlayerData data;
+    protected PlayerData data = PlayerData.shell("Dev");
     protected Camera camera;
     private boolean e;
     private final Vector3f color = new Vector3f(1,1,1);
@@ -38,7 +39,7 @@ public class Player extends Entity {
     ));
 
     public Player(PlayerData data, GridMap map, Camera camera, Window window) {
-        super("player", map, window);
+        super("player", map, window, new Inventory(36));
         this.data = data;
         this.camera = camera;
 
@@ -46,12 +47,12 @@ public class Player extends Entity {
         camera.setPosition(position.x, position.y, position.z);
     }
 
-    public Player(String id, GridMap map, Window window, Camera camera) {
-        super(id, map, window);
+    public Player(GridMap map, Window window, Camera camera) {
+        super("player", map, window, new Inventory(36));
         this.camera = camera;
 
-        // Example hitbox: 0.6x1.8 blocks
         this.hitbox = new AABB(-0.3f, 0, -0.3f, 0.3f, 1.8f, 0.3f);
+        camera.setPosition(position.x, position.y, position.z);
     }
 
     public void handleInput(float delta) {

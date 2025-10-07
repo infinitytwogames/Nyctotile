@@ -16,7 +16,7 @@ import org.joml.Vector2i;
  * It automatically subscribes to WindowResizedEvent to maintain full-screen size.
  */
 public class Background extends UI {
-    public Scale scale = new Scale(1,1);
+    public Scale scale = new Scale(1, 1);
 
     public Background(UIBatchRenderer renderer) {
         super(renderer);
