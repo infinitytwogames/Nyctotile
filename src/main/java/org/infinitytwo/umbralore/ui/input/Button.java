@@ -37,10 +37,10 @@ public abstract class Button extends Label {
     @Override
     public void onMouseHover(MouseHoverEvent e) {
         float d = 0.25f;
-        super.setBackgroundColor(
-                Math.max(0, original.red - d),
-                Math.max(0, original.green - d),
-                Math.max(0, original.blue - d),
+        backgroundColor.set(
+                Math.max(0, original.r() - d),
+                Math.max(0, original.g() - d),
+                Math.max(0, original.b() - d),
                 original.alpha
         );
     }
@@ -48,7 +48,7 @@ public abstract class Button extends Label {
 
     @Override
     public void onMouseHoverEnded() {
-        super.setBackgroundColor(original);
+        backgroundColor.set(original);
     }
 
     public static class ButtonBuilder<T extends Button> extends LabelBuilder<T> {

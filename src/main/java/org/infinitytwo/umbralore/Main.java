@@ -5,6 +5,8 @@ import org.infinitytwo.umbralore.data.Inventory;
 import org.infinitytwo.umbralore.data.ItemType;
 import org.infinitytwo.umbralore.data.TextComponent;
 import org.infinitytwo.umbralore.event.bus.EventBus;
+import org.infinitytwo.umbralore.event.input.MouseButtonEvent;
+import org.infinitytwo.umbralore.event.input.MouseHoverEvent;
 import org.infinitytwo.umbralore.event.state.WindowResizedEvent;
 import org.infinitytwo.umbralore.item.Item;
 import org.infinitytwo.umbralore.logging.Logger;
@@ -18,6 +20,7 @@ import org.infinitytwo.umbralore.ui.builtin.InventoryViewer;
 import org.infinitytwo.umbralore.ui.builtin.ItemSlot;
 import org.infinitytwo.umbralore.ui.component.ItemHolder;
 import org.infinitytwo.umbralore.ui.component.TextureComponent;
+import org.infinitytwo.umbralore.ui.input.Button;
 import org.infinitytwo.umbralore.ui.position.Anchor;
 import org.infinitytwo.umbralore.ui.position.Pivot;
 import org.joml.Matrix4f;
@@ -155,7 +158,9 @@ public class Main {
         ;
 
         try {
-            registry.register(type, atlas.addTexture("src/main/resources/pickaxe.png",false));
+            int index = atlas.addTexture("src/main/resources/pickaxe.png",false);
+            registry.register(type, index);
+            Mouse.init(atlas, screen, index, fontRenderer, window);
 
         } catch (IOException e) {
             throw new RuntimeException(e);
@@ -165,15 +170,14 @@ public class Main {
         Inventory inventory = new Inventory(9);
         inventory.set(0, Item.of(type));
         inventory.set(1, Item.of(type));
-        inventory.set(2, Item.of(type));
         inventory.set(3, Item.of(type));
         inventory.set(4, Item.of(type));
         inventory.set(5, Item.of(type));
+        inventory.setCount(0,5);
 
-        InventoryViewer viewer = new InventoryViewer(screen,fontRenderer,3);
+        InventoryViewer viewer = new InventoryViewer(screen,fontRenderer, window,3);
         viewer.setCellSize(128);
         viewer.linkInventory(inventory);
-
         screen.register(viewer);
         atlas.build();
     }

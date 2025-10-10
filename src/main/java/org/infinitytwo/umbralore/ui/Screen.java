@@ -1,5 +1,6 @@
 package org.infinitytwo.umbralore.ui;
 
+import org.infinitytwo.umbralore.Mouse;
 import org.infinitytwo.umbralore.data.TextComponent;
 import org.infinitytwo.umbralore.event.SubscribeEvent;
 import org.infinitytwo.umbralore.event.bus.EventBus;
@@ -87,6 +88,7 @@ public class Screen {
             ui.draw();
         }
         tooltip.draw();
+        Mouse.draw();
         uiBatchRenderer.flush();
 
         // --- Run deferred runnables ---
@@ -102,6 +104,7 @@ public class Screen {
         for (int i = uis.size() - 1; i >= 0; i--) {
             if (isPointWithinRectangle(uis.get(i).getPosition(), mousePosition, uis.get(i).getEnd())) {
                 uis.get(i).onMouseClicked(e);
+                System.err.println("e");
                 break;
             }
         }

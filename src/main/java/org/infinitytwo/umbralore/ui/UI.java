@@ -153,7 +153,7 @@ public abstract class UI {
         setHeight(height);
     }
 
-    protected void setSize(int same) {
+    public void setSize(int same) {
         setSize(same,same);
     }
 

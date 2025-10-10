@@ -88,11 +88,7 @@ public class Main {
 
     public static void main(String[] args) {
         Display.enable();
-        toml = new Toml().read(new File("config.toml"));
-        if (toml.getBoolean("debug", false)) {
-//            logger.info("Creating Console");
-//            new Console().setupRedirectedOutput();
-        }
+        Display.init();
 
         Thread.currentThread().setName("Renderer Thread");
         CrashHandler crashHandler = new CrashHandler();
@@ -107,7 +103,6 @@ public class Main {
         logger.info("Initialization completed!");
 
         double lastTime = glfwGetTime();
-        mouse = new Mouse(window);
         locked = false; // Initial state: Locked (Cursor visible, Menu often shows on start)
         glfwSetInputMode(window.getWindowHandle(), GLFW_CURSOR, GLFW_CURSOR_DISABLED);
 
@@ -153,8 +148,6 @@ public class Main {
             for (int button = GLFW_MOUSE_BUTTON_1; button <= GLFW_MOUSE_BUTTON_LAST; button++) {
                 mouseStates.put(button, glfwGetMouseButton(window.getWindowHandle(), button) == GLFW_PRESS);
             }
-
-            mouse.update();
 
             // --- GAME LOGIC GATED BY PAUSE STATE ---
             if (!locked) {
@@ -357,9 +350,11 @@ public class Main {
         player.getInventory().set(0, Item.of(i));
 
         mainScreen = new Screen(renderer, window);
-        hotbar = new Hotbar(mainScreen, textRenderer, 9);
+        hotbar = new Hotbar(mainScreen, textRenderer, window,9);
         hotbar.linkInventory(player.getInventory());
         mainScreen.register(hotbar);
+
+        Mouse.init(itemAtlas,mainScreen,-1,textRenderer,window);
     }
 
     private static void init() {
@@ -428,6 +423,7 @@ public class Main {
             accumulator = 0.0;
 
     private static void render(float alpha) {
+        Mouse.update();
         glEnable(GL_DEPTH_TEST);
         update();
         env.render(camera, window);

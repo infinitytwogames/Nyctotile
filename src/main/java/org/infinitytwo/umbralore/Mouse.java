@@ -1,29 +1,36 @@
 package org.infinitytwo.umbralore;
 
-import org.infinitytwo.umbralore.debug.Main;
 import org.infinitytwo.umbralore.item.Item;
-import org.infinitytwo.umbralore.registry.ItemRegistry;
+import org.infinitytwo.umbralore.model.TextureAtlas;
+import org.infinitytwo.umbralore.renderer.FontRenderer;
+import org.infinitytwo.umbralore.ui.Screen;
 import org.infinitytwo.umbralore.ui.component.ItemHolder;
-import org.infinitytwo.umbralore.ui.position.Anchor;
-import org.infinitytwo.umbralore.ui.position.Pivot;
 import org.joml.Vector2i;
 import org.lwjgl.glfw.GLFW;
 
 public class Mouse {
-    private final ItemHolder itemHolder;
-    private double lastX, lastY;
-    private double deltaX, deltaY;
-    private boolean first = true;
-    private final Window window;
+    private static ItemHolder itemHolder;
+    private static double lastX, lastY;
+    private static double deltaX, deltaY;
+    private static boolean first = true;
+    private static Window window;
 
-    public Mouse(Window window) {
-        this.window = window;
-        itemHolder = new ItemHolder(ItemRegistry.getTextureAtlas(), Main.getCurrentScreen(), 0, Main.getCurrentScreen().getFontRenderer());
-
-        itemHolder.setPosition(new Anchor(0,0), new Pivot(0,0));
+    public static void setWindow(Window window) {
+        Mouse.window = window;
     }
 
-    public void update() {
+    public static Window getWindow() {
+        return window;
+    }
+
+    public static void init(TextureAtlas a, Screen screen, int index, FontRenderer renderer, Window window) {
+        itemHolder = new ItemHolder(a, screen, index, renderer);
+        Mouse.window = window;
+
+        itemHolder.setSize(64,64);
+    }
+
+    public static void update() {
         double[] x = new double[1];
         double[] y = new double[1];
         GLFW.glfwGetCursorPos(window.getWindowHandle(), x, y);
@@ -41,7 +48,7 @@ public class Mouse {
         lastY = y[0];
     }
 
-    public Vector2i getCurrentPosition() {
+    public static Vector2i getCurrentPosition() {
         double[] x = new double[1];
         double[] y = new double[1];
         GLFW.glfwGetCursorPos(window.getWindowHandle(), x, y);
@@ -49,19 +56,72 @@ public class Mouse {
         return new Vector2i((int) x[0], (int) y[0]);
     }
 
-    public double getDeltaX() { return deltaX; }
-    public double getDeltaY() { return deltaY; }
+    public static double getDeltaX() { return deltaX; }
+    public static double getDeltaY() { return deltaY; }
 
-    public void setItem(Item item) {
+    public static void setItem(Item item) {
         itemHolder.setItem(item);
     }
 
-    public void draw() {
-        itemHolder.setOffset(getCurrentPosition());
-        itemHolder.draw();
+    public static RGBA getForegroundColor() {
+        return itemHolder.getForegroundColor();
     }
 
-    public Item getItem() {
+    public static void setForegroundColor(RGBA foregroundColor) {
+        itemHolder.setForegroundColor(foregroundColor);
+    }
+
+    public static int getTextureIndex() {
+        return itemHolder.getTextureIndex();
+    }
+
+    public static void setTextureIndex(int textureIndex) {
+        itemHolder.setTextureIndex(textureIndex);
+    }
+
+    public static TextureAtlas getAtlas() {
+        return itemHolder.getAtlas();
+    }
+
+    public static void setAtlas(TextureAtlas atlas) {
+        itemHolder.setAtlas(atlas);
+    }
+
+    public static Item getItem() {
         return itemHolder.getItem();
+    }
+
+    public static void setCount(int count) {
+        itemHolder.setCount(count);
+    }
+
+    public static void damage(int amount) {
+        itemHolder.damage(amount);
+    }
+
+    public static void repair(int amount) {
+        itemHolder.repair(amount);
+    }
+
+    public static boolean isBroken() {
+        return itemHolder.isBroken();
+    }
+
+    public static boolean isStackable() {
+        return itemHolder.isStackable();
+    }
+
+    public static void renderUsing(TextureAtlas atlas, int index) {
+        itemHolder.renderUsing(atlas, index);
+    }
+
+    public static Screen getScreen() {
+        return itemHolder.getScreen();
+    }
+
+    public static void draw() {
+        if (itemHolder == null) return;
+        itemHolder.setOffset(AdvancedMath.transformWindowToVirtual(window,getCurrentPosition()));
+        itemHolder.draw();
     }
 }

@@ -1,5 +1,6 @@
 package org.infinitytwo.umbralore.ui.builtin;
 
+import org.infinitytwo.umbralore.Window;
 import org.infinitytwo.umbralore.data.Inventory;
 import org.infinitytwo.umbralore.event.SubscribeEvent;
 import org.infinitytwo.umbralore.event.input.MouseButtonEvent;
@@ -19,12 +20,14 @@ public class InventoryViewer extends Grid {
     protected Screen screen;
     protected FontRenderer fontRenderer;
     protected final List<ItemSlot> slots = new ArrayList<>();
+    protected final Window window;
 
-    public InventoryViewer(Screen renderer, FontRenderer fontRenderer, int columns) {
+    public InventoryViewer(Screen renderer, FontRenderer fontRenderer, Window window, int columns) {
         super(renderer.getUIBatchRenderer());
         screen = renderer;
         this.fontRenderer = fontRenderer;
         this.columns = columns;
+        this.window = window;
     }
 
     public void linkInventory(@NotNull Inventory inventory) {
@@ -37,7 +40,7 @@ public class InventoryViewer extends Grid {
         inventory.getEventBus().register(this);
 
         for (int i = 0; i < link.getMaxSlots(); i++) {
-            ItemSlot slot = new ItemSlot(screen, fontRenderer);
+            ItemSlot slot = new ItemSlot(screen, fontRenderer, window);
             slot.setItem(link.get(i));
             put(slot, row, column);
             slots.add(slot);

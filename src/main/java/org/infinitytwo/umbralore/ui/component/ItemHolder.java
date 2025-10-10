@@ -1,5 +1,7 @@
 package org.infinitytwo.umbralore.ui.component;
 
+import org.infinitytwo.umbralore.RGB;
+import org.infinitytwo.umbralore.data.ItemType;
 import org.infinitytwo.umbralore.item.Item;
 import org.infinitytwo.umbralore.model.TextureAtlas;
 import org.infinitytwo.umbralore.registry.ItemRegistry;
@@ -22,6 +24,7 @@ public class ItemHolder extends TextureComponent {
         text = new Text(fontRenderer, screen);
         text.setParent(this);
         text.setPosition(new Anchor(0, 1), new Pivot(0, 1), new Vector2i(padding, -padding));
+        text.setColor(new RGB(0.75f,0.75f,0.75f));
     }
 
     public Item getItem() {
@@ -39,15 +42,55 @@ public class ItemHolder extends TextureComponent {
         this.item = item;
     }
 
+    public ItemType getType() {
+        return item.getType();
+    }
+
+    public int getDurability() {
+        return item.getDurability();
+    }
+
+    public void setDurability(int durability) {
+        item.setDurability(durability);
+    }
+
+    public int getCount() {
+        return item.getCount();
+    }
+
+    public void setCount(int count) {
+        item.setCount(count);
+    }
+
+    public void damage(int amount) {
+        item.damage(amount);
+    }
+
+    public void repair(int amount) {
+        item.repair(amount);
+    }
+
+    public boolean isBroken() {
+        return item.isBroken();
+    }
+
+    public boolean isStackable() {
+        return item.isStackable();
+    }
+
     @Override
     public void draw() {
-        if (textureIndex >= 0) super.draw();
         if (item == null) {
             return;
         }
         text.setText(item.getCount() == 1? "" : String.valueOf(item.getCount()));
         super.draw();
         text.draw();
+    }
+
+    public void renderUsing(TextureAtlas atlas, int index) {
+        setTextureIndex(index);
+        setAtlas(atlas);
     }
 
     public Screen getScreen() {

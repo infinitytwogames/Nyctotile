@@ -1,6 +1,7 @@
 package org.infinitytwo.umbralore.ui.builtin;
 
 import org.infinitytwo.umbralore.RGBA;
+import org.infinitytwo.umbralore.Window;
 import org.infinitytwo.umbralore.data.Inventory;
 import org.infinitytwo.umbralore.event.SubscribeEvent;
 import org.infinitytwo.umbralore.event.bus.EventBus;
@@ -18,8 +19,8 @@ public class Hotbar extends InventoryViewer {
     ;
     private RGBA original;
 
-    public Hotbar(Screen renderer, FontRenderer fontRenderer, int slots) {
-        super(renderer, fontRenderer, slots);
+    public Hotbar(Screen renderer, FontRenderer fontRenderer, Window window, int slots) {
+        super(renderer, fontRenderer, window, slots);
 
         EventBus.register(this);
         rows = 1;
@@ -44,7 +45,7 @@ public class Hotbar extends InventoryViewer {
         int startIndex = row * columns;
         int endIndex = Math.min(startIndex + columns, link.getMaxSlots());
         for (int i = startIndex; i < endIndex; i++) {
-            ItemSlot slot = new ItemSlot(screen, fontRenderer);
+            ItemSlot slot = new ItemSlot(screen, fontRenderer, window);
             slot.setItem(link.get(i));
             put(slot, 0, i);
             slots.add(slot);

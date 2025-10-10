@@ -153,7 +153,9 @@ void main() {
     public void render(Camera camera, Window window) {
         shader.bind();
 
-        float timeOfDay = (System.currentTimeMillis() % 60000L) / 60000.0f;
+        // Full cycle (day/night) now takes 5 minutes (300,000 milliseconds)
+        long cycleDurationMillis = 720000L;
+        float timeOfDay = (System.currentTimeMillis() % cycleDurationMillis) / (float)cycleDurationMillis;
         float angle = timeOfDay * 2.0f * (float)Math.PI; // Full 360°
         Vector3f sunDir = new Vector3f((float)Math.sin(angle), (float)Math.cos(angle), 0f).normalize();
         shader.setUniform3f("sunDir", sunDir);

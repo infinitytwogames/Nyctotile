@@ -1,6 +1,8 @@
 package org.infinitytwo.umbralore.ui.builtin;
 
+import org.infinitytwo.umbralore.Mouse;
 import org.infinitytwo.umbralore.RGBA;
+import org.infinitytwo.umbralore.Window;
 import org.infinitytwo.umbralore.debug.Main;
 import org.infinitytwo.umbralore.event.input.MouseButtonEvent;
 import org.infinitytwo.umbralore.event.input.MouseHoverEvent;
@@ -9,17 +11,19 @@ import org.infinitytwo.umbralore.model.TextureAtlas;
 import org.infinitytwo.umbralore.registry.ItemRegistry;
 import org.infinitytwo.umbralore.registry.ResourceManager;
 import org.infinitytwo.umbralore.renderer.FontRenderer;
-import org.infinitytwo.umbralore.renderer.UIBatchRenderer;
 import org.infinitytwo.umbralore.ui.Screen;
 import org.infinitytwo.umbralore.ui.UI;
 import org.infinitytwo.umbralore.ui.component.ItemHolder;
 
+import static org.lwjgl.glfw.GLFW.GLFW_PRESS;
+
 public class ItemSlot extends UI {
     public final ItemHolder item;
 
-    public ItemSlot(Screen screen, FontRenderer fontRenderer) {
+    public ItemSlot(Screen screen, FontRenderer fontRenderer, Window window) {
         super(screen.getUIBatchRenderer());
         item = new ItemHolder(ResourceManager.items,screen,0,fontRenderer);
+        screen.register(this);
     }
 
     public Item getItem() {
@@ -79,7 +83,18 @@ public class ItemSlot extends UI {
 
     @Override
     public void onMouseClicked(MouseButtonEvent e) {
-
+        if (e.action == GLFW_PRESS) {
+            if (Mouse.getItem() != null && getItem() != null &&
+                getItem().getType() == Mouse.getItem().getType()) {
+                item.setCount(item.getCount() + Mouse.getItem().getCount());
+                Mouse.setItem(null);
+            } else {
+                Item i = getItem();
+                Mouse.renderUsing(getAtlas(),getTextureIndex());
+                setItem(Mouse.getItem());
+                Mouse.setItem(i);
+            }
+        }
     }
 
     @Override
