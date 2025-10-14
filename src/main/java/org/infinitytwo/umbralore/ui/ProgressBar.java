@@ -13,8 +13,8 @@ import org.infinitytwo.umbralore.ui.position.Pivot;
 
 import java.util.concurrent.atomic.AtomicInteger;
 
-import static org.infinitytwo.umbralore.AdvancedMath.clamp;
-import static org.infinitytwo.umbralore.AdvancedMath.lerp;
+import static org.joml.Math.clamp;
+import static org.joml.Math.lerp;
 
 public class ProgressBar extends UpdatableUI {
     protected AtomicInteger total = new AtomicInteger(100);

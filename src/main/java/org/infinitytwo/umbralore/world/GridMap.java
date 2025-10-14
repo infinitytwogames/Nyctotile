@@ -8,7 +8,9 @@ import org.infinitytwo.umbralore.model.TextureAtlas;
 import org.infinitytwo.umbralore.registry.BlockRegistry;
 import org.infinitytwo.umbralore.renderer.Camera;
 import org.infinitytwo.umbralore.renderer.Chunk;
+import org.infinitytwo.umbralore.renderer.FrustumCuller;
 import org.infinitytwo.umbralore.renderer.ShaderProgram;
+import org.joml.Matrix4f;
 import org.joml.Vector2i;
 import org.joml.Vector3f;
 import org.joml.Vector3i;
@@ -23,6 +25,7 @@ public class GridMap {
     protected final ConcurrentHashMap<ChunkPos, Chunk> chunks = new ConcurrentHashMap<>();
     protected boolean isReady = false;
     protected final BlockRegistry registry;
+    private final FrustumCuller culler = new FrustumCuller();
 
     public GridMap(BlockRegistry registry) {
         this.registry = registry;
@@ -59,13 +62,17 @@ public class GridMap {
         return localChunkPos.add((chunk.x * SIZE_X),0,(chunk.y * SIZE_Z));
     }
 
+    public static Vector3i convertToWorldPosition(Vector2i chunk, int x, int y, int z) {
+        return convertToWorldPosition(chunk,new Vector3i(x,y,z));
+    }
+
     public Block getBlock(int x, int y, int z) {
         Vector2i p = convertToChunkPosition(x,z);
         ChunkPos pos = new ChunkPos(p.x, p.y);
 
         if (chunks.containsKey(pos)) {
             int id = chunks.get(pos).getBlockId(convertToLocalChunk(x,y,z));
-            if (id != 0) return new Block().create(registry.get(id)); else {
+            if (id != 0) return new Block(registry.get(id)); else {
                 return null;
             }
         } else return null;
@@ -108,16 +115,42 @@ public class GridMap {
     }
 
     public void draw(Camera camera, Window window, int view) {
-//        if (isReady) {
-            Vector2i chunkP = convertToChunkPosition((int) camera.getPosition().x, (int) camera.getPosition().z);
-            ChunkPos pos = new ChunkPos(chunkP.x, chunkP.y);
-            List<ChunkPos> r = getSurroundingChunks(pos,view);
-            for (ChunkPos search : r) {
-                if (chunks.containsKey(search)) {
-                    chunks.get(search).draw(camera,window);
-                }
+        // Calculate the combined View-Projection matrix
+        Matrix4f projection = new Matrix4f().perspective((float) Math.toRadians(camera.getFov()), (float) window.getSize().x / window.getSize().y, 0.1f, 1024f);
+        Matrix4f viewMatrix = camera.getViewMatrix();
+        Matrix4f viewProjection = projection.mul(viewMatrix, new Matrix4f());
+
+        // 1. Update the Frustum Planes once per frame
+//        culler.update(viewProjection);
+
+        // Determine chunks to potentially check (culling region)
+        Vector2i chunkP = convertToChunkPosition((int) camera.getPosition().x, (int) camera.getPosition().z);
+        ChunkPos pos = new ChunkPos(chunkP.x, chunkP.y);
+        List<ChunkPos> r = getSurroundingChunks(pos, view);
+
+        // Chunk AABB corners (y is always fixed)
+        final float MIN_Y = 0;
+        final float MAX_Y = Chunk.SIZE_Y;
+
+        for (ChunkPos search : r) {
+            if (chunks.containsKey(search)) {
+                Chunk chunk = chunks.get(search);
+
+//                 2. Define the Chunk's AABB World Coordinates
+//                float minX = search.x * Chunk.SIZE_X;
+//                float minZ = search.z * Chunk.SIZE_Z;
+//                float maxX = minX + Chunk.SIZE_X;
+//                float maxZ = minZ + Chunk.SIZE_Z;
+//
+//                Vector3f min = new Vector3f(minX, MIN_Y, minZ);
+//                Vector3f max = new Vector3f(maxX, MAX_Y, maxZ);
+//
+                // 3. Frustum Culling Test
+//                if (culler.isVisible(min, max)) {
+                    chunk.draw(camera, window);
+//                }
             }
-//        }
+        }
     }
 
     public RaycastResult raycast(Vector3f origin, Vector3f direction, float maxDistance) {
@@ -172,12 +205,17 @@ public class GridMap {
     }
 
     public void placeBlock(Block block) throws IllegalChunkAccessExecption {
-        Vector2i p = convertToChunkPosition((int) block.x, (int) block.z);
+        Vector3i blockPos = block.getPosition();
+        Vector2i p = convertToChunkPosition(blockPos);
         ChunkPos pos = new ChunkPos(p.x, p.y);
 
         if (chunks.containsKey(pos)) {
-            chunks.get(pos).setBlock(convertToLocalChunk((int) block.x, (int) block.y, (int) block.z), registry.getId(block.getType().getId()));
+            chunks.get(pos).setBlock(convertToLocalChunk(blockPos), registry.getId(block.getType().getId()));
         } else throw new IllegalChunkAccessExecption("Cannot modify a non-existing chunk. "+p);
+    }
+
+    private Vector3i convertToLocalChunk(Vector3i blockPos) {
+        return convertToLocalChunk(blockPos.x, blockPos.y, blockPos.z);
     }
 
     public Map<ChunkPos, Chunk> getChunks() {

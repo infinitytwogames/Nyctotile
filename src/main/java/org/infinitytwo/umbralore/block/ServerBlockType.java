@@ -1,10 +1,9 @@
 package org.infinitytwo.umbralore.block;
 
+import org.infinitytwo.umbralore.data.buffer.NFloatBuffer;
 import org.infinitytwo.umbralore.model.TextureAtlas;
 import org.infinitytwo.umbralore.registry.BlockRegistry;
 import org.infinitytwo.umbralore.world.GridMap;
-
-import java.util.ArrayList;
 
 public class ServerBlockType extends BlockType {
     public ServerBlockType(String material, boolean b, String name) {
@@ -12,7 +11,7 @@ public class ServerBlockType extends BlockType {
     }
 
     @Override
-    public void buildModel(GridMap map, int x, int y, int z, TextureAtlas atlas, BlockRegistry registry, ArrayList<Float> buffer) {
+    public void buildModel(GridMap map, int x, int y, int z, TextureAtlas atlas, BlockRegistry registry, NFloatBuffer buffer) {
 
     }
 }

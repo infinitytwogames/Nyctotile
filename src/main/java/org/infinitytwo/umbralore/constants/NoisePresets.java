@@ -1,7 +1,5 @@
 package org.infinitytwo.umbralore.constants;
 
-import personthecat.fastnoise.FastNoise;
-
 public enum NoisePresets {
     DESERT(1,0.35f,0.007f),
     PLAINS(1,0.35f, 0.007f),

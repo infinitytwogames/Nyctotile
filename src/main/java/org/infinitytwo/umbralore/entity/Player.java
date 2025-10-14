@@ -12,7 +12,7 @@ import org.infinitytwo.umbralore.world.GridMap;
 import org.joml.Vector3f;
 import org.lwjgl.glfw.GLFW;
 
-import static org.infinitytwo.umbralore.AdvancedMath.lerp;
+import static org.joml.Math.lerp;
 
 public class Player extends Entity {
     protected PlayerData data = PlayerData.shell("Dev");

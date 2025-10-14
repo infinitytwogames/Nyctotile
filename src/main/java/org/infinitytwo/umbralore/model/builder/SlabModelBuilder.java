@@ -1,12 +1,9 @@
 package org.infinitytwo.umbralore.model.builder;
 
 import org.infinitytwo.umbralore.data.AABB;
-import org.infinitytwo.umbralore.model.Model;
-import org.infinitytwo.umbralore.model.TextureAtlas;
 import org.infinitytwo.umbralore.world.GridMap;
 
 import java.util.ArrayList;
-import java.util.List;
 
 public class SlabModelBuilder {
     private static final float minY = 0f,
@@ -16,7 +13,7 @@ public class SlabModelBuilder {
             minZ = 0f,
             maxZ = 1f;
 
-    private static void addFace(Model.Face face, int x, int y, int z, float[] uv, ArrayList<Float> vertices) {
+    private static void addFace(Face face, int x, int y, int z, float[] uv, ArrayList<Float> vertices) {
         float u0 = uv[0]; // uMin
         float v0 = uv[1]; // vMin
         float u1 = uv[2]; // uMax
@@ -99,10 +96,10 @@ public class SlabModelBuilder {
     }
 
     public static void buildSlabVertices(GridMap map, int x, int y, int z,float[] uv, ArrayList<Float> b) {
-        if (!map.isTransparent(x, y - 1, z)) addFace(Model.Face.DOWN,x,y,z,uv,b);
-        if (!map.isTransparent(x + 1, y, z)) addFace(Model.Face.EAST,x,y,z,uv,b);
-        if (!map.isTransparent(x - 1, y, z)) addFace(Model.Face.WEST,x,y,z,uv,b);
-        if (!map.isTransparent(x, y, z + 1)) addFace(Model.Face.SOUTH,x,y,z,uv,b);
-        if (!map.isTransparent(x, y, z - 1)) addFace(Model.Face.NORTH,x,y,z,uv,b);
+        if (!map.isTransparent(x, y - 1, z)) addFace(Face.DOWN,x,y,z,uv,b);
+        if (!map.isTransparent(x + 1, y, z)) addFace(Face.EAST,x,y,z,uv,b);
+        if (!map.isTransparent(x - 1, y, z)) addFace(Face.WEST,x,y,z,uv,b);
+        if (!map.isTransparent(x, y, z + 1)) addFace(Face.SOUTH,x,y,z,uv,b);
+        if (!map.isTransparent(x, y, z - 1)) addFace(Face.NORTH,x,y,z,uv,b);
     }
 }

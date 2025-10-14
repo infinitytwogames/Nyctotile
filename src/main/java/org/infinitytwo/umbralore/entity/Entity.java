@@ -5,6 +5,7 @@ import org.infinitytwo.umbralore.block.Block;
 import org.infinitytwo.umbralore.data.AABB;
 import org.infinitytwo.umbralore.data.Inventory;
 import org.infinitytwo.umbralore.item.Item;
+import org.infinitytwo.umbralore.model.Model;
 import org.infinitytwo.umbralore.world.GridMap;
 import org.joml.Vector3f;
 
@@ -18,7 +19,7 @@ public abstract class Entity {
     protected GridMap world;
     protected Inventory inventory;
     private boolean isGrounded = false;
-    protected AABB currentHitbox = hitbox;
+    protected Model model;
     private Vector3f prevPos = position;
     protected float movementSpeed = 7;
     protected float jumpStrength = 7.2f;
@@ -44,6 +45,46 @@ public abstract class Entity {
 
     public void addItem(int slot, int change) {
         inventory.add(slot,change);
+    }
+
+    public Model getModel() {
+        return model;
+    }
+
+    public void setModel(Model model) {
+        this.model = model;
+    }
+
+    public void setItem(int slot, Item item) {
+        inventory.set(slot, item);
+    }
+
+    public int addItem(Item item) {
+        return inventory.add(item);
+    }
+
+    public void remove(int slot) {
+        inventory.remove(slot);
+    }
+
+    public int getItemCount(int slot) {
+        return inventory.getCount(slot);
+    }
+
+    public int getMaxSlots() {
+        return inventory.getMaxSlots();
+    }
+
+    public boolean isInventoryFull() {
+        return inventory.isFull();
+    }
+
+    public void clearInventory() {
+        inventory.clear();
+    }
+
+    public boolean isInventoryEmpty() {
+        return inventory.isEmpty();
     }
 
     public abstract void draw();
@@ -117,7 +158,7 @@ public abstract class Entity {
                         }
 
                         // Refresh base AABB after resolving
-                        base = hitbox.offset(position.x + moveX, position.y + moveY, position.z + moveZ);
+//                        base = hitbox.offset(position.x + moveX, position.y + moveY, position.z + moveZ);
                     }
                 }
             }

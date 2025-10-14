@@ -121,7 +121,7 @@ public class Mouse {
 
     public static void draw() {
         if (itemHolder == null) return;
-        itemHolder.setOffset(AdvancedMath.transformWindowToVirtual(window,getCurrentPosition()));
+        itemHolder.setOffset(Display.transformWindowToVirtual(window,getCurrentPosition()));
         itemHolder.draw();
     }
 }

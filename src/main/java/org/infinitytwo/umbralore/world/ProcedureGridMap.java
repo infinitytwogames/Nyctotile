@@ -20,10 +20,6 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.atomic.AtomicInteger;
 
-import static org.infinitytwo.umbralore.constants.Biomes.PLAINS;
-import static org.infinitytwo.umbralore.constants.Biomes.RIVER;
-import static org.infinitytwo.umbralore.constants.TerrainGenerationType.*;
-
 @Deprecated
 public class ProcedureGridMap extends GridMap {
     private final NoiseGenerationSettings dimension;

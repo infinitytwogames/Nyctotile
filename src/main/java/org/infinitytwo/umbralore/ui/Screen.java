@@ -16,7 +16,8 @@ import org.joml.Vector2i;
 import java.util.ArrayList;
 import java.util.concurrent.ConcurrentLinkedQueue;
 
-import static org.infinitytwo.umbralore.AdvancedMath.*;
+import static org.infinitytwo.umbralore.VectorMath.isPointWithinRectangle;
+import static org.infinitytwo.umbralore.Display.transformWindowToVirtual;
 
 public class Screen {
     private final UIBatchRenderer uiBatchRenderer;

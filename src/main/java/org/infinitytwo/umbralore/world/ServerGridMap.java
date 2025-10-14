@@ -69,7 +69,7 @@ public class ServerGridMap {
 
         if (chunks.containsKey(pos)) {
             int id = chunks.get(pos).getBlockId(x,y,z);
-            if (id != 0) return new Block().create(registry.get(id));
+            if (id != 0) return new Block(registry.get(id));
         } else return null;
         return null;
     }
@@ -174,16 +174,17 @@ public class ServerGridMap {
     }
 
     public void setBlock(Block block) throws IllegalChunkAccessExecption {
-        Vector2i p = convertToChunkPosition((int) block.x, (int) block.z);
+        Vector3i blockPos = block.getPosition();
+        Vector2i p = convertToChunkPosition(blockPos);
         ChunkPos pos = new ChunkPos(p.x, p.y);
 
         if (chunks.containsKey(pos)) {
-            chunks.get(pos).setBlock(convertToLocalChunk((int) block.x, (int) block.y, (int) block.z), registry.getId(block.getType().getId()));
+            chunks.get(pos).setBlock(convertToLocalChunk(blockPos), registry.getId(block.getType().getId()));
         } else throw new IllegalChunkAccessExecption("Cannot modify a non-existing chunk. "+p);
     }
 
-    public void placeBlock(Block block) {
-        getBlock((int) block.x, (int) block.y, (int) block.z);
+    private Vector3i convertToLocalChunk(Vector3i blockPos) {
+        return convertToLocalChunk(blockPos.x, blockPos.y, blockPos.z);
     }
 
     public ChunkData getChunk(Vector2i pos) throws IllegalChunkAccessExecption {

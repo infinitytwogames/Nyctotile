@@ -24,6 +24,7 @@ public class ItemSlot extends UI {
         super(screen.getUIBatchRenderer());
         item = new ItemHolder(ResourceManager.items,screen,0,fontRenderer);
         screen.register(this);
+        item.setParent(this);
     }
 
     public Item getItem() {

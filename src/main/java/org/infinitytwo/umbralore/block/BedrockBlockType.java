@@ -1,13 +1,10 @@
 package org.infinitytwo.umbralore.block;
 
+import org.infinitytwo.umbralore.data.buffer.NFloatBuffer;
 import org.infinitytwo.umbralore.model.TextureAtlas;
-import org.infinitytwo.umbralore.model.builder.ModelBuilder;
+import org.infinitytwo.umbralore.model.builder.CubeModelBuilder;
 import org.infinitytwo.umbralore.registry.BlockRegistry;
 import org.infinitytwo.umbralore.world.GridMap;
-
-import java.nio.FloatBuffer;
-import java.util.ArrayList;
-import java.util.List;
 
 public class BedrockBlockType extends BlockType {
     public BedrockBlockType(int index) {
@@ -17,7 +14,7 @@ public class BedrockBlockType extends BlockType {
     }
 
     @Override
-    public void buildModel(GridMap map, int x, int y, int z, TextureAtlas atlas, BlockRegistry registry, ArrayList<Float> b) {
-        ModelBuilder.standardVerticesList(map,x,y,z,atlas.getUVCoords(textureIndex),b);
+    public void buildModel(GridMap map, int x, int y, int z, TextureAtlas atlas, BlockRegistry registry, NFloatBuffer buffer) {
+        CubeModelBuilder.standardVerticesList(map,x,y,z,atlas.getUVCoords(textureIndex),buffer);
     }
 }

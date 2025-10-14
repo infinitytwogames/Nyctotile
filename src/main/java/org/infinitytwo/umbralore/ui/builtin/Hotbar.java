@@ -10,7 +10,7 @@ import org.infinitytwo.umbralore.renderer.FontRenderer;
 import org.infinitytwo.umbralore.ui.Screen;
 import org.jetbrains.annotations.NotNull;
 
-import static org.infinitytwo.umbralore.AdvancedMath.clamp;
+import static org.joml.Math.clamp;
 
 public class Hotbar extends InventoryViewer {
     protected int

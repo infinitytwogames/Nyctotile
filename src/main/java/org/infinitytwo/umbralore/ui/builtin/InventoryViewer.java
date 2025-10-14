@@ -6,6 +6,7 @@ import org.infinitytwo.umbralore.event.SubscribeEvent;
 import org.infinitytwo.umbralore.event.input.MouseButtonEvent;
 import org.infinitytwo.umbralore.event.input.MouseHoverEvent;
 import org.infinitytwo.umbralore.item.Item;
+import org.infinitytwo.umbralore.model.TextureAtlas;
 import org.infinitytwo.umbralore.renderer.FontRenderer;
 import org.infinitytwo.umbralore.ui.Grid;
 import org.infinitytwo.umbralore.ui.Screen;
@@ -21,6 +22,7 @@ public class InventoryViewer extends Grid {
     protected FontRenderer fontRenderer;
     protected final List<ItemSlot> slots = new ArrayList<>();
     protected final Window window;
+    private TextureAtlas atlas;
 
     public InventoryViewer(Screen renderer, FontRenderer fontRenderer, Window window, int columns) {
         super(renderer.getUIBatchRenderer());
@@ -41,6 +43,8 @@ public class InventoryViewer extends Grid {
 
         for (int i = 0; i < link.getMaxSlots(); i++) {
             ItemSlot slot = new ItemSlot(screen, fontRenderer, window);
+            slot.setAtlas(atlas);
+            slot.setTextureIndex(0);
             slot.setItem(link.get(i));
             put(slot, row, column);
             slots.add(slot);
@@ -116,6 +120,8 @@ public class InventoryViewer extends Grid {
         return link.get(slot);
     }
 
+
+
     @Override
     public void onMouseClicked(MouseButtonEvent e) {
 
@@ -129,6 +135,14 @@ public class InventoryViewer extends Grid {
     @Override
     public void onMouseHoverEnded() {
 
+    }
+
+    public TextureAtlas getAtlas() {
+        return atlas;
+    }
+
+    public void setAtlas(TextureAtlas atlas) {
+        this.atlas = atlas;
     }
 
     @Override

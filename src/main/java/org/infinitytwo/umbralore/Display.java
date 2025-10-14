@@ -4,6 +4,7 @@ import org.infinitytwo.umbralore.event.SubscribeEvent;
 import org.infinitytwo.umbralore.event.bus.EventBus;
 import org.infinitytwo.umbralore.event.state.WindowResizedEvent;
 import org.joml.Matrix4f;
+import org.joml.Vector2i;
 import org.lwjgl.opengl.GL;
 import org.lwjgl.opengl.GL11;
 
@@ -19,6 +20,41 @@ public final class Display {
     public static void init() {
         EventBus.register(Display.class);
     }
+
+    public static Vector2i transformVirtualToWindow(Window window, int virtualX, int virtualY) {
+        float scale = (float) window.getHeight() / Display.height;
+
+        int screenX = (int) (virtualX * scale);
+        int screenY = (int) (virtualY * scale);
+        return new Vector2i(screenX, screenY);
+    }
+
+    public static Vector2i transformVirtualToWindow(Window window, Vector2i pos) {
+        float scale = (float) window.getHeight() / Display.height;
+
+        int screenX = (int) (pos.x * scale);
+        int screenY = (int) (pos.y * scale);
+        return new Vector2i(screenX, screenY);
+    }
+
+    public static Vector2i transformWindowToVirtual(Window window, int windowX, int windowY) {
+        float scale = (float) Display.height / window.getHeight();
+
+        int virtualX = (int) (windowX * scale);
+        int virtualY = (int) (windowY * scale);
+
+        return new Vector2i(virtualX, virtualY);
+    }
+
+    public static Vector2i transformWindowToVirtual(Window window, Vector2i pos) {
+        float scale = (float) Display.height / window.getHeight();
+
+        int virtualX = (int) (pos.x * scale);
+        int virtualY = (int) (pos.y * scale);
+
+        return new Vector2i(virtualX, virtualY);
+    }
+
 
     @SubscribeEvent
     public static void onWindowResize(WindowResizedEvent e) {

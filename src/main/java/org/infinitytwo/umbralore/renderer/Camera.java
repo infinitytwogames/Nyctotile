@@ -1,9 +1,9 @@
 package org.infinitytwo.umbralore.renderer;
 
-import org.infinitytwo.umbralore.AdvancedMath;
 import org.joml.Matrix4f;
 import org.joml.Vector3f;
-import org.joml.Vector3i;
+
+import static org.joml.Math.clamp;
 
 public class Camera {
     private Vector3f position = new Vector3f(0, 0, 3);
@@ -110,7 +110,7 @@ public class Camera {
     }
 
     public void setPov(double pov) {
-        POV = AdvancedMath.clamp(pov, 40, 120);
+        POV = clamp(pov, 40, 120);
     }
 
     public void setRawPov(double pov) {

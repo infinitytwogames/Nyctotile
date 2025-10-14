@@ -7,5 +7,5 @@ public enum TerrainGenerationType {
     RIVER, // Rivers
     CANYON, // Canyon
     CAVE, // Cave Biome
-    CORE // uhhhhh, oddly Superflat biome
+    CORE
 }

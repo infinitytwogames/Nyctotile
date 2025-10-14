@@ -2,21 +2,18 @@ package org.infinitytwo.umbralore.renderer;
 
 import org.infinitytwo.umbralore.Window;
 import org.infinitytwo.umbralore.block.BlockType;
-import org.infinitytwo.umbralore.block.ServerBlockType;
 import org.infinitytwo.umbralore.data.ChunkData;
-import org.infinitytwo.umbralore.data.ChunkMeshData;
+import org.infinitytwo.umbralore.data.buffer.NFloatBuffer;
 import org.infinitytwo.umbralore.exception.IllegalChunkAccessExecption;
 import org.infinitytwo.umbralore.model.TextureAtlas;
 import org.infinitytwo.umbralore.registry.BlockRegistry;
 import org.infinitytwo.umbralore.world.GridMap;
 import org.joml.Matrix4f;
-import org.joml.Vector2f;
 import org.joml.Vector2i;
 import org.joml.Vector3i;
 import org.lwjgl.opengl.*;
 
 import java.nio.FloatBuffer;
-import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -49,12 +46,14 @@ public class Chunk {
     private int vaoId;
     private int vboId;
     private int vertexCount;
+    private int vboCapacityFloats = 0;
 
     private final ShaderProgram shaderProgram;
     private boolean isDirty = false;
     private final TextureAtlas atlas;
     private final GridMap gridMap;
     private final BlockRegistry registry;
+    private final NFloatBuffer nBuffer;
 
     public Chunk(Vector2i chunkPos, ShaderProgram shaderProgram, TextureAtlas atlas, GridMap map, BlockRegistry registry) {
         this.chunkPos = new Vector2i(chunkPos);
@@ -64,6 +63,7 @@ public class Chunk {
         this.registry = registry;
         this.blocks = new int[SIZE_X * SIZE_Y * SIZE_Z];
         setupMeshBuffers();
+        nBuffer = new NFloatBuffer();
     }
 
     private int getIndex(int x, int y, int z) {
@@ -88,27 +88,27 @@ public class Chunk {
     }
 
     public void setData(int x, int y, int z, byte[] data) throws IllegalChunkAccessExecption {
-        if (inBounds(x,y,z)) blockData.replace(new Vector3i(x,y,z), data);
-        else throw new IllegalChunkAccessExecption("Position ("+x+", "+y+", "+z+") is out of bounds");
+        if (inBounds(x, y, z)) blockData.replace(new Vector3i(x, y, z), data);
+        else throw new IllegalChunkAccessExecption("Position (" + x + ", " + y + ", " + z + ") is out of bounds");
     }
 
     public void setData(Vector3i pos, byte[] data) throws IllegalChunkAccessExecption {
-        if (inBounds(pos.x,pos.y,pos.z)) blockData.replace(new Vector3i(pos),data);
-        else throw new IllegalChunkAccessExecption("Position ("+pos.x+", "+pos.y+", "+pos.z+") is out of bounds");
+        if (inBounds(pos.x, pos.y, pos.z)) blockData.replace(new Vector3i(pos), data);
+        else throw new IllegalChunkAccessExecption("Position (" + pos.x + ", " + pos.y + ", " + pos.z + ") is out of bounds");
     }
 
     public byte[] getData(int x, int y, int z) throws IllegalChunkAccessExecption {
-        if (inBounds(x,y,z)) return blockData.get(new Vector3i(x,y,z));
-        else throw new IllegalChunkAccessExecption("Position ("+x+", "+y+", "+z+") is out of bounds");
+        if (inBounds(x, y, z)) return blockData.get(new Vector3i(x, y, z));
+        else throw new IllegalChunkAccessExecption("Position (" + x + ", " + y + ", " + z + ") is out of bounds");
     }
 
     public byte[] getData(Vector3i pos) throws IllegalChunkAccessExecption {
-        if (inBounds(pos.x,pos.y,pos.z)) return blockData.get(pos);
-        else throw new IllegalChunkAccessExecption("Position ("+pos.x+", "+pos.y+", "+pos.z+") is out of bounds");
+        if (inBounds(pos.x, pos.y, pos.z)) return blockData.get(pos);
+        else throw new IllegalChunkAccessExecption("Position (" + pos.x + ", " + pos.y + ", " + pos.z + ") is out of bounds");
     }
 
     public void setBlock(int x, int y, int z, int blockId) throws IllegalChunkAccessExecption {
-        setBlock(x,y,z,blockId,false);
+        setBlock(x, y, z, blockId, false);
     }
 
     private void notifyNeighboringChunks(int x, int y, int z) {
@@ -130,11 +130,12 @@ public class Chunk {
     }
 
     public ChunkData toChunkData() {
-        return new ChunkData(chunkPos,gridMap);
+        return new ChunkData(chunkPos, gridMap);
     }
 
-    public ChunkMeshData buildMeshData() {
-        ArrayList<Float> combinedVertices = new ArrayList<>();
+    public void buildMeshData() {
+        nBuffer.reset();
+
         for (int x = 0; x < SIZE_X; x++) {
             for (int y = 0; y < SIZE_Y; y++) {
                 for (int z = 0; z < SIZE_Z; z++) {
@@ -143,26 +144,40 @@ public class Chunk {
 
                     BlockType type = registry.get(id);
                     if (type == null) continue;
-                    Vector3i worldPos = new Vector3i(chunkPos.x * SIZE_X + x, y, chunkPos.y * SIZE_Z + z);
 
-                    int before = combinedVertices.size();
-                    if (type instanceof ServerBlockType) throw new RuntimeException("ServerBlockType is not supported!");
-                    type.buildModel(gridMap, worldPos,atlas, registry, combinedVertices);
-                    int added = combinedVertices.size() - before;
+                    type.buildModel(gridMap,GridMap.convertToWorldPosition(chunkPos,x,y,z),atlas,registry, nBuffer);
                 }
             }
         }
-
-        return new ChunkMeshData(combinedVertices);
     }
 
-    private void uploadMesh(ChunkMeshData meshData) {
-        vertexCount = meshData.getVertexCount();
-        FloatBuffer buffer = meshData.toFloatBuffer();
+    private void uploadMesh() {
+        int totalFloats = nBuffer.getWritten(); // Total USED floats
+        FloatBuffer buffer = nBuffer.getBuffer();
+
+        vertexCount = totalFloats / 6;
+
+        if (totalFloats == 0) return; // Skip if empty
 
         glBindVertexArray(vaoId);
         glBindBuffer(GL_ARRAY_BUFFER, vboId);
-        glBufferData(GL_ARRAY_BUFFER, buffer, GL_STATIC_DRAW);
+
+        // --- OPTIMIZATION: Use glBufferSubData when possible ---
+        if (totalFloats > vboCapacityFloats) {
+            // Case 1: The new mesh is LARGER than the GPU capacity.
+            // We must re-allocate on the GPU (glBufferData).
+            GL15.glBufferData(GL_ARRAY_BUFFER, buffer, GL_STATIC_DRAW);
+            vboCapacityFloats = totalFloats; // Update GPU capacity
+        } else {
+            // Case 2: The new mesh FITS within the existing GPU capacity.
+            // Fast update: Only copy the data, no reallocation.
+            GL15.glBufferSubData(GL_ARRAY_BUFFER, 0, buffer);
+        }
+
+        // The Attribute Pointers only need to be set once, but it's often safer
+        // to keep them here or in setupMeshBuffers if your VAO is simple.
+        // Since you are calling glBufferData/glBufferSubData, the data itself is updated,
+        // and the VAO bindings are valid.
 
         int stride = 6 * Float.BYTES;
         glVertexAttribPointer(0, 3, GL_FLOAT, false, stride, 0);
@@ -175,8 +190,6 @@ public class Chunk {
 
         glBindBuffer(GL_ARRAY_BUFFER, 0);
         glBindVertexArray(0);
-
-        meshData.free();
 
         isDirty = false;
     }
@@ -219,9 +232,7 @@ public class Chunk {
         glBindVertexArray(0);
         glDeleteVertexArrays(vaoId);
 
-        if (this.meshData != null) {
-            this.meshData.free();
-        }
+        nBuffer.cleanup();
     }
 
     public Vector2i getPosition() {
@@ -232,23 +243,9 @@ public class Chunk {
         return blocks;
     }
 
-    // Add a field to store the ChunkMeshData object
-    private ChunkMeshData meshData;
-
     public void rebuild() {
-        // If a mesh already exists, free its memory before creating a new one
-        if (this.meshData != null) {
-            this.meshData.free();
-        }
-
-        // Create and build the new mesh data
-        this.meshData = buildMeshData();
-        if (this.meshData.getVertexCount() > 0) {
-            this.meshData.build();
-            uploadMesh(this.meshData);
-        }
-
-        isDirty = false;
+        buildMeshData();
+        uploadMesh();
     }
 
     public void dirty() {
@@ -268,7 +265,7 @@ public class Chunk {
     }
 
     public static Chunk of(ChunkData data, GridMap map, ShaderProgram program, TextureAtlas atlas, BlockRegistry registry) throws IllegalChunkAccessExecption {
-        Chunk chunk = new Chunk(data.position,program,atlas,map, registry);
+        Chunk chunk = new Chunk(data.position, program, atlas, map, registry);
         for (int x = 0; x < SIZE_X; x++) {
             for (int y = 0; y < SIZE_Y; y++) {
                 for (int z = 0; z < SIZE_Z; z++) {
@@ -283,6 +280,6 @@ public class Chunk {
     }
 
     public int getBlockId(Vector3i pos) {
-        return getBlockId(pos.x,pos.y,pos.z);
+        return getBlockId(pos.x, pos.y, pos.z);
     }
 }

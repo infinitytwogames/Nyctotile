@@ -15,7 +15,9 @@ import org.infinitytwo.umbralore.ui.position.Anchor;
 import org.infinitytwo.umbralore.ui.position.Pivot;
 import org.joml.Vector2i;
 
-import static org.infinitytwo.umbralore.AdvancedMath.*;
+import static org.infinitytwo.umbralore.VectorMath.isPointWithinRectangle;
+import static org.infinitytwo.umbralore.Display.transformWindowToVirtual;
+import static org.joml.Math.clamp;
 import static org.lwjgl.glfw.GLFW.*;
 
 public abstract class TextInput extends Label {

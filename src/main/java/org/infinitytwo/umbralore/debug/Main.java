@@ -29,6 +29,7 @@ import org.infinitytwo.umbralore.renderer.*;
 import org.infinitytwo.umbralore.ui.Screen;
 import org.infinitytwo.umbralore.ui.builtin.Background;
 import org.infinitytwo.umbralore.ui.builtin.Hotbar;
+import org.infinitytwo.umbralore.ui.builtin.InventoryViewer;
 import org.infinitytwo.umbralore.ui.input.TextInput;
 import org.infinitytwo.umbralore.ui.position.Anchor;
 import org.infinitytwo.umbralore.ui.position.Pivot;
@@ -37,6 +38,7 @@ import org.infinitytwo.umbralore.world.dimension.Overworld;
 import org.joml.*;
 import org.lwjgl.opengl.GL20;
 
+import javax.swing.*;
 import java.io.File;
 import java.io.IOException;
 import java.lang.Math;
@@ -83,12 +85,32 @@ public class Main {
     private static TextureAtlas itemAtlas;
     private static Mouse mouse;
     private static ItemRegistry itemRegistry;
-    private static Hotbar hotbar;
     private static Screen mainScreen;
+
+    public static void launchConsole() {
+        // ⚠️ CRITICAL: Enforce that the Console setup runs on the EDT
+        SwingUtilities.invokeLater(() -> {
+            Console console = new Console(); // Constructor creates the JFrame components
+
+            // Final JFrame commands must be here
+            console.setDefaultCloseOperation(JFrame.HIDE_ON_CLOSE);
+            console.setLocation(100, 100);
+            console.setSize(700, 500);
+
+            // This makes the window appear!
+            console.setVisible(true);
+
+            // Now that the UI is visible, start the *worker* thread for log consumption
+            Thread consoleWorker = new Thread(console, "Console-Worker-Thread");
+            consoleWorker.setDaemon(true);
+            consoleWorker.start();
+        });
+    }
 
     public static void main(String[] args) {
         Display.enable();
         Display.init();
+        launchConsole();
 
         Thread.currentThread().setName("Renderer Thread");
         CrashHandler crashHandler = new CrashHandler();
@@ -166,7 +188,7 @@ public class Main {
                         );
                         if (map.getBlock(pos.x, pos.y, pos.z) == null) {
                             // FIX: Get the correct grass block ID from the registry.
-                            Block block = new Block().create(Main.getBlockRegistry().get(1)); // 1 is the ID for grass
+                            Block block = new Block(Main.getBlockRegistry().get(1)); // 1 is the ID for grass
                             block.setPosition(pos.x, pos.y, pos.z);
                             try {
                                 map.placeBlock(block);
@@ -333,7 +355,7 @@ public class Main {
                 .build();
 
         try {
-            itemRegistry = new ItemRegistry();
+            itemRegistry = ItemRegistry.getMainRegistry();
             itemAtlas = ItemRegistry.getTextureAtlas();
             itemRegistry.register(i, itemAtlas.addTexture("src/main/resources/pickaxe.png", false));
 
@@ -350,8 +372,12 @@ public class Main {
         player.getInventory().set(0, Item.of(i));
 
         mainScreen = new Screen(renderer, window);
-        hotbar = new Hotbar(mainScreen, textRenderer, window,9);
+        InventoryViewer hotbar = new InventoryViewer(mainScreen, textRenderer, window, 9);
+        hotbar.setAtlas(itemAtlas);
         hotbar.linkInventory(player.getInventory());
+        hotbar.setCellSize(128);
+        hotbar.refresh();
+        hotbar.setPosition(new Anchor(1f,0.5f),new Pivot(1,0));
         mainScreen.register(hotbar);
 
         Mouse.init(itemAtlas,mainScreen,-1,textRenderer,window);
@@ -438,7 +464,6 @@ public class Main {
 
         window.getSize();
         Matrix4f ortho = new Matrix4f().ortho(0, window.getWidth(), window.getHeight(), 0, -1, 1);
-        glViewport(0, 0, (int) window.getWidth(), (int) window.getHeight());
 
         Vector3f cameraPosition = camera.getPosition();
         textRenderer.renderText(cameraPosition.toString(), new Vector2i(0, 24), new RGB(1f, 1f, 1f));
@@ -460,10 +485,6 @@ public class Main {
         Display.prepare2d();
 
         mainScreen.draw();
-
-        if (locked) {
-            pauseScreen.draw();
-        }
 
         Display.prepare3d();
     }
