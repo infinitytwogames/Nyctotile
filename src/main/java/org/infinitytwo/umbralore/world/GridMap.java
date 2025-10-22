@@ -3,7 +3,7 @@ package org.infinitytwo.umbralore.world;
 import org.infinitytwo.umbralore.Window;
 import org.infinitytwo.umbralore.block.Block;
 import org.infinitytwo.umbralore.data.ChunkData;
-import org.infinitytwo.umbralore.exception.IllegalChunkAccessExecption;
+import org.infinitytwo.umbralore.exception.IllegalChunkAccessException;
 import org.infinitytwo.umbralore.model.TextureAtlas;
 import org.infinitytwo.umbralore.registry.BlockRegistry;
 import org.infinitytwo.umbralore.renderer.Camera;
@@ -78,16 +78,16 @@ public class GridMap {
         } else return null;
     }
 
-    public void removeBlock(int x, int y, int z) throws IllegalChunkAccessExecption { // When I call this function, the game crashes
+    public void removeBlock(int x, int y, int z) throws IllegalChunkAccessException {
         Vector2i p = convertToChunkPosition(x,z);
         ChunkPos pos = new ChunkPos(p.x, p.y);
 
         if (chunks.containsKey(pos)) {
             chunks.get(pos).setBlock(convertToLocalChunk(x,y,z), 0);
-        } else throw new IllegalChunkAccessExecption("Cannot modify a non-existing chunk. "+p);
+        } else throw new IllegalChunkAccessException("Cannot modify a non-existing chunk. "+p);
     }
 
-    public void removeBlock(Vector3i pos) throws IllegalChunkAccessExecption {
+    public void removeBlock(Vector3i pos) throws IllegalChunkAccessException {
         removeBlock(pos.x,pos.y, pos.z);
     }
 
@@ -204,14 +204,14 @@ public class GridMap {
         return null;
     }
 
-    public void placeBlock(Block block) throws IllegalChunkAccessExecption {
+    public void placeBlock(Block block) throws IllegalChunkAccessException {
         Vector3i blockPos = block.getPosition();
         Vector2i p = convertToChunkPosition(blockPos);
         ChunkPos pos = new ChunkPos(p.x, p.y);
 
         if (chunks.containsKey(pos)) {
             chunks.get(pos).setBlock(convertToLocalChunk(blockPos), registry.getId(block.getType().getId()));
-        } else throw new IllegalChunkAccessExecption("Cannot modify a non-existing chunk. "+p);
+        } else throw new IllegalChunkAccessException("Cannot modify a non-existing chunk. "+p);
     }
 
     private Vector3i convertToLocalChunk(Vector3i blockPos) {
@@ -249,6 +249,10 @@ public class GridMap {
         Block block = getBlock(x,y,z);
         return block == null;
 //        return block.getType().isInvisible();
+    }
+
+    public BlockRegistry getRegistry() {
+        return registry;
     }
 
     public record RaycastResult(Vector3i blockPos, Vector3i hitNormal){}

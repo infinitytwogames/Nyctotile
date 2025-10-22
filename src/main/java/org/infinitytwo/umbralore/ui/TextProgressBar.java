@@ -101,7 +101,7 @@ public class TextProgressBar extends Label {
 
     public static class ProgressBarBuilder extends UIBuilder<TextProgressBar> {
         public ProgressBarBuilder(Screen renderer, FontRenderer fontRenderer, RGB color) {
-            super(renderer.getUIBatchRenderer(), new TextProgressBar(renderer, fontRenderer, color, 10));
+            super(new TextProgressBar(renderer, fontRenderer, color, 10));
         }
 
         public ProgressBarBuilder max(int max) {

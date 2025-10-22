@@ -54,7 +54,7 @@ public class Background extends UI {
      */
     public static class Builder extends UIBuilder<Background> {
         public Builder(UIBatchRenderer renderer) {
-            super(renderer, new Background(renderer));
+            super(new Background(renderer));
         }
 
         @Override

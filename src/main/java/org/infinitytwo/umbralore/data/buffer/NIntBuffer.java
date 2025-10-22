@@ -1,16 +1,15 @@
 package org.infinitytwo.umbralore.data.buffer;
 
 import java.nio.ByteOrder;
-import java.nio.FloatBuffer;
+import java.nio.IntBuffer;
 
-import static org.lwjgl.system.MemoryUtil.memAllocFloat;
-import static org.lwjgl.system.MemoryUtil.memFree;
+import static org.lwjgl.system.MemoryUtil.*;
 
 /**
- * A native float buffer that behaves like a C++ dynamic array (vector-style)
+ * A native int buffer that behaves like a C++ dynamic array (vector-style)
  * but implemented in Java using off-heap memory.
  * <p>
- * This class allocates a manually managed {@link FloatBuffer} using
+ * This class allocates a manually managed {@link IntBuffer} using
  * {@link org.lwjgl.system.MemoryUtil#memAllocFloat(int)}. It avoids the
  * Java garbage collector entirely, offering better performance and control
  * in graphics-intensive workloads such as OpenGL or Vulkan rendering.
@@ -18,12 +17,12 @@ import static org.lwjgl.system.MemoryUtil.memFree;
  *
  * <h3>How It Works</h3>
  * <ul>
- *     <li>Allocates an initial capacity of {@code 4096} floats (4 KB).</li>
+ *     <li>Allocates an initial capacity of {@code 4096} ints (4 KB).</li>
  *     <li>Automatically resizes via {@link #require(int)} when additional space is needed.</li>
- *     <li>Tracks the number of written floats to keep a clean separation between
+ *     <li>Tracks the number of written ints to keep a clean separation between
  *     used and free space.</li>
- *     <li>Provides fast bulk writes with {@link #put(float[])},
- *     {@link #put(FloatBuffer)}, and single-element {@link #put(float)}.</li>
+ *     <li>Provides fast bulk writes with {@link #put(int[])},
+ *     {@link #put(IntBuffer)}, and single-element {@link #put(int)}.</li>
  * </ul>
  *
  * <h3>Memory Management</h3>
@@ -34,10 +33,10 @@ import static org.lwjgl.system.MemoryUtil.memFree;
  * </p>
  *
  * <pre>{@code
- * try (NFloatBuffer buf = new NFloatBuffer()) {
+ * try (NIntBuffer buf = new NIntBuffer()) {
  *     buf.put(1.0f);
  *     buf.put(2.0f);
- *     FloatBuffer fb = buf.getBuffer();
+ *     IntBuffer fb = buf.getBuffer();
  *     // ... use fb in OpenGL calls
  * } // Automatically calls buf.close() → cleanup()
  * }</pre>
@@ -56,25 +55,25 @@ import static org.lwjgl.system.MemoryUtil.memFree;
  *     <li>Once cleaned up, this buffer is invalid and must not be reused.</li>
  * </ul>
  *
- * @see java.nio.FloatBuffer
+ * @see IntBuffer
  * @see org.lwjgl.system.MemoryUtil
  */
-public final class NFloatBuffer extends NativeBuffer {
-    private FloatBuffer buffer;
+public final class NIntBuffer extends NativeBuffer {
+    private IntBuffer buffer;
 
     private static final int INITIAL = 4096; // 4 KB
 
     /**
-     * Creates a new NFloatBuffer. This allocates a {@code INITIAL} of
+     * Creates a new NIntBuffer. This allocates a {@code INITIAL} of
      */
-    public NFloatBuffer() {
-        buffer = memAllocFloat(INITIAL);
+    public NIntBuffer() {
+        buffer = memAllocInt(INITIAL);
         capacity = INITIAL;
         // In NativeBuffer, 'written' should be 0 by default.
     }
 
-    public NFloatBuffer(int capacity) {
-        buffer = memAllocFloat(capacity);
+    public NIntBuffer(int capacity) {
+        buffer = memAllocInt(capacity);
         this.capacity = capacity;
     }
 
@@ -86,7 +85,7 @@ public final class NFloatBuffer extends NativeBuffer {
         if (written + c > capacity) {
             int nCapacity = Math.max(capacity * 2, written + c + INITIAL);
 
-            FloatBuffer nBuffer = memAllocFloat(nCapacity);
+            IntBuffer nBuffer = memAllocInt(nCapacity);
 
             // Prepare old buffer for reading (limit = written)
             buffer.flip();
@@ -106,14 +105,14 @@ public final class NFloatBuffer extends NativeBuffer {
 
     /**
      * Appends a new element to the buffer.
-     * @param f The value to be put.
+     * @param i The value to be put.
      */
-    public void put(float f) {
+    public void put(int i) {
         if (written >= capacity) {
             // If not enough space, perform the resize/reposition
             require(1);
         }
-        buffer.put(f);
+        buffer.put(i);
         written++;
     }
 
@@ -121,7 +120,7 @@ public final class NFloatBuffer extends NativeBuffer {
      * Appends every element in {@code b} to the native buffer.
      * @param b The buffer to be put into the native buffer.
      */
-    public void put(FloatBuffer b) {
+    public void put(IntBuffer b) {
         int length = b.remaining();
 
         // Check capacity before calling the resize function
@@ -134,10 +133,10 @@ public final class NFloatBuffer extends NativeBuffer {
     }
 
     /**
-     * Appends every element of {@code float[]} into the buffer.
+     * Appends every element of {@code int[]} into the buffer.
      * @param l The list to be put into the buffer.
      */
-    public void put(float[] l) {
+    public void put(int[] l) {
         int length = l.length;
 
         // Check capacity before calling the resize function
@@ -151,10 +150,10 @@ public final class NFloatBuffer extends NativeBuffer {
 
     /**
      * @return A buffer with position of 0 (beginning of the buffer). And
-     * with a limit of current written floats
+     * with a limit of current written ints
      */
     @Override
-    public FloatBuffer getBuffer() {
+    public IntBuffer getBuffer() {
         buffer.position(0);
         buffer.limit(written);
         return buffer;
@@ -190,19 +189,19 @@ public final class NFloatBuffer extends NativeBuffer {
         buffer.clear();
     }
 
-    public FloatBuffer duplicate() {
+    public IntBuffer duplicate() {
         return buffer.duplicate();
     }
 
-    public FloatBuffer limit(int newLimit) {
+    public IntBuffer limit(int newLimit) {
         return buffer.limit(newLimit);
     }
 
-    public FloatBuffer asReadOnlyBuffer() {
+    public IntBuffer asReadOnlyBuffer() {
         return buffer.asReadOnlyBuffer();
     }
 
-    public FloatBuffer position(int newPosition) {
+    public IntBuffer position(int newPosition) {
         return buffer.position(newPosition);
     }
 
@@ -210,23 +209,23 @@ public final class NFloatBuffer extends NativeBuffer {
         return buffer.capacity();
     }
 
-    public FloatBuffer get(int index, float[] dst) {
+    public IntBuffer get(int index, int[] dst) {
         return buffer.get(index, dst);
     }
 
-    public int compareTo(FloatBuffer that) {
+    public int compareTo(IntBuffer that) {
         return buffer.compareTo(that);
     }
 
-    public FloatBuffer mark() {
+    public IntBuffer mark() {
         return buffer.mark();
     }
 
-    public float get() {
+    public int get() {
         return buffer.get();
     }
 
-    public FloatBuffer put(int index, float[] src, int offset, int length) {
+    public IntBuffer put(int index, int[] src, int offset, int length) {
         return buffer.put(index, src, offset, length);
     }
 
@@ -238,23 +237,29 @@ public final class NFloatBuffer extends NativeBuffer {
         return buffer.remaining();
     }
 
-    public float get(int index) {
+    public int get(int index) {
+        if (index < 0 || index >= written) {
+            // Checking against 'written' is the CRITICAL protection against reading garbage.
+            // Reading index 32767 is valid, but reading index 32768 is NOT.
+            throw new IndexOutOfBoundsException("Index " + index + " is out of bounds [0, " + written + ")");
+        }
+        // We can rely on the underlying buffer's integrity since we checked the boundary.
         return buffer.get(index);
     }
 
-    public int mismatch(FloatBuffer that) {
+    public int mismatch(IntBuffer that) {
         return buffer.mismatch(that);
     }
 
-    public FloatBuffer put(int index, float[] src) {
+    public IntBuffer put(int index, int[] src) {
         return buffer.put(index, src);
     }
 
-    public FloatBuffer flip() {
+    public IntBuffer flip() {
         return buffer.flip();
     }
 
-    public FloatBuffer put(int index, float f) {
+    public IntBuffer put(int index, int f) {
         return buffer.put(index, f);
     }
 
@@ -262,19 +267,19 @@ public final class NFloatBuffer extends NativeBuffer {
         return buffer.order();
     }
 
-    public FloatBuffer put(int index, FloatBuffer src, int offset, int length) {
+    public IntBuffer put(int index, IntBuffer src, int offset, int length) {
         return buffer.put(index, src, offset, length);
     }
 
-    public FloatBuffer compact() {
+    public IntBuffer compact() {
         return buffer.compact();
     }
 
-    public FloatBuffer get(float[] dst, int offset, int length) {
+    public IntBuffer get(int[] dst, int offset, int length) {
         return buffer.get(dst, offset, length);
     }
 
-    public FloatBuffer rewind() {
+    public IntBuffer rewind() {
         return buffer.rewind();
     }
 
@@ -286,15 +291,29 @@ public final class NFloatBuffer extends NativeBuffer {
         return buffer.isReadOnly();
     }
 
-    public float[] array() {
-        return buffer.array();
+    public int[] array() {
+        // 1. Create a new array sized exactly to the data that has been written.
+        int[] array = new int[written];
+
+        // 2. Prepare the internal IntBuffer for a bulk read operation.
+        // getBuffer() already sets position(0) and limit(written).
+        IntBuffer tempBuffer = getBuffer();
+
+        // 3. Perform the bulk copy from native memory to the Java array.
+        tempBuffer.get(array);
+
+        // 4. Reset the internal buffer's state (optional but recommended
+        // to maintain consistency if getBuffer() modified it).
+        buffer.position(written);
+
+        return array;
     }
 
-    public FloatBuffer slice() {
+    public IntBuffer slice() {
         return buffer.slice();
     }
 
-    public FloatBuffer get(float[] dst) {
+    public IntBuffer get(int[] dst) {
         return buffer.get(dst);
     }
 
@@ -306,11 +325,11 @@ public final class NFloatBuffer extends NativeBuffer {
         return buffer.hasArray();
     }
 
-    public FloatBuffer slice(int index, int length) {
+    public IntBuffer slice(int index, int length) {
         return buffer.slice(index, length);
     }
 
-    public FloatBuffer get(int index, float[] dst, int offset, int length) {
+    public IntBuffer get(int index, int[] dst, int offset, int length) {
         return buffer.get(index, dst, offset, length);
     }
 
@@ -318,11 +337,15 @@ public final class NFloatBuffer extends NativeBuffer {
         return buffer.limit();
     }
 
-    public FloatBuffer put(float[] src, int offset, int length) {
+    public IntBuffer put(int[] src, int offset, int length) {
         return buffer.put(src, offset, length);
     }
 
     public int arrayOffset() {
         return buffer.arrayOffset();
+    }
+
+    public void put(NIntBuffer buffer) {
+        put(buffer.buffer);
     }
 }

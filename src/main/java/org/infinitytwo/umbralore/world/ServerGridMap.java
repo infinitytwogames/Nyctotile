@@ -3,7 +3,7 @@ package org.infinitytwo.umbralore.world;
 import org.infinitytwo.umbralore.block.Block;
 import org.infinitytwo.umbralore.block.BlockType;
 import org.infinitytwo.umbralore.data.ChunkData;
-import org.infinitytwo.umbralore.exception.IllegalChunkAccessExecption;
+import org.infinitytwo.umbralore.exception.IllegalChunkAccessException;
 import org.infinitytwo.umbralore.exception.IllegalDataTypeException;
 import org.infinitytwo.umbralore.registry.BlockDataReader;
 import org.infinitytwo.umbralore.registry.BlockRegistry;
@@ -74,16 +74,16 @@ public class ServerGridMap {
         return null;
     }
 
-    public void removeBlock(int x, int y, int z) throws IllegalChunkAccessExecption {
+    public void removeBlock(int x, int y, int z) throws IllegalChunkAccessException {
         Vector2i p = convertToChunkPosition(x,z);
         ChunkPos pos = new ChunkPos(p.x, p.y);
 
         if (chunks.containsKey(pos)) {
             chunks.get(pos).setBlock(convertToLocalChunk(x,y,z), (short) 0);
-        } else throw new IllegalChunkAccessExecption("Cannot modify a non-existing chunk. "+p);
+        } else throw new IllegalChunkAccessException("Cannot modify a non-existing chunk. "+p);
     }
 
-    public void removeBlock(Vector3i pos) throws IllegalChunkAccessExecption {
+    public void removeBlock(Vector3i pos) throws IllegalChunkAccessException {
         removeBlock(pos.x,pos.y, pos.z);
     }
 
@@ -101,15 +101,15 @@ public class ServerGridMap {
         return result;
     }
 
-    public void insertData(Vector3i pos, byte[] data) throws IllegalChunkAccessExecption {
+    public void insertData(Vector3i pos, byte[] data) throws IllegalChunkAccessException {
         chunks.get(worldToChunkPos(pos.x, pos.z)).setData(pos, data);
     }
 
-    public byte[] getData(Vector3i pos) throws IllegalChunkAccessExecption {
+    public byte[] getData(Vector3i pos) throws IllegalChunkAccessException {
         return chunks.get(worldToChunkPos(pos.x, pos.z)).getData(pos);
     }
 
-    public Object getData(Vector3i pos, BlockDataReader reader, String name) throws IllegalChunkAccessExecption, IllegalDataTypeException {
+    public Object getData(Vector3i pos, BlockDataReader reader, String name) throws IllegalChunkAccessException, IllegalDataTypeException {
         ChunkData chunk = chunks.get(worldToChunkPos(pos.x, pos.z));
         return reader.getData(chunk.getBlockId(pos.x,pos.y,pos.z), chunk.getData(pos), name);
     }
@@ -173,23 +173,23 @@ public class ServerGridMap {
         return null;
     }
 
-    public void setBlock(Block block) throws IllegalChunkAccessExecption {
+    public void setBlock(Block block) throws IllegalChunkAccessException {
         Vector3i blockPos = block.getPosition();
         Vector2i p = convertToChunkPosition(blockPos);
         ChunkPos pos = new ChunkPos(p.x, p.y);
 
         if (chunks.containsKey(pos)) {
             chunks.get(pos).setBlock(convertToLocalChunk(blockPos), registry.getId(block.getType().getId()));
-        } else throw new IllegalChunkAccessExecption("Cannot modify a non-existing chunk. "+p);
+        } else throw new IllegalChunkAccessException("Cannot modify a non-existing chunk. "+p);
     }
 
     private Vector3i convertToLocalChunk(Vector3i blockPos) {
         return convertToLocalChunk(blockPos.x, blockPos.y, blockPos.z);
     }
 
-    public ChunkData getChunk(Vector2i pos) throws IllegalChunkAccessExecption {
+    public ChunkData getChunk(Vector2i pos) throws IllegalChunkAccessException {
         ChunkData data = chunks.get(new ChunkPos(pos.x, pos.y));
-        if (data == null) throw new IllegalChunkAccessExecption("Cannot access a non-existing chunk at (" + pos.x +", "+pos.y+")");
+        if (data == null) throw new IllegalChunkAccessException("Cannot access a non-existing chunk at (" + pos.x +", "+pos.y+")");
         return data;
     }
 

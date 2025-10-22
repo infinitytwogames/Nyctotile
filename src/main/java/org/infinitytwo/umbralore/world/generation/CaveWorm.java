@@ -1,7 +1,7 @@
 package org.infinitytwo.umbralore.world.generation;
 
 import org.infinitytwo.umbralore.data.ChunkData;
-import org.infinitytwo.umbralore.exception.IllegalChunkAccessExecption;
+import org.infinitytwo.umbralore.exception.IllegalChunkAccessException;
 import org.infinitytwo.umbralore.world.ServerGridMap;
 import org.joml.Vector3i;
 
@@ -46,7 +46,7 @@ public class CaveWorm {
         normalizeDirection();
     }
 
-    public void carveEllipsoid(ChunkData grid, Vector3i pos, float radius, float radiusY) throws IllegalChunkAccessExecption {
+    public void carveEllipsoid(ChunkData grid, Vector3i pos, float radius, float radiusY) throws IllegalChunkAccessException {
         int minX = (int) Math.floor(pos.x - radius);
         int maxX = (int) Math.ceil(pos.x + radius);
         int minY = (int) Math.floor(pos.y - radiusY);
@@ -69,7 +69,7 @@ public class CaveWorm {
         }
     }
 
-    public void carveSphere(ChunkData grid, Vector3i pos, float radius) throws IllegalChunkAccessExecption {
+    public void carveSphere(ChunkData grid, Vector3i pos, float radius) throws IllegalChunkAccessException {
         int minY = (int) (pos.y - radius);
         int maxY = (int) (pos.y + radius);
 
@@ -103,7 +103,7 @@ public class CaveWorm {
         }
     }
 
-    public void carve(ChunkData data, int steps) throws IllegalChunkAccessExecption {
+    public void carve(ChunkData data, int steps) throws IllegalChunkAccessException {
         for (int i = 0; i < steps; i++) {
             step();
 

@@ -101,7 +101,7 @@ public class ProgressBar extends UpdatableUI {
 
     public static class ProgressBarBuilder extends UIBuilder<ProgressBar> {
         public ProgressBarBuilder(Screen renderer, FontRenderer fontRenderer, RGB color) {
-            super(renderer.getUIBatchRenderer(), new ProgressBar(renderer, fontRenderer, color, 10));
+            super(new ProgressBar(renderer, fontRenderer, color, 10));
         }
 
         public ProgressBarBuilder max(int max) {

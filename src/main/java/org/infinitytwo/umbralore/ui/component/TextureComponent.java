@@ -77,7 +77,7 @@ public class TextureComponent extends UI implements Component {
 
     public static class Builder extends UIBuilder<TextureComponent> {
         public Builder(UIBatchRenderer renderer, TextureAtlas atlas, int index) {
-            super(renderer, new TextureComponent(index,atlas,renderer));
+            super(new TextureComponent(index,atlas,renderer));
         }
 
         @Override

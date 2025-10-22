@@ -2,6 +2,7 @@ package org.infinitytwo.umbralore.registry;
 
 import org.infinitytwo.umbralore.block.BlockType;
 import org.infinitytwo.umbralore.exception.IllegalDataTypeException;
+import org.infinitytwo.umbralore.exception.UnknownRegistryException;
 
 import java.lang.annotation.*;
 import java.lang.reflect.Field;
@@ -65,6 +66,7 @@ public class BlockRegistry {
     }
 
     public BlockType get(int id) {
+        if (idToBlock.get(id) == null) throw new UnknownRegistryException("Couldn't find a registry with id: "+id);
         return idToBlock.get(id);
     }
 

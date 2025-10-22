@@ -16,7 +16,7 @@ import org.infinitytwo.umbralore.event.input.CharacterInputEvent;
 import org.infinitytwo.umbralore.event.input.KeyPressEvent;
 import org.infinitytwo.umbralore.event.input.MouseButtonEvent;
 import org.infinitytwo.umbralore.event.state.WindowResizedEvent; // ADDED: Import for the explicit resize call
-import org.infinitytwo.umbralore.exception.IllegalChunkAccessExecption;
+import org.infinitytwo.umbralore.exception.IllegalChunkAccessException;
 import org.infinitytwo.umbralore.item.Item;
 import org.infinitytwo.umbralore.logging.Logger;
 import org.infinitytwo.umbralore.model.TextureAtlas;
@@ -28,7 +28,6 @@ import org.infinitytwo.umbralore.registry.ResourceManager;
 import org.infinitytwo.umbralore.renderer.*;
 import org.infinitytwo.umbralore.ui.Screen;
 import org.infinitytwo.umbralore.ui.builtin.Background;
-import org.infinitytwo.umbralore.ui.builtin.Hotbar;
 import org.infinitytwo.umbralore.ui.builtin.InventoryViewer;
 import org.infinitytwo.umbralore.ui.input.TextInput;
 import org.infinitytwo.umbralore.ui.position.Anchor;
@@ -39,7 +38,6 @@ import org.joml.*;
 import org.lwjgl.opengl.GL20;
 
 import javax.swing.*;
-import java.io.File;
 import java.io.IOException;
 import java.lang.Math;
 import java.net.UnknownHostException;
@@ -110,7 +108,6 @@ public class Main {
     public static void main(String[] args) {
         Display.enable();
         Display.init();
-        launchConsole();
 
         Thread.currentThread().setName("Renderer Thread");
         CrashHandler crashHandler = new CrashHandler();
@@ -192,7 +189,7 @@ public class Main {
                             block.setPosition(pos.x, pos.y, pos.z);
                             try {
                                 map.placeBlock(block);
-                            } catch (IllegalChunkAccessExecption e) {
+                            } catch (IllegalChunkAccessException e) {
                                 throw new RuntimeException(e);
                             }
                         }
@@ -202,7 +199,7 @@ public class Main {
                     if (hit != null) {
                         try {
                             map.removeBlock(hit.blockPos());
-                        } catch (IllegalChunkAccessExecption e) {
+                        } catch (IllegalChunkAccessException e) {
                             throw new RuntimeException(e);
                         }
                     }
@@ -222,7 +219,6 @@ public class Main {
     }
 
     private static void applyPhysics(double fixedDelta) {
-//        player.savePrevPosition();
         player.update((float) fixedDelta);
     }
 
@@ -407,7 +403,7 @@ public class Main {
         networkThread.start();
 
         try {
-            Thread.sleep(50);
+            Thread.sleep(500);
         } catch (InterruptedException e) {
             throw new RuntimeException(e);
         }
@@ -503,24 +499,25 @@ public class Main {
     }
 
     private static void getChunk(Vector2i pos) {
-        ChunkData data = serverThread.getCurrentWorld().getChunkOrGenerate(pos);
+        ChunkData data = serverThread.getCurrentWorld().getChunkOrGenerate(pos); // From ServerProcedureGridMap
         for (int id : registry.getIds()) {
             if (registry.get(id) instanceof ServerBlockType) {
                 throw new RuntimeException("Somehow registry is server-side...");
             }
         }
-//        if (data == null) return;
+        if (data == null) return;
 
         // This ensures all modifications to the GridMap are synchronized.
-        dispatchTask(() -> {
+        // Disabled temporary
+//        dispatchTask(() -> {
             Chunk chunk = null;
             try {
-                chunk = Chunk.of(data, map, shaderProgram, atlas, registry);
-            } catch (IllegalChunkAccessExecption e) {
+                chunk = Chunk.of(data, map, shaderProgram, atlas, registry); // Passed ChunkData from ServerProcedureGridMap
+            } catch (IllegalChunkAccessException e) {
 
             }
             map.addChunk(chunk);
-        });
+//        });
     }
 
     protected static void cleanup() {
@@ -551,13 +548,11 @@ public class Main {
     }
 
     public static void dispatchTask(Runnable task) {
-        tasks.add(task);
+        WorkerThreads.dispatch(task);
     }
 
     private static void runTasks() {
-        while (!tasks.isEmpty()) {
-            tasks.poll().run();
-        }
+        WorkerThreads.run();
     }
 
     public static GridMap getGridMap() {

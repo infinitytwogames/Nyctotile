@@ -148,4 +148,8 @@ public class Camera {
     public void follow(Vector3f position, Vector3f offset) {
         this.position.set(position).add(offset);
     }
+
+    public double getPov() {
+        return POV;
+    }
 }

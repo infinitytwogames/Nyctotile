@@ -1,10 +1,12 @@
 package org.infinitytwo.umbralore.renderer;
 
+import org.infinitytwo.umbralore.ChunkManager;
 import org.infinitytwo.umbralore.Window;
+import org.infinitytwo.umbralore.WorkerThreads;
 import org.infinitytwo.umbralore.block.BlockType;
 import org.infinitytwo.umbralore.data.ChunkData;
 import org.infinitytwo.umbralore.data.buffer.NFloatBuffer;
-import org.infinitytwo.umbralore.exception.IllegalChunkAccessExecption;
+import org.infinitytwo.umbralore.exception.IllegalChunkAccessException;
 import org.infinitytwo.umbralore.model.TextureAtlas;
 import org.infinitytwo.umbralore.registry.BlockRegistry;
 import org.infinitytwo.umbralore.world.GridMap;
@@ -66,7 +68,7 @@ public class Chunk {
         nBuffer = new NFloatBuffer();
     }
 
-    private int getIndex(int x, int y, int z) {
+    private static int getIndex(int x, int y, int z) {
         return (x * SIZE_Y * SIZE_Z) + (y * SIZE_Z) + z;
     }
 
@@ -74,40 +76,42 @@ public class Chunk {
         return x >= 0 && x < SIZE_X && y >= 0 && y < SIZE_Y && z >= 0 && z < SIZE_Z;
     }
 
-    public void setBlock(int x, int y, int z, int blockId, boolean generator) throws IllegalChunkAccessExecption {
+    public void setBlock(int x, int y, int z, int blockId, boolean generator) throws IllegalChunkAccessException {
         if (inBounds(x, y, z)) {
-            blocks[getIndex(x, y, z)] = blockId;
+            blocks[getIndex(x, y, z)]=blockId;
             isDirty = true;
             if (x == 0 || x == SIZE_X - 1 ||
                     z == 0 || z == SIZE_Z - 1) {
                 if (!generator) notifyNeighboringChunks(x, y, z);
             }
         } else {
-            throw new IllegalChunkAccessExecption("Block position out of chunk bounds");
+            throw new IllegalChunkAccessException("Block position out of chunk bounds");
         }
     }
 
-    public void setData(int x, int y, int z, byte[] data) throws IllegalChunkAccessExecption {
+    public void setData(int x, int y, int z, byte[] data) throws IllegalChunkAccessException {
         if (inBounds(x, y, z)) blockData.replace(new Vector3i(x, y, z), data);
-        else throw new IllegalChunkAccessExecption("Position (" + x + ", " + y + ", " + z + ") is out of bounds");
+        else throw new IllegalChunkAccessException("Position (" + x + ", " + y + ", " + z + ") is out of bounds");
     }
 
-    public void setData(Vector3i pos, byte[] data) throws IllegalChunkAccessExecption {
+    public void setData(Vector3i pos, byte[] data) throws IllegalChunkAccessException {
         if (inBounds(pos.x, pos.y, pos.z)) blockData.replace(new Vector3i(pos), data);
-        else throw new IllegalChunkAccessExecption("Position (" + pos.x + ", " + pos.y + ", " + pos.z + ") is out of bounds");
+        else
+            throw new IllegalChunkAccessException("Position (" + pos.x + ", " + pos.y + ", " + pos.z + ") is out of bounds");
     }
 
-    public byte[] getData(int x, int y, int z) throws IllegalChunkAccessExecption {
+    public byte[] getData(int x, int y, int z) throws IllegalChunkAccessException {
         if (inBounds(x, y, z)) return blockData.get(new Vector3i(x, y, z));
-        else throw new IllegalChunkAccessExecption("Position (" + x + ", " + y + ", " + z + ") is out of bounds");
+        else throw new IllegalChunkAccessException("Position (" + x + ", " + y + ", " + z + ") is out of bounds");
     }
 
-    public byte[] getData(Vector3i pos) throws IllegalChunkAccessExecption {
+    public byte[] getData(Vector3i pos) throws IllegalChunkAccessException {
         if (inBounds(pos.x, pos.y, pos.z)) return blockData.get(pos);
-        else throw new IllegalChunkAccessExecption("Position (" + pos.x + ", " + pos.y + ", " + pos.z + ") is out of bounds");
+        else
+            throw new IllegalChunkAccessException("Position (" + pos.x + ", " + pos.y + ", " + pos.z + ") is out of bounds");
     }
 
-    public void setBlock(int x, int y, int z, int blockId) throws IllegalChunkAccessExecption {
+    public void setBlock(int x, int y, int z, int blockId) throws IllegalChunkAccessException {
         setBlock(x, y, z, blockId, false);
     }
 
@@ -121,7 +125,8 @@ public class Chunk {
     }
 
     public int getBlockId(int x, int y, int z) {
-        return inBounds(x, y, z) ? blocks[getIndex(x, y, z)] : 0;
+        if (!inBounds(x, y, z)) return 0;
+        return blocks[getIndex(x, y, z)];
     }
 
     private void setupMeshBuffers() {
@@ -134,21 +139,26 @@ public class Chunk {
     }
 
     public void buildMeshData() {
-        nBuffer.reset();
+        isDirty = false;
+        ChunkManager.run(() -> {
+            nBuffer.reset();
 
-        for (int x = 0; x < SIZE_X; x++) {
-            for (int y = 0; y < SIZE_Y; y++) {
-                for (int z = 0; z < SIZE_Z; z++) {
-                    int id = getBlockId(x, y, z);
-                    if (id == 0) continue;
+            for (int x = 0; x < SIZE_X; x++) {
+                for (int y = 0; y < SIZE_Y; y++) {
+                    for (int z = 0; z < SIZE_Z; z++) {
+                        int id = getBlockId(x, y, z);
+                        if (id == 0) continue;
 
-                    BlockType type = registry.get(id);
-                    if (type == null) continue;
+                        BlockType type = registry.get(id);
+                        if (type == null) continue;
 
-                    type.buildModel(gridMap,GridMap.convertToWorldPosition(chunkPos,x,y,z),atlas,registry, nBuffer);
+                        type.buildModel(gridMap, GridMap.convertToWorldPosition(chunkPos, x, y, z), atlas, registry, nBuffer);
+                    }
                 }
             }
-        }
+
+            WorkerThreads.dispatch(this::uploadMesh);
+        });
     }
 
     private void uploadMesh() {
@@ -245,18 +255,17 @@ public class Chunk {
 
     public void rebuild() {
         buildMeshData();
-        uploadMesh();
     }
 
     public void dirty() {
         isDirty = true;
     }
 
-    public void setBlock(Vector3i pos, int id, boolean generator) throws IllegalChunkAccessExecption {
+    public void setBlock(Vector3i pos, int id, boolean generator) throws IllegalChunkAccessException {
         setBlock(pos.x, pos.y, pos.z, id, generator);
     }
 
-    public void setBlock(Vector3i pos, int id) throws IllegalChunkAccessExecption {
+    public void setBlock(Vector3i pos, int id) throws IllegalChunkAccessException {
         setBlock(pos, id, false);
     }
 
@@ -264,18 +273,12 @@ public class Chunk {
         return isDirty;
     }
 
-    public static Chunk of(ChunkData data, GridMap map, ShaderProgram program, TextureAtlas atlas, BlockRegistry registry) throws IllegalChunkAccessExecption {
+    public static Chunk of(ChunkData data, GridMap map, ShaderProgram program, TextureAtlas atlas, BlockRegistry registry) throws IllegalChunkAccessException {
         Chunk chunk = new Chunk(data.position, program, atlas, map, registry);
-        for (int x = 0; x < SIZE_X; x++) {
-            for (int y = 0; y < SIZE_Y; y++) {
-                for (int z = 0; z < SIZE_Z; z++) {
-                    int id = data.getBlockId(x, y, z);
-                    if (id != 0) { // assuming 0 = air or empty
-                        chunk.setBlock(x, y, z, id);
-                    }
-                }
-            }
-        }
+        int[] sourceBlocks = data.getBlockIds();
+        System.arraycopy(sourceBlocks, 0, chunk.blocks, 0, chunk.blocks.length);
+
+        chunk.dirty();
         return chunk;
     }
 

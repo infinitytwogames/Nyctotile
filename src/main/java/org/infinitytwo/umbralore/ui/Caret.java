@@ -71,7 +71,7 @@ public class Caret extends UpdatableUI {
 
     public static class CaretBuilder extends UIBuilder<Caret> {
         public CaretBuilder(UIBatchRenderer renderer, int height) {
-            super(renderer, new Caret(renderer, height));
+            super(new Caret(renderer, height));
         }
 
         public CaretBuilder active(boolean active) {

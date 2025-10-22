@@ -2,7 +2,6 @@ package org.infinitytwo.umbralore.ui.builder;
 
 import org.infinitytwo.umbralore.IBuilder;
 import org.infinitytwo.umbralore.RGBA;
-import org.infinitytwo.umbralore.renderer.UIBatchRenderer;
 import org.infinitytwo.umbralore.ui.UI;
 import org.infinitytwo.umbralore.ui.position.Anchor;
 import org.infinitytwo.umbralore.ui.position.Pivot;
@@ -11,7 +10,7 @@ import org.joml.Vector2i;
 public abstract class UIBuilder<T extends UI> implements IBuilder<T> {
     protected T ui;
 
-    public UIBuilder(UIBatchRenderer renderer, T element) {
+    public UIBuilder(T element) {
         ui = element;
     }
 

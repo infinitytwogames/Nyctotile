@@ -37,7 +37,7 @@ public class Rectangle extends UI {
 
     public static class RectBuilder extends UIBuilder<Rectangle> {
         public RectBuilder(UIBatchRenderer renderer) {
-            super(renderer, new Rectangle(renderer));
+            super(new Rectangle(renderer));
         }
 
         @Override

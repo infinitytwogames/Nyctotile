@@ -118,7 +118,7 @@ public abstract class Label extends UI {
 
     public static class LabelBuilder<T extends Label> extends UIBuilder<T> {
         public LabelBuilder(UIBatchRenderer renderer, T element) {
-            super(renderer, element);
+            super(element);
         }
 
         public UIBuilder<T> textPosition(Anchor anchor, Pivot pivot, Vector2i offset) {

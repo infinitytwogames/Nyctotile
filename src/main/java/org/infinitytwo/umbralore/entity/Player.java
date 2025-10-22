@@ -100,7 +100,6 @@ public class Player extends Entity {
         camera.setPosition(position.x,position.y + 1.67f,position.z);
     }
 
-    @Override
     public void draw() {
         outline.renderAABB(hitbox.offset(position),camera,window,color);
     }

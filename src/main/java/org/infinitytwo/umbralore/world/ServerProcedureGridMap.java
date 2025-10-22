@@ -1,7 +1,8 @@
 package org.infinitytwo.umbralore.world;
 
+import org.infinitytwo.umbralore.WorkerThreads;
 import org.infinitytwo.umbralore.data.ChunkData;
-import org.infinitytwo.umbralore.exception.IllegalChunkAccessExecption;
+import org.infinitytwo.umbralore.exception.IllegalChunkAccessException;
 import org.infinitytwo.umbralore.logging.Logger;
 import org.infinitytwo.umbralore.registry.BlockRegistry;
 import org.infinitytwo.umbralore.world.generation.Biome;
@@ -11,10 +12,7 @@ import org.joml.Vector2i;
 import personthecat.fastnoise.FastNoise;
 
 import java.util.*;
-import java.util.concurrent.ConcurrentLinkedQueue;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import java.util.concurrent.Future;
+import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicInteger;
 
 public class ServerProcedureGridMap extends ServerGridMap {
@@ -124,15 +122,19 @@ public class ServerProcedureGridMap extends ServerGridMap {
                         if (y > height) {
                             continue;
                         } else if (y == height) {
-                            data.setBlock(localX, y, localZ, (short) Math.round(blendedTop));
+                            validate(Math.round(blendedTop));
+                            data.setBlock(localX, y, localZ, Math.round(blendedTop));
                         } else if (y >= height - 3) {
-                            data.setBlock(localX, y, localZ, (short) Math.round(blendedSoil));
+                            validate(Math.round(blendedSoil));
+                            data.setBlock(localX, y, localZ, Math.round(blendedSoil));
                         } else if (y == 0) {
-                            data.setBlock(localX, y, localZ, (short) 4);
+                            validate(4);
+                            data.setBlock(localX, y, localZ, 4);
                         } else {
-                            data.setBlock(localX, y, localZ, (short) Math.round(blendedRocky));
+                            validate(Math.round(blendedRocky));
+                            data.setBlock(localX, y, localZ, Math.round(blendedRocky));
                         }
-                    } catch (IllegalChunkAccessExecption e) {
+                    } catch (IllegalChunkAccessException e) {
                         throw new RuntimeException(e);
                     }
 
@@ -156,7 +158,16 @@ public class ServerProcedureGridMap extends ServerGridMap {
         logger.info("Generated x:"+GenChunk.x() * 16+" y:"+GenChunk.z() *16);
     }
 
-    private void carveWormPath(ChunkData data, CaveWorm worm) throws IllegalChunkAccessExecption {
+    private void validate(int id) { // Only used for debugging
+        if (id == 0) return;
+        try {
+            registry.get(id);
+        } catch (Exception e) {
+            WorkerThreads.dispatch(() -> {throw new RuntimeException(e);});
+        }
+    }
+
+    private void carveWormPath(ChunkData data, CaveWorm worm) throws IllegalChunkAccessException {
         int steps = 80 + random.nextInt(60); // random tunnel length (80–140)
         float baseRadius = worm.radius;
 
@@ -242,10 +253,8 @@ public class ServerProcedureGridMap extends ServerGridMap {
 
             // Wait for the task to complete and return the generated chunk data
             return future.get(); // This will block until the task is done
-        } catch (Exception e) {
-            logger.error(e,"Failed to generate and retrieve chunk");
-
-            return null;
+        } catch (ExecutionException | InterruptedException e) {
+            throw new RuntimeException(e);
         }
     }
 

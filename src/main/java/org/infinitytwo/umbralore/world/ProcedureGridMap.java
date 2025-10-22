@@ -2,7 +2,7 @@ package org.infinitytwo.umbralore.world;
 
 import org.infinitytwo.umbralore.Window;
 import org.infinitytwo.umbralore.data.ChunkData;
-import org.infinitytwo.umbralore.exception.IllegalChunkAccessExecption;
+import org.infinitytwo.umbralore.exception.IllegalChunkAccessException;
 import org.infinitytwo.umbralore.logging.Logger;
 import org.infinitytwo.umbralore.model.TextureAtlas;
 import org.infinitytwo.umbralore.registry.BlockRegistry;
@@ -132,7 +132,7 @@ public class ProcedureGridMap extends GridMap {
                         } else {
                             data.setBlock(localX, y, localZ, (short) Math.round(blendedRocky));
                         }
-                    } catch (IllegalChunkAccessExecption e) {
+                    } catch (IllegalChunkAccessException e) {
                         throw new RuntimeException(e);
                     }
                 }

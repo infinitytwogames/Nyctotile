@@ -5,8 +5,8 @@ import org.infinitytwo.umbralore.block.Block;
 import org.infinitytwo.umbralore.data.AABB;
 import org.infinitytwo.umbralore.data.Inventory;
 import org.infinitytwo.umbralore.item.Item;
-import org.infinitytwo.umbralore.model.Model;
 import org.infinitytwo.umbralore.world.GridMap;
+import org.joml.Matrix4f;
 import org.joml.Vector3f;
 
 public abstract class Entity {
@@ -19,10 +19,11 @@ public abstract class Entity {
     protected GridMap world;
     protected Inventory inventory;
     private boolean isGrounded = false;
-    protected Model model;
-    private Vector3f prevPos = position;
+    protected int modelIndex;
     protected float movementSpeed = 7;
     protected float jumpStrength = 7.2f;
+    private Vector3f scale;
+    private Vector3f rotation;
 
     protected Entity(String id, GridMap map, Window window, Inventory inventory) {
         this.id = id;
@@ -47,12 +48,12 @@ public abstract class Entity {
         inventory.add(slot,change);
     }
 
-    public Model getModel() {
-        return model;
+    public int getModelIndex() {
+        return modelIndex;
     }
 
-    public void setModel(Model model) {
-        this.model = model;
+    public void setModelIndex(int modelIndex) {
+        this.modelIndex = modelIndex;
     }
 
     public void setItem(int slot, Item item) {
@@ -86,13 +87,6 @@ public abstract class Entity {
     public boolean isInventoryEmpty() {
         return inventory.isEmpty();
     }
-
-    public abstract void draw();
-
-    // Implement the collision detection here.
-    // Note: This is a voxel game. GridMap here means my world.
-    // How to use GridMap: You can get block by using GridMap.getBlock(int x, int y, int z)
-    // For now, let's assume every cube is a solid "new AABB(0,0,0,1,1,1);"
 
     public void update(float deltaTime) {
         // Reset grounded state
@@ -129,6 +123,7 @@ public abstract class Entity {
                     Block block = world.getBlock(x, y, z);
                     if (block == null) continue;
 
+                    if (block.getType() == null) throw new IllegalStateException("Somehow, the block at "+x+" "+y+" "+z+" has undefined block type");
                     for (AABB blockBox : block.getType().getBoundingBoxes()) {
                         // Convert block-local AABB to world coords
                         AABB worldBox = blockBox.offset(x, y, z);
@@ -178,22 +173,76 @@ public abstract class Entity {
 
     public void setPosition(float x, float y, float z) {
         position.set(x,y,z);
-        prevPos.set(x,y,z);
-    }
-
-    public void savePrevPosition() {
-        prevPos.set(position);
     }
 
     public void setPosition(Vector3f pos) {
         setPosition(pos.x, pos.y, pos.z);
     }
 
-    public Vector3f getPrevPosition() {
-        return prevPos;
-    }
-
     public AABB getHitbox() {
         return hitbox;
+    }
+
+    public Vector3f getRotation() {
+        return rotation;
+    }
+
+    public void setRotation(Vector3f rotation) {
+        this.rotation = rotation;
+    }
+
+    public Vector3f getScale() {
+        return scale;
+    }
+
+    public void setScale(Vector3f scale) {
+        this.scale = scale;
+    }
+
+    public Vector3f getVelocity() {
+        return velocity;
+    }
+
+    public void setVelocity(Vector3f velocity) {
+        this.velocity = velocity;
+    }
+
+    public float getGravity() {
+        return gravity;
+    }
+
+    public void setGravity(float gravity) {
+        this.gravity = gravity;
+    }
+
+    public GridMap getWorld() {
+        return world;
+    }
+
+    public void setWorld(GridMap world) {
+        this.world = world;
+    }
+
+    public float getMovementSpeed() {
+        return movementSpeed;
+    }
+
+    public void setMovementSpeed(float movementSpeed) {
+        this.movementSpeed = movementSpeed;
+    }
+
+    public float getJumpStrength() {
+        return jumpStrength;
+    }
+
+    public void setJumpStrength(float jumpStrength) {
+        this.jumpStrength = jumpStrength;
+    }
+
+    public Matrix4f getModelMatrix() {
+        return new Matrix4f()
+                .translate(position)
+                .rotateXYZ(rotation.x, rotation.y, rotation.z)
+                .scale(scale);
     }
 }

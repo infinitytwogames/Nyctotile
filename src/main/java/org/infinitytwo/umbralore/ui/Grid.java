@@ -107,7 +107,7 @@ public abstract class Grid extends UI {
     public static class Builder<T extends Grid> extends UIBuilder<T> {
 
         public Builder(UIBatchRenderer renderer, T element) {
-            super(renderer, element);
+            super(element);
         }
 
         public Builder<T> rows(int rows) { ui.rows = rows; return this; }

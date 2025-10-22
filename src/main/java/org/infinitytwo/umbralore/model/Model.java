@@ -1,75 +1,88 @@
 package org.infinitytwo.umbralore.model;
 
+import org.infinitytwo.umbralore.data.buffer.NFloatBuffer;
 import org.joml.Vector3i;
 
-import java.util.ArrayList;
+import java.nio.FloatBuffer;
 
-public class Model {
-    protected ArrayList<Float> vertices = new ArrayList<>(), normals = new ArrayList<>();
+public class Model implements AutoCloseable {
+    protected NFloatBuffer vertices = new NFloatBuffer(), normals = new NFloatBuffer();
 
     public void vertex(float x, float y, float z) {
-        vertices.add(x);
-        vertices.add(y);
-        vertices.add(z);
+        vertices.put(x);
+        vertices.put(y);
+        vertices.put(z);
     }
 
     public float[] toArray() {
-        float[] arr = new float[vertices.size()];
-        for (int i = 0; i < vertices.size(); i++) arr[i] = vertices.get(i);
-        return arr;
+        return vertices.array();
     }
 
     public void uv(float x, float y, float brightness) {
-        vertices.add(x); vertices.add(y);
-        vertices.add(brightness);
+        vertices.put(x); vertices.put(y);
+        vertices.put(brightness);
     }
 
     public void normal(float x, float y, float z) {
-        normals.add(x);normals.add(y);normals.add(z);
+        normals.put(x);normals.put(y);normals.put(z);
     }
 
-    public ArrayList<Float> getVertices() {
-        return vertices;
+    public FloatBuffer getVertices() {
+        return vertices.getBuffer();
     }
 
-    public void getVertices(ArrayList<Float> buffer) {
-        buffer.addAll(getVertices());
+    public void getVertices(NFloatBuffer buffer) {
+        buffer.put(getVertices());
     }
 
-    public void getVertices(TextureAtlas atlas, int textureCoords, Vector3i pos,  ArrayList<Float> data) {
+    public void getVertices(TextureAtlas atlas, int textureCoords, Vector3i pos,  NFloatBuffer data) {
         getVertices(atlas.getUVCoords(textureCoords),pos,data);
     }
 
-    public void getVertices(float[] uvs, Vector3i pos, ArrayList<Float> data) {
+    public void getVertices(float[] uvs, Vector3i pos, NFloatBuffer data) {
         getVertices(uvs,pos.x, pos.y, pos.z, data);
     }
 
-    public ArrayList<Float> getVertices(TextureAtlas atlas, int texture, Vector3i pos) {
-        ArrayList<Float> f = new ArrayList<>();
-        getVertices(atlas,texture,pos,f);
-        return f;
-    }
-
-    public void getVertices(float[] uvs, int x, int y, int z, ArrayList<Float> data) {
+    public void getVertices(float[] uvs, int x, int y, int z, NFloatBuffer data) {
         // [ x, y, z, u, v, brightness ]
         int vertexCount = vertices.size() / 6;
         for (int i = 0; i < vertexCount; i++) {
-            data.add(vertices.get(i * 6) + x);     // x
-            data.add(vertices.get(i * 6 + 1) + y); // y
-            data.add(vertices.get(i * 6 + 2) + z); // z
+            data.put(vertices.get(i * 6) + x);     // x
+            data.put(vertices.get(i * 6 + 1) + y); // y
+            data.put(vertices.get(i * 6 + 2) + z); // z
 
             float uOrig = vertices.get(i * 6 + 3);
             float vOrig = vertices.get(i * 6 + 4);
             float u = uvs[0] + uOrig * (uvs[2] - uvs[0]);
             float v = uvs[1] + vOrig * (uvs[3] - uvs[1]);
 
-            data.add(u);
-            data.add(v);
-            data.add(vertices.get(i * 6 + 5)); // brightness
+            data.put(u);
+            data.put(v);
+            data.put(vertices.get(i * 6 + 5)); // brightness
         }
     }
 
-    public void getVertices(TextureAtlas atlas, int textureIndex, int x, int y, int z, ArrayList<Float> buffer) {
+    public void getVertices(TextureAtlas atlas, int textureIndex, int x, int y, int z, NFloatBuffer buffer) {
         getVertices(atlas.getUVCoords(textureIndex),x,y,z,buffer);
+    }
+
+    public void setVertices(NFloatBuffer buffer) {
+        vertices.close();
+        vertices = buffer;
+    }
+
+    public void setVertices(FloatBuffer buffer) {
+        vertices.reset();
+        vertices.put(buffer);
+    }
+
+    public void cleanup() {
+        vertices.close();
+        normals.close();
+    }
+
+    @Override
+    public void close() {
+        cleanup();
     }
 }
