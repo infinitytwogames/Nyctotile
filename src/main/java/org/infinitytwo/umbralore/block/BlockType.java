@@ -1,10 +1,10 @@
 package org.infinitytwo.umbralore.block;
 
-import org.infinitytwo.umbralore.data.AABB;
-import org.infinitytwo.umbralore.data.buffer.NFloatBuffer;
-import org.infinitytwo.umbralore.model.TextureAtlas;
-import org.infinitytwo.umbralore.registry.BlockRegistry;
-import org.infinitytwo.umbralore.world.GridMap;
+import org.infinitytwo.umbralore.core.data.AABB;
+import org.infinitytwo.umbralore.core.data.buffer.NFloatBuffer;
+import org.infinitytwo.umbralore.core.model.TextureAtlas;
+import org.infinitytwo.umbralore.core.registry.BlockRegistry;
+import org.infinitytwo.umbralore.core.world.GridMap;
 import org.joml.Vector3i;
 
 import java.util.List;

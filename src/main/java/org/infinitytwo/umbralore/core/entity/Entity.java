@@ -1,0 +1,248 @@
+package org.infinitytwo.umbralore.core.entity;
+
+import org.infinitytwo.umbralore.core.Window;
+import org.infinitytwo.umbralore.core.data.Block;
+import org.infinitytwo.umbralore.core.data.AABB;
+import org.infinitytwo.umbralore.core.data.Inventory;
+import org.infinitytwo.umbralore.core.data.Item;
+import org.infinitytwo.umbralore.core.world.GridMap;
+import org.joml.Matrix4f;
+import org.joml.Vector3f;
+
+public abstract class Entity {
+    protected final String id;
+    protected final Window window;
+    protected AABB hitbox = new AABB(0,0,0,0,0,0); // Local-space AABB size
+    protected Vector3f velocity = new Vector3f(); // But we also have this...
+    protected Vector3f position = new Vector3f();
+    protected float gravity = -22.7f; // Increased gravity for a more noticeable effect (original -0.08f was too small)
+    protected GridMap world;
+    protected Inventory inventory;
+    private boolean isGrounded = false;
+    protected int modelIndex;
+    protected float movementSpeed = 7;
+    protected float jumpStrength = 7.2f;
+    private Vector3f scale;
+    private Vector3f rotation;
+
+    protected Entity(String id, GridMap map, Window window, Inventory inventory) {
+        this.id = id;
+        this.world = map;
+        this.window = window;
+        this.inventory = inventory;
+    }
+
+    public Inventory getInventory() {
+        return inventory;
+    }
+
+    public int giveItem(Item item) {
+        return inventory.add(item);
+    }
+
+    public void removeItem(int slot) {
+        inventory.remove(slot);
+    }
+
+    public void addItem(int slot, int change) {
+        inventory.add(slot,change);
+    }
+
+    public int getModelIndex() {
+        return modelIndex;
+    }
+
+    public void setModelIndex(int modelIndex) {
+        this.modelIndex = modelIndex;
+    }
+
+    public void setItem(int slot, Item item) {
+        inventory.set(slot, item);
+    }
+
+    public int addItem(Item item) {
+        return inventory.add(item);
+    }
+
+    public void remove(int slot) {
+        inventory.remove(slot);
+    }
+
+    public int getItemCount(int slot) {
+        return inventory.getCount(slot);
+    }
+
+    public int getMaxSlots() {
+        return inventory.getMaxSlots();
+    }
+
+    public boolean isInventoryFull() {
+        return inventory.isFull();
+    }
+
+    public void clearInventory() {
+        inventory.clear();
+    }
+
+    public boolean isInventoryEmpty() {
+        return inventory.isEmpty();
+    }
+
+    public void update(float deltaTime) {
+        // Reset grounded state
+        isGrounded = false;
+
+        // Apply gravity
+        velocity.y += gravity * deltaTime;
+
+        // Move axis by axis
+        moveAxis(velocity.x * deltaTime, 0, 0);
+        moveAxis(0, velocity.y * deltaTime, 0);
+        moveAxis(0, 0, velocity.z * deltaTime);
+    }
+
+    protected void moveAxis(float dx, float dy, float dz) {
+        float moveX = dx;
+        float moveY = dy;
+        float moveZ = dz;
+
+        // Check blocks around entity
+        AABB base = hitbox.offset(position.x, position.y, position.z); // how do i render this in real time?
+
+        int minX = (int)Math.floor(base.minX + dx);
+        int minY = (int)Math.floor(base.minY + dy);
+        int minZ = (int)Math.floor(base.minZ + dz);
+
+        int maxX = (int)Math.floor(base.maxX + dx);
+        int maxY = (int)Math.floor(base.maxY + dy);
+        int maxZ = (int)Math.floor(base.maxZ + dz);
+
+        for (int x = minX; x <= maxX; x++) {
+            for (int y = minY; y <= maxY; y++) {
+                for (int z = minZ; z <= maxZ; z++) {
+                    Block block = world.getBlock(x, y, z);
+                    if (block == null) continue;
+
+                    if (block.getType() == null) throw new IllegalStateException("Somehow, the block at "+x+" "+y+" "+z+" has undefined block type");
+                    for (AABB blockBox : block.getType().getBoundingBoxes()) {
+                        // Convert block-local AABB to world coords
+                        AABB worldBox = blockBox.offset(x, y, z);
+
+                        // Entity’s attempted new box
+                        AABB moved = hitbox.offset(position.x + moveX, position.y + moveY, position.z + moveZ);
+
+                        if (!moved.isIntersecting(worldBox)) continue;
+
+                        if (dx != 0) {
+                            if (dx > 0) moveX = Math.min(moveX, worldBox.minX - base.maxX - 0.0001f);
+                            else        moveX = Math.max(moveX, worldBox.maxX - base.minX + 0.0001f);
+                            velocity.x = 0;
+                        }
+                        if (dy != 0) {
+                            if (dy > 0) moveY = Math.min(moveY, worldBox.minY - base.maxY - 0.0001f);
+                            else {
+                                moveY = Math.max(moveY, worldBox.maxY - base.minY + 0.0001f);
+                                if (velocity.y < 0) isGrounded = true; // only if falling
+                            }
+                            velocity.y = 0;
+                        }
+                        if (dz != 0) {
+                            if (dz > 0) moveZ = Math.min(moveZ, worldBox.minZ - base.maxZ - 0.0001f);
+                            else        moveZ = Math.max(moveZ, worldBox.maxZ - base.minZ + 0.0001f);
+                            velocity.z = 0;
+                        }
+
+                        // Refresh base AABB after resolving
+//                        base = hitbox.offset(position.x + moveX, position.y + moveY, position.z + moveZ);
+                    }
+                }
+            }
+        }
+
+        // Apply final resolved movement
+        position.add(moveX, moveY, moveZ);
+    }
+
+    public boolean isGrounded() {
+        return isGrounded;
+    }
+
+    public Vector3f getPosition() {
+        return position;
+    }
+
+    public void setPosition(float x, float y, float z) {
+        position.set(x,y,z);
+    }
+
+    public void setPosition(Vector3f pos) {
+        setPosition(pos.x, pos.y, pos.z);
+    }
+
+    public AABB getHitbox() {
+        return hitbox;
+    }
+
+    public Vector3f getRotation() {
+        return rotation;
+    }
+
+    public void setRotation(Vector3f rotation) {
+        this.rotation = rotation;
+    }
+
+    public Vector3f getScale() {
+        return scale;
+    }
+
+    public void setScale(Vector3f scale) {
+        this.scale = scale;
+    }
+
+    public Vector3f getVelocity() {
+        return velocity;
+    }
+
+    public void setVelocity(Vector3f velocity) {
+        this.velocity = velocity;
+    }
+
+    public float getGravity() {
+        return gravity;
+    }
+
+    public void setGravity(float gravity) {
+        this.gravity = gravity;
+    }
+
+    public GridMap getWorld() {
+        return world;
+    }
+
+    public void setWorld(GridMap world) {
+        this.world = world;
+    }
+
+    public float getMovementSpeed() {
+        return movementSpeed;
+    }
+
+    public void setMovementSpeed(float movementSpeed) {
+        this.movementSpeed = movementSpeed;
+    }
+
+    public float getJumpStrength() {
+        return jumpStrength;
+    }
+
+    public void setJumpStrength(float jumpStrength) {
+        this.jumpStrength = jumpStrength;
+    }
+
+    public Matrix4f getModelMatrix() {
+        return new Matrix4f()
+                .translate(position)
+                .rotateXYZ(rotation.x, rotation.y, rotation.z)
+                .scale(scale);
+    }
+}

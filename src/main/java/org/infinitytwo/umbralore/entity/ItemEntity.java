@@ -1,12 +1,13 @@
 package org.infinitytwo.umbralore.entity;
 
-import org.infinitytwo.umbralore.Window;
-import org.infinitytwo.umbralore.data.Inventory;
-import org.infinitytwo.umbralore.data.buffer.NFloatBuffer;
-import org.infinitytwo.umbralore.model.Model;
-import org.infinitytwo.umbralore.model.builder.ModelBuilder;
-import org.infinitytwo.umbralore.registry.ModelRegistry;
-import org.infinitytwo.umbralore.world.GridMap;
+import org.infinitytwo.umbralore.core.Window;
+import org.infinitytwo.umbralore.core.data.Inventory;
+import org.infinitytwo.umbralore.core.data.buffer.NFloatBuffer;
+import org.infinitytwo.umbralore.core.entity.Entity;
+import org.infinitytwo.umbralore.core.model.Model;
+import org.infinitytwo.umbralore.core.model.builder.ModelBuilder;
+import org.infinitytwo.umbralore.core.registry.ModelRegistry;
+import org.infinitytwo.umbralore.core.world.GridMap;
 
 public class ItemEntity extends Entity {
     private static final int index;
