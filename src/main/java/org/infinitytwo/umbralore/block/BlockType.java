@@ -17,6 +17,7 @@ public abstract class BlockType {
     protected final boolean invisible;
     protected final String id;
     protected boolean collidable = true;
+    protected float friction = 1;
 
     public BlockType(String material, boolean invisible, String name, int textureIndex) {
         this.textureIndex = textureIndex;
@@ -66,4 +67,8 @@ public abstract class BlockType {
     }
 
     public abstract void buildModel(GridMap gridMap, int x, int y, int z, TextureAtlas atlas, BlockRegistry registry, NFloatBuffer buffer);
+
+    public float getFriction() {
+        return friction;
+    }
 }

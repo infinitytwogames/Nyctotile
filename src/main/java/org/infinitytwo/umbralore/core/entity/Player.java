@@ -70,14 +70,16 @@ public class Player extends Entity {
         if (Main.isKeyPressed(GLFW.GLFW_KEY_A)) move.sub(right);
 
         // Apply movement
-        if (move.lengthSquared() > 0) {
-            move.normalize().mul(movementSpeed);
-            velocity.x = move.x;
-            velocity.z = move.z;
-        } else {
-            velocity.x = lerp(velocity.x, 0, delta * 8f);
-            velocity.z = lerp(velocity.z, 0, delta * 8f);
-        }
+//        if (move.lengthSquared() > 0) {
+//            move.normalize().mul(movementSpeed);
+//            velocity.x = move.x;
+//            velocity.z = move.z;
+//        } else {
+//            velocity.x = lerp(velocity.x, 0, delta * 8f);
+//            velocity.z = lerp(velocity.z, 0, delta * 8f);
+//        }
+
+        velocity.add(move);
 
         // Jump
         if (Main.isKeyPressed(GLFW.GLFW_KEY_SPACE) && isGrounded()) {

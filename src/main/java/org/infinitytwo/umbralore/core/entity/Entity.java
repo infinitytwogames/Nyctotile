@@ -9,6 +9,8 @@ import org.infinitytwo.umbralore.core.world.GridMap;
 import org.joml.Matrix4f;
 import org.joml.Vector3f;
 
+import static org.joml.Math.lerp;
+
 public abstract class Entity {
     protected final String id;
     protected final Window window;
@@ -24,6 +26,7 @@ public abstract class Entity {
     protected float jumpStrength = 7.2f;
     private Vector3f scale = new Vector3f(1,1,1);
     private Vector3f rotation = new Vector3f();
+    private float airResistance = 7;
 
     protected Entity(String id, GridMap map, Window window, Inventory inventory) {
         this.id = id;
@@ -100,8 +103,12 @@ public abstract class Entity {
         // Reset grounded state
         isGrounded = false;
 
+        Block block = world.getBlock((int) position.x, (int) (position.y - 1), (int) position.z);
+        float friction = block == null? 1 : block.getType().getFriction();
         // Apply gravity
         velocity.y += gravity * deltaTime;
+        velocity.x = lerp(velocity.x, 0, deltaTime * (friction * airResistance));
+        velocity.z = lerp(velocity.z, 0, deltaTime * (friction * airResistance));
 
         // Move axis by axis
         moveAxis(velocity.x * deltaTime, 0, 0);

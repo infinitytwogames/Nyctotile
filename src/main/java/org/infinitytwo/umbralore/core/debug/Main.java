@@ -499,7 +499,7 @@ public class Main {
         Matrix4f ortho = new Matrix4f().ortho(0, window.getWidth(), window.getHeight(), 0, -1, 1);
 
         textRenderer.renderText(ortho, player.getPosition().toString(), new Vector2i(0, 24), new RGB(1f, 1f, 1f));
-        textRenderer.renderText(ortho, entity.getPosition().toString(), new Vector2i(0, 2 + 24 * 2), new RGB(1f, 1f, 1f));
+        textRenderer.renderText(ortho, player.getVelocity().toString(), new Vector2i(0, 2 + 24 * 2), new RGB(1f, 1f, 1f));
 
         camera.update((float) delta);
         player.handleInput((float) delta);
