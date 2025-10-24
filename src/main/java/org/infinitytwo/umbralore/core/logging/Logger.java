@@ -6,88 +6,118 @@ import org.infinitytwo.umbralore.core.renderer.CleanupManager;
 import org.infinitytwo.umbralore.core.exception.VerboseException;
 import org.infinitytwo.umbralore.core.ui.UI;
 
+import java.io.*;
 import java.lang.reflect.InvocationTargetException;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Path;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
+import java.time.format.DateTimeFormatterBuilder;
 
 public class Logger {
     private final String name;
+    private final FileOutputStream stream;
 
     public Logger(String processName) {
         this.name = processName;
+        String pattern = "yyyy-MM-dd HH:mm:ss.SSS";
+
+        File file = Path.of("logs",LocalDateTime.now().format(DateTimeFormatter.ofPattern(pattern))).toFile();
+        try {
+            stream = new FileOutputStream(file, true);
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
     }
 
-    public void info(String ...messages) {
-        System.out.println(format(LoggingLevel.INFO,messages));
+    private void log(String message) {
+        System.out.println(message);
+        try {
+            stream.write((message+"\n").getBytes(StandardCharsets.UTF_8));
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
     }
+
+    public void info(String... messages) {
+        log(format(LoggingLevel.INFO, messages));
+    }
+
     @SafeVarargs
     public final <T> void info(T... objects) {
-        System.out.println(formatObj(LoggingLevel.INFO,objects));
+        log(formatObj(LoggingLevel.INFO, objects));
     }
 
-    public void warn(String ...messages) {
-        System.out.println("\033[43m"+format(LoggingLevel.WARN,messages)+"\033[0m");
-    }
-    public void warn(Object ...objects) {
-        System.out.println("\033[43m"+formatObj(LoggingLevel.WARN,objects)+"\033[0m");
+    public void warn(String... messages) {
+        log("\033[43m" + format(LoggingLevel.WARN, messages) + "\033[0m");
     }
 
-    public void error(Throwable e, String ...messages) {
-        System.err.println("\033[31m"+format(LoggingLevel.ERROR,messages)+"\033[0m");
+    public void warn(Object... objects) {
+        log("\033[43m" + formatObj(LoggingLevel.WARN, objects) + "\033[0m");
+    }
+
+    public void error(Throwable e, String... messages) {
+        System.err.println("\033[31m" + format(LoggingLevel.ERROR, messages) + "\033[0m");
         if (e instanceof VerboseException) {
             e.printStackTrace(); // Rely on VerboseException's custom output
         } else {
             printStacktrace(e, LoggingLevel.ERROR); // Use Logger's formatting
         }
     }
-    public void error(Throwable e, Object ...objects) {
-        System.err.println("\033[31m"+formatObj(LoggingLevel.ERROR,objects)+"\033[0m");
+
+    public void error(Throwable e, Object... objects) {
+        System.err.println("\033[31m" + formatObj(LoggingLevel.ERROR, objects) + "\033[0m");
         if (e instanceof VerboseException) {
             e.printStackTrace(); // Rely on VerboseException's custom output
         } else {
             printStacktrace(e, LoggingLevel.ERROR); // Use Logger's formatting
         }
     }
-    public void error(String ...messages) {
-        System.err.println("\033[31m"+format(LoggingLevel.ERROR,messages)+"\033[0m");
-    }
-    public void error(Object ...objects) {
-        System.err.println("\033[31m"+formatObj(LoggingLevel.ERROR,objects)+"\033[0m");
+
+    public void error(String... messages) {
+        System.err.println("\033[31m" + format(LoggingLevel.ERROR, messages) + "\033[0m");
     }
 
-    public void fatal(Throwable e,String ...messages) {
-        System.err.println("\033[31m"+format(LoggingLevel.FATAL,messages)+"\033[0m");
+    public void error(Object... objects) {
+        System.err.println("\033[31m" + formatObj(LoggingLevel.ERROR, objects) + "\033[0m");
+    }
+
+    public void fatal(Throwable e, String... messages) {
+        System.err.println("\033[31m" + format(LoggingLevel.FATAL, messages) + "\033[0m");
         if (e instanceof VerboseException) {
             e.printStackTrace(); // Rely on VerboseException's custom output
         } else {
             printStacktrace(e, LoggingLevel.FATAL); // Use Logger's formatting
         }
-        CleanupManager.createPopup("A Fatal error has been thrown: "+e.getMessage()+"\n"+formatStacktrace(e));
+        CleanupManager.createPopup("A Fatal error has been thrown: " + e.getMessage() + "\n" + formatStacktrace(e));
         Main.cleanup();
     }
-    public void fatal(Throwable e,Object ...objects) {
-        System.err.println("\033[31m"+formatObj(LoggingLevel.FATAL,objects)+"\033[0m");
+
+    public void fatal(Throwable e, Object... objects) {
+        System.err.println("\033[31m" + formatObj(LoggingLevel.FATAL, objects) + "\033[0m");
         if (e instanceof VerboseException) {
             e.printStackTrace(); // Rely on VerboseException's custom output
         } else {
             printStacktrace(e, LoggingLevel.FATAL); // Use Logger's formatting
         }
-        CleanupManager.createPopup("A Fatal error has been thrown: "+e.getMessage()+"\n"+formatStacktrace(e));
+        CleanupManager.createPopup("A Fatal error has been thrown: " + e.getMessage() + "\n" + formatStacktrace(e));
         Main.cleanup();
     }
 
-    public void debug(Object ...objects) {
-        System.out.println(formatObj(LoggingLevel.DEBUG,objects));
-    }
-    public void debug(String ...messages) {
-        System.out.println(format(LoggingLevel.DEBUG,messages));
+    public void debug(Object... objects) {
+        log(formatObj(LoggingLevel.DEBUG, objects));
     }
 
-    public void trace(String ...messages) {
-        System.out.println(format(LoggingLevel.TRACE,messages));
+    public void debug(String... messages) {
+        log(format(LoggingLevel.DEBUG, messages));
     }
-    public void trace(Object ...objects) {
-        System.out.println(formatObj(LoggingLevel.TRACE,objects));
+
+    public void trace(String... messages) {
+        log(format(LoggingLevel.TRACE, messages));
+    }
+
+    public void trace(Object... objects) {
+        log(formatObj(LoggingLevel.TRACE, objects));
     }
 
     public String getProcessName() {
@@ -101,10 +131,10 @@ public class Logger {
         for (String message : messages) {
             result.append(message).append(" ");
         }
-        return  result.toString();
+        return result.toString();
     }
 
-    private <T> String formatObj(LoggingLevel level,T[] objects) {
+    private <T> String formatObj(LoggingLevel level, T[] objects) {
         if (objects.length == 0) return "";
 
         StringBuilder objectResult = new StringBuilder();
@@ -133,7 +163,7 @@ public class Logger {
             }
         }
 
-        finalResult = textResult.toString()+objectResult.toString();
+        finalResult = textResult.toString() + objectResult.toString();
 
         return finalResult;
     }
@@ -157,47 +187,47 @@ public class Logger {
         return result.toString();
     }
 
-    private void printStacktrace(Throwable e,LoggingLevel level) {
-        System.out.println(formatStacktrace(e));
+    private void printStacktrace(Throwable e, LoggingLevel level) {
+        log(formatStacktrace(e));
     }
 
     public String formatStacktrace(Throwable e) {
         StringBuilder builder = new StringBuilder();
         builder
-                .append("An exception has been occurred!")
+                .append("An exception has been occurred!\n")
                 .append("   Message: ")
-                .append(e.getMessage())
-                .append("\n    Stacktrace:");
+                .append(e.getMessage() == null ? "<No Message (null)>" : e.getMessage())
+                .append("\n   Stacktrace:\n");
         for (StackTraceElement element : e.getStackTrace()) {
             if (element.isNativeMethod()) {
-                builder.append("        [NATIVE METHOD] ")
+                builder.append("       [NATIVE METHOD] ")
                         .append(element.getClassName())
-                        .append(" { ")
+                        .append(" {")
                         .append(element.getFileName())
-                        .append(" } at line: ")
+                        .append("} at line: ")
                         .append(element.getLineNumber())
-                        .append(" > ")
+                        .append(" inside ")
                         .append(element.getMethodName())
                         .append("\n");
             } else {
-                builder .append("       [METHOD] ")
+                builder.append("       [METHOD] ")
                         .append(element.getClassName())
-                        .append(" { ")
+                        .append(" {")
                         .append(element.getFileName())
-                        .append(" } at line: ")
+                        .append("} at line: ")
                         .append(element.getLineNumber())
                         .append(" inside ")
                         .append(element.getMethodName())
                         .append("\n");
             }
         }
-        return "\033[31m"+ builder +"\033[0m";
+        return "\033[31m" + builder + "\033[0m";
     }
 
     public String formatClassName(Class<?> classProvided) {
-        String fullName =  classProvided.getName();
+        String fullName = classProvided.getName();
         String packageName = classProvided.getPackageName();
-        return  fullName.replaceAll(packageName + ".","");
+        return fullName.replaceAll(packageName + ".", "");
     }
 
     private static boolean isPrimitiveClass(Class<?> classProvided) {
@@ -206,35 +236,12 @@ public class Logger {
 
     private static boolean isSupported(Class<?> clazz) {
         if (clazz.isAssignableFrom(RGB.class)) return true;
-        else if (clazz.isAssignableFrom(UI.class)) return true;
-        return false;
-    }
-
-    private String formatRGB(Object obj) {
-        StringBuilder builder = new StringBuilder();
-        Class<?> provided = obj.getClass();
-        try {
-            builder.append("RGB Component: ")
-                    .append(provided.getName())
-                    .append("\n")
-                    .append("   Red: ").append(provided.getDeclaredMethod("getRed").invoke(obj))
-                    .append("   Green: ").append(provided.getDeclaredMethod("getGreen").invoke(obj))
-                    .append("   Blue: ").append(provided.getDeclaredMethod("getBlue").invoke(obj));
-        } catch (IllegalAccessException e) {
-            builder.append("Failed to access object ").append(provided.getName()).append("\n").append(formatStacktrace(e));
-        } catch (InvocationTargetException e) {
-            builder.append("There was a problem caused by ").append(provided.getName()).append("\n").append(formatStacktrace(e));
-        } catch (NoSuchMethodException e) {
-            builder.append("Could not access ")
-                    .append(provided.getName())
-                    .append("'s method")
-                    .append("\n").append(formatStacktrace(e))
-            ;
-        }
-        return builder.toString();
+        else return clazz.isAssignableFrom(UI.class);
     }
 
     @SafeVarargs
     @SuppressWarnings("varargs")
-    public final <T extends Number> void info(T... numbers) {System.out.println(formatObj(LoggingLevel.INFO,numbers));}
+    public final <T extends Number> void info(T... numbers) {
+        log(formatObj(LoggingLevel.INFO, numbers));
+    }
 }

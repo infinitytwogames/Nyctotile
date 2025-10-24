@@ -10,12 +10,12 @@ public class ItemType {
     private final Recipe recipe;
     private final int maxDurability;
     private final Material material;
-    private final TextComponent name;
+    private final String name;
     private transient int index;
 
     private ItemType(Item.ItemBehaviour itemBehaviour, boolean isEatable, boolean isDrinkable,
                     boolean fireResistant, float nutrients, float saturation,
-                    Recipe recipe, int maxDurability, Material material, TextComponent name) {
+                    Recipe recipe, int maxDurability, Material material, String name) {
         this.itemBehaviour = itemBehaviour;
         this.isEatable = isEatable;
         this.isDrinkable = isDrinkable;
@@ -36,7 +36,7 @@ public class ItemType {
         this.index = index;
     }
 
-    public TextComponent getName() {
+    public String getName() {
         return name;
     }
 
@@ -47,7 +47,7 @@ public class ItemType {
         private Recipe recipe;
         private int maxDurability;
         private Material material;
-        private TextComponent name;
+        private String name;
 
         public Builder type(Item.ItemBehaviour itemBehaviour) { this.itemBehaviour = itemBehaviour; return this; }
         public Builder isEatable(boolean eatable) { this.isEatable = eatable; return this; }
@@ -58,7 +58,7 @@ public class ItemType {
         public Builder maxDurability(int md) { this.maxDurability = md; return this; }
         public Builder material(Material material) { this.material = material; return this; }
         public Builder recipe(Recipe recipe) { this.recipe = recipe; return this; }
-        public Builder name(TextComponent name) { this.name = name; return this; }
+        public Builder name(String name) { this.name = name; return this; }
 
         public ItemType build() {
             return new ItemType(itemBehaviour, isEatable, isDrinkable, fireResistant,

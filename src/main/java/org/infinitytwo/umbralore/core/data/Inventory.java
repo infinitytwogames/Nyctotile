@@ -3,7 +3,10 @@ package org.infinitytwo.umbralore.core.data;
 import org.infinitytwo.umbralore.core.event.Event;
 import org.infinitytwo.umbralore.core.event.bus.LocalEventBus;
 
+import java.util.Collection;
+import java.util.Collections;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 
 public class Inventory {
@@ -80,8 +83,8 @@ public class Inventory {
         return maxSlots;
     }
 
-    public Map<Integer, Item> getItems() {
-        return items;
+    public Collection<Item> getItems() {
+        return Collections.unmodifiableCollection(items.values());
     }
 
     public int add(Item item) {

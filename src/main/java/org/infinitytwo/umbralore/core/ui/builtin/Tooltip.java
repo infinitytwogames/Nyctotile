@@ -1,7 +1,6 @@
 package org.infinitytwo.umbralore.core.ui.builtin;
 
 import org.infinitytwo.umbralore.core.constants.Constants;
-import org.infinitytwo.umbralore.core.data.TextComponent;
 import org.infinitytwo.umbralore.core.event.input.MouseButtonEvent;
 import org.infinitytwo.umbralore.core.event.input.MouseHoverEvent;
 import org.infinitytwo.umbralore.core.event.state.WindowResizedEvent;
@@ -34,8 +33,8 @@ public class Tooltip extends UI {
 
     }
 
-    public void setText(TextComponent component) { // TextComponent is a prototype of what will I do
-        text.setText(component.toString());
+    public void setText(String text) {
+        this.text.setText(text);
     }
 
     public String getText() {

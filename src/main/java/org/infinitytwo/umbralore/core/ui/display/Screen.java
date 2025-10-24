@@ -1,7 +1,6 @@
 package org.infinitytwo.umbralore.core.ui.display;
 
 import org.infinitytwo.umbralore.core.Mouse;
-import org.infinitytwo.umbralore.core.data.TextComponent;
 import org.infinitytwo.umbralore.core.event.SubscribeEvent;
 import org.infinitytwo.umbralore.core.event.bus.EventBus;
 import org.infinitytwo.umbralore.core.event.input.MouseButtonEvent;
@@ -128,7 +127,7 @@ public class Screen {
         return renderer;
     }
 
-    public void showTooltip(TextComponent text) {
+    public void showTooltip(String text) {
         showTooltip = true;
         tooltip.setText(text);
     }

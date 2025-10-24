@@ -1,5 +1,6 @@
 package org.infinitytwo.umbralore.core.intervals; // Or wherever you want to put utility classes
 
+@Deprecated
 public class Interval {
     private long lastActionTime; // Stores System.nanoTime() when the action last occurred
     private long intervalDurationNanos; // Desired interval in nanoseconds

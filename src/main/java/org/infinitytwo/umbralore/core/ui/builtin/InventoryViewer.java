@@ -1,150 +1,106 @@
 package org.infinitytwo.umbralore.core.ui.builtin;
 
-import org.infinitytwo.umbralore.core.Window;
 import org.infinitytwo.umbralore.core.data.Inventory;
+import org.infinitytwo.umbralore.core.data.Item;
 import org.infinitytwo.umbralore.core.event.SubscribeEvent;
+import org.infinitytwo.umbralore.core.event.bus.LocalEventBus;
 import org.infinitytwo.umbralore.core.event.input.MouseButtonEvent;
 import org.infinitytwo.umbralore.core.event.input.MouseHoverEvent;
-import org.infinitytwo.umbralore.core.data.Item;
-import org.infinitytwo.umbralore.core.model.TextureAtlas;
-import org.infinitytwo.umbralore.core.renderer.FontRenderer;
 import org.infinitytwo.umbralore.core.renderer.UIBatchRenderer;
-import org.infinitytwo.umbralore.core.ui.display.Grid;
+import org.infinitytwo.umbralore.core.ui.UI;
 import org.infinitytwo.umbralore.core.ui.display.Screen;
-import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
-import java.util.List;
+import java.util.Collection;
 import java.util.Map;
+import java.util.Set;
 
-public class InventoryViewer extends Grid {
-    protected Inventory link;
-    protected Screen screen;
-    protected FontRenderer fontRenderer;
-    protected final List<ItemSlot> slots = new ArrayList<>();
-    protected final Window window;
-    private TextureAtlas atlas;
-    protected Factory factory;
+public class InventoryViewer extends UI {
+    private final Screen screen;
 
-    public InventoryViewer(Screen screen, FontRenderer fontRenderer, Window window, int columns) {
-        super(screen.getUIBatchRenderer());
-        this.screen = screen;
-        this.fontRenderer = fontRenderer;
-        this.columns = columns;
-        this.window = window;
+    protected ItemSlot[] slots;
+    protected Inventory inventory;
+
+    public InventoryViewer(Screen renderer) {
+        super(renderer.getUIBatchRenderer());
+        this.screen = renderer;
     }
 
-    public InventoryViewer(Screen screen, FontRenderer fontRenderer, Window window, Factory factory, int columns) {
-        super(screen.getUIBatchRenderer());
-        this.screen = screen;
-        this.fontRenderer = fontRenderer;
-        this.window = window;
-        this.factory = factory;
-        this.columns = columns;
-    }
-
-    public void linkInventory(@NotNull Inventory inventory) {
-        int column = 0;
-        int row = 0;
-        slots.clear();
-        this.link = inventory;
-        this.rows = (int) Math.ceil((double) inventory.getMaxSlots() / columns); // Inherited from Grid
-
-        updateSize();
-
+    public void linkInventory(Inventory inventory) {
+        this.inventory = inventory;
         inventory.getEventBus().register(this);
 
-        for (int i = 0; i < link.getMaxSlots(); i++) {
-            ItemSlot slot = getItemSlot(i);
-            put(slot, row, column);
-            slots.add(slot);
-
-            column++;
-            if (column >= columns) {
-                column = 0;
-                row++;
-            }
-        }
+        slots = new ItemSlot[inventory.getMaxSlots()];
     }
 
-    @NotNull
-    public ItemSlot getItemSlot(int i) {
-        ItemSlot result;
-        if (factory == null) {
-            ItemSlot slot = new ItemSlot(screen, fontRenderer, window);
-            slot.setAtlas(atlas);
-            slot.setItem(link.get(i));
-            result = slot;
-        } else {
-            result = factory.create(i, link.get(i), screen, fontRenderer, window);
-        }
-        return result;
+    public void put(ItemSlot slot, int id) {
+        if (id > slots.length) throw new IndexOutOfBoundsException("The slot id is out of bounds.");
+        slots[id] = slot;
+        screen.register(slot);
     }
 
     @SubscribeEvent
-    public void refresh(Inventory.ChangedEvent e) {
+    public void onChanged(Inventory.ChangedEvent e) {
         if (e == null) {
-            // refresh all
-            for (int i = 0; i < link.getMaxSlots(); i++) {
-                slots.get(i).setItem(link.get(i));
+            for (int i = 0; i < slots.length; i++) {
+                slots[i].setItem(inventory.get(i));
             }
-        } else {
-            if (link == null || e.slot >= slots.size()) return;
-            slots.get(e.slot).setItem(link.get(e.slot));
-        }
+        } else slots[e.slot].setItem(inventory.get(e.slot));
     }
 
-    public void refresh() { refresh(null); }
+    public void refresh() { onChanged(null); }
 
-    public void set(int slot, Item item) {
-        link.set(slot, item);
-    }
-
-    public void setCount(int slot, int count) {
-        link.setCount(slot, count);
-    }
-
-    public void remove(int slot) {
-        link.remove(slot);
-    }
-
-    public int getCount(int slot) {
-        return link.getCount(slot);
-    }
-
-    public void add(int slot, int addition) {
-        link.add(slot, addition);
-    }
-
-    public boolean isEmpty() {
-        return link.isEmpty();
-    }
-
-    public boolean isFull() {
-        return link.isFull();
-    }
-
-    public void clear() {
-        link.clear();
-    }
-
-    public int getMaxSlots() {
-        return link.getMaxSlots();
-    }
-
-    public Map<Integer, Item> getItems() {
-        return link.getItems();
-    }
-
-    public int add(Item item) {
-        return link.add(item);
+    public void setItem(int slot, Item item) {
+        inventory.set(slot, item);
     }
 
     public Item getItem(int slot) {
-        return link.get(slot);
+        return inventory.get(slot);
     }
 
+    public void remove(int slot) {
+        inventory.remove(slot);
+    }
 
+    public void setCount(int slot, int count) {
+        inventory.setCount(slot, count);
+    }
+
+    public int addItem(Item item) {
+        return inventory.add(item);
+    }
+
+    public int getCount(int slot) {
+        return inventory.getCount(slot);
+    }
+
+    public void addCount(int slot, int addition) {
+        inventory.add(slot, addition);
+    }
+
+    public boolean isEmpty() {
+        return inventory.isEmpty();
+    }
+
+    public LocalEventBus getEventBus() {
+        return inventory.getEventBus();
+    }
+
+    public Collection<Item> getItems() {
+        return inventory.getItems();
+    }
+
+    public boolean isFull() {
+        return inventory.isFull();
+    }
+
+    public void clear() {
+        inventory.clear();
+    }
+
+    public int getMaxSlots() {
+        return inventory.getMaxSlots();
+    }
 
     @Override
     public void onMouseClicked(MouseButtonEvent e) {
@@ -161,20 +117,8 @@ public class InventoryViewer extends Grid {
 
     }
 
-    public TextureAtlas getAtlas() {
-        return atlas;
-    }
-
-    public void setAtlas(TextureAtlas atlas) {
-        this.atlas = atlas;
-    }
-
     @Override
     public void cleanup() {
-        if (link != null) link.getEventBus().unregister(this);
-    }
 
-    public interface Factory {
-        ItemSlot create(int slot, Item item, Screen screen, FontRenderer fontRenderer, Window window);
     }
 }

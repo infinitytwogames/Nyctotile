@@ -47,9 +47,10 @@ public class LocalEventBus {
         if (methods != null) {
             for (ListenerMethod lm : new ArrayList<>(methods)) {
                 try {
+                    lm.method.setAccessible(true);
                     lm.method.invoke(lm.instance, event);
                 } catch (Exception e) {
-                    logger.error(e,"Cannot post event:",logger.formatClassName(event.getClass()));
+                    logger.error(e,"Failed on running method \""+lm.method.getName()+"\" of class"+lm.method.getDeclaringClass().getName(),", Cannot post event:",logger.formatClassName(event.getClass()));
                 }
             }
         }

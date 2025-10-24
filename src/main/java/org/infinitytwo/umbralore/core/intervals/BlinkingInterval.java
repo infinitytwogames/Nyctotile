@@ -4,6 +4,7 @@ import org.infinitytwo.umbralore.core.event.Event;
 import org.infinitytwo.umbralore.core.event.bus.LocalEventBus;
 import org.infinitytwo.umbralore.core.event.SubscribeEvent;
 
+@Deprecated
 public class BlinkingInterval {
     // volatile ensures changes to this flag are immediately visible across threads
     private volatile boolean isRunning = false;

@@ -2,6 +2,7 @@ package org.infinitytwo.umbralore.core.debug;
 
 import org.infinitytwo.umbralore.block.*;
 import org.infinitytwo.umbralore.core.*;
+import org.infinitytwo.umbralore.core.constants.Constants;
 import org.infinitytwo.umbralore.core.constants.Material;
 import org.infinitytwo.umbralore.core.data.*;
 import org.infinitytwo.umbralore.core.data.buffer.NFloatBuffer;
@@ -10,9 +11,7 @@ import org.infinitytwo.umbralore.core.entity.Player;
 import org.infinitytwo.umbralore.core.event.SubscribeEvent;
 import org.infinitytwo.umbralore.core.event.bus.EventBus;
 import org.infinitytwo.umbralore.core.event.bus.LocalEventBus;
-import org.infinitytwo.umbralore.core.event.input.CharacterInputEvent;
 import org.infinitytwo.umbralore.core.event.input.KeyPressEvent;
-import org.infinitytwo.umbralore.core.event.input.MouseButtonEvent;
 import org.infinitytwo.umbralore.core.event.state.WindowResizedEvent; // ADDED: Import for the explicit resize call
 import org.infinitytwo.umbralore.core.exception.IllegalChunkAccessException;
 import org.infinitytwo.umbralore.core.data.Item;
@@ -25,11 +24,11 @@ import org.infinitytwo.umbralore.core.model.builder.ModelBuilder;
 import org.infinitytwo.umbralore.core.network.client.ClientNetworkThread;
 import org.infinitytwo.umbralore.core.registry.*;
 import org.infinitytwo.umbralore.core.renderer.*;
-import org.infinitytwo.umbralore.core.ui.display.Grid;
+import org.infinitytwo.umbralore.core.ui.builtin.InventoryGridViewer;
+import org.infinitytwo.umbralore.core.ui.builtin.ItemSlot;
 import org.infinitytwo.umbralore.core.ui.display.Screen;
 import org.infinitytwo.umbralore.core.ui.builtin.Background;
 import org.infinitytwo.umbralore.core.ui.builtin.Hotbar;
-import org.infinitytwo.umbralore.core.ui.input.TextInput;
 import org.infinitytwo.umbralore.core.ui.position.Anchor;
 import org.infinitytwo.umbralore.core.ui.position.Pivot;
 import org.infinitytwo.umbralore.core.world.GridMap;
@@ -244,48 +243,8 @@ public class Main {
         textRenderer = new FontRenderer("src/main/resources/font.ttf", 16);
 
         renderer = new UIBatchRenderer();
-        pauseScreen = new Screen(renderer, window);
-        setPos = new Screen(renderer, window);
-        TextInput input = new TextInput(textRenderer, setPos, new RGB(1, 1, 1)) {
-            @Override
-            public void submit(String data) {
-                String[] pos = data.split(" ");
-                Vector3f p = new Vector3f(Float.parseFloat(pos[0]), Float.parseFloat(pos[1]), Float.parseFloat(pos[2]));
-                player.setPosition(p);
-            }
 
-            @SubscribeEvent
-            @Override
-            public void onMouseClicked(MouseButtonEvent e) {
-                super.onMouseClicked(e);
-            }
 
-            @SubscribeEvent
-            @Override
-            public void onKeyPress(KeyPressEvent e) {
-                super.onKeyPress(e);
-            }
-
-            @SubscribeEvent
-            @Override
-            public void onMouseClickedA(MouseButtonEvent e) {
-                super.onMouseClickedA(e);
-            }
-
-            @SubscribeEvent
-            @Override
-            public void onCharacterPressed(CharacterInputEvent e) {
-                super.onCharacterPressed(e);
-            }
-        };
-
-        input.setPosition(new Anchor(0, 1), new Pivot(0, 0), new Vector2i(5, -255));
-        input.setWidth(Display.width - 10);
-        input.setHeight(250);
-        input.setBackgroundColor(new RGBA(0, 0, 0, 0.5f));
-
-        pauseScreen.register(new Background.Builder(renderer).applyDefault().backgroundColor(0, 0, 0, 0.5f).build());
-        setPos.register(input);
 
         try {
             registry.register(new GrassBlockType(atlas.addTexture("src/main/resources/grass_side.png", true)));
@@ -349,7 +308,7 @@ public class Main {
         ItemType i = new ItemType.Builder()
                 .material(Material.GRASS)
                 .type(Item.ItemBehaviour.ITEM)
-                .name(new TextComponent("Hello", new RGB(1, 1, 1)))
+                .name("")
                 .build();
 
         try {
@@ -370,6 +329,25 @@ public class Main {
         player.getInventory().set(0, Item.of(i));
         player.getInventory().set(6, Item.of(i));
 
+        // "PAUSE" SCREEN
+        pauseScreen = new Screen(renderer, window);
+
+        InventoryGridViewer viewer = new InventoryGridViewer(pauseScreen, new FontRenderer(Constants.fontFilePath, 16), window, (InventoryGridViewer.Factory) (slot, item, screen, fontRenderer, window) -> {
+            ItemSlot ie = new ItemSlot(screen,fontRenderer,window);
+            ie.setAtlas(itemAtlas);
+            ie.setBackgroundColor(0,0,0,1);
+            return ie;
+        }, 9);
+        viewer.linkInventory(player.getInventory());
+        viewer.setAtlas(itemAtlas);
+        viewer.setCellSize(128);
+        viewer.setBackgroundColor(1,1,1,0.5f);
+        viewer.setPosition(new Anchor(0.5f,0.5f),new Pivot(0.5f,0.5f));
+        viewer.updateSize();
+
+        pauseScreen.register(viewer);
+        pauseScreen.register(new Background.Builder(renderer).applyDefault().backgroundColor(0, 0, 0, 0.5f).build());
+
         mainScreen = new Screen(renderer, window);
         Hotbar hotbar = new Hotbar(mainScreen, textRenderer, window, 9);
         hotbar.setAtlas(itemAtlas);
@@ -378,7 +356,6 @@ public class Main {
         hotbar.setPosition(new Anchor(0.5f, 1), new Pivot(0.5f, 1));
         hotbar.updateSize();
         hotbar.linkInventory(player.getInventory());
-        hotbar.refresh();
         mainScreen.register(hotbar);
 
         Mouse.init(itemAtlas, mainScreen, -1, textRenderer, window);
@@ -508,6 +485,7 @@ public class Main {
         Display.prepare2d();
 
         mainScreen.draw();
+        if (locked) pauseScreen.draw();
 
         Display.prepare3d();
     }
@@ -560,24 +538,13 @@ public class Main {
     @SubscribeEvent
     public static void onKeyPress(KeyPressEvent event) {
         if (event.getAction() == GLFW_PRESS) {
-            if (event.getKey() == GLFW_KEY_ESCAPE) {
-                locked = !locked;
-            } else if (event.getKey() == GLFW_KEY_Q) {
-                drop();
-            } else if (event.getKey() == GLFW_KEY_E) {
-                GridMap.RaycastResult hit = map.raycast(camera.getPosition(), camera.getDirection(), 6);
-                try {
-                    System.out.println(reader.getData(dynamic,map.getChunk(GridMap.worldToChunk(hit.blockPos())).getData(GridMap.convertToLocalChunk(hit.blockPos())),"data").value);
-                } catch (IllegalDataTypeException e) {
-                    throw new RuntimeException(e);
-                }
-            }
-        } else keyStates.put(event.getKey(), event.getAction() == GLFW_PRESS || event.getAction() == GLFW_REPEAT);
+            keyStates.put(event.getKey(), event.getAction() == GLFW_PRESS || event.getAction() == GLFW_REPEAT);
+        }
     }
 
     private static void drop() {
         GridMap.RaycastResult hit = map.raycast(camera.getPosition(), camera.getDirection(), 6);
-        map.getChunk(GridMap.worldToChunk(hit.blockPos())).setData(GridMap.convertToLocalChunk(hit.blockPos()),reader.serialize(registry.get(dynamic),dynamic));
+        map.getChunk(GridMap.worldToChunk(hit.blockPos())).setData(GridMap.convertToLocalChunk(hit.blockPos()), reader.serialize(registry.get(dynamic), dynamic));
     }
 
     public static boolean isKeyJustPressed(int key) {

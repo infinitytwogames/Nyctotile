@@ -50,8 +50,8 @@ public class CrashHandler {
                 writer.println("Max  : " + toMB(Runtime.getRuntime().maxMemory()) + " MB");
 
                 // System Info
-                writer.println("\n--- System Properties ---");
-                System.getProperties().forEach((k, v) -> writer.println(k + ": " + v));
+//                writer.println("\n--- System Properties ---");
+//                System.getProperties().forEach((k, v) -> writer.println(k + ": " + v));
 
             } catch (IOException ex) {
                 System.err.println("Failed to write crash report: " + ex);

@@ -134,4 +134,8 @@ public abstract class Grid extends UI {
             return this;
         }
     }
+
+    public void clearCells() {
+        uis.clear();
+    }
 }

@@ -12,7 +12,7 @@ import org.infinitytwo.umbralore.core.renderer.FontRenderer;
 import org.infinitytwo.umbralore.core.ui.display.Screen;
 import org.jetbrains.annotations.NotNull;
 
-public class Hotbar extends InventoryViewer {
+public class Hotbar extends InventoryGridViewer {
     protected int
             selected,
             row
@@ -38,19 +38,21 @@ public class Hotbar extends InventoryViewer {
         this.link = inventory;
         this.row = row;
 
-        link.getEventBus().register(this);
-
         setSize(1, columns);
-
-        slots.clear();
+        clearCells();
 
         int startIndex = row * columns;
         int endIndex = Math.min(startIndex + columns, link.getMaxSlots());
+        int column = 0;
         for (int i = startIndex; i < endIndex; i++) {
             ItemSlot slot = getItemSlot(i);
-            put(slot, 0, i);
+            slot.setItem(inventory.get(i));
+            put(slot, 0, column);
             slots.add(slot);
+            column++;
         }
+
+        link.getEventBus().register(this);
     }
 
     @Override
@@ -71,10 +73,12 @@ public class Hotbar extends InventoryViewer {
     @Override
     @SubscribeEvent
     public void refresh(Inventory.ChangedEvent e) {
+        if (slots.isEmpty()) return;
         if (e == null) {
             // refresh all
+            int startIndex = this.row * this.columns; // Get the correct starting index
             for (int i = 0; i < columns; i++) {
-                slots.get(i).setItem(link.get(i));
+                slots.get(i).setItem(link.get(startIndex + i)); // Correct slot index
             }
         } else {
             if (link == null || e.slot >= slots.size()) return;
@@ -93,5 +97,11 @@ public class Hotbar extends InventoryViewer {
 
             return i;
         }
+    }
+
+    @Override
+    public void clearCells() {
+        super.clearCells();
+        slots.clear();
     }
 }

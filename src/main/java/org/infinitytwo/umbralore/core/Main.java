@@ -3,7 +3,6 @@ package org.infinitytwo.umbralore.core;
 import org.infinitytwo.umbralore.core.constants.Constants;
 import org.infinitytwo.umbralore.core.data.Inventory;
 import org.infinitytwo.umbralore.core.data.ItemType;
-import org.infinitytwo.umbralore.core.data.TextComponent;
 import org.infinitytwo.umbralore.core.event.bus.EventBus;
 import org.infinitytwo.umbralore.core.event.state.WindowResizedEvent;
 import org.infinitytwo.umbralore.core.data.Item;
@@ -13,7 +12,7 @@ import org.infinitytwo.umbralore.core.registry.ItemRegistry;
 import org.infinitytwo.umbralore.core.registry.ResourceManager;
 import org.infinitytwo.umbralore.core.renderer.*;
 import org.infinitytwo.umbralore.core.ui.*;
-import org.infinitytwo.umbralore.core.ui.builtin.InventoryViewer;
+import org.infinitytwo.umbralore.core.ui.builtin.InventoryGridViewer;
 import org.infinitytwo.umbralore.core.ui.display.Screen;
 import org.joml.Matrix4f;
 import org.lwjgl.glfw.GLFWErrorCallback;
@@ -145,7 +144,7 @@ public class Main {
         ItemRegistry registry = ItemRegistry.getMainRegistry();
         TextureAtlas atlas = ItemRegistry.getTextureAtlas();
         ItemType type = new ItemType.Builder()
-                .name(new TextComponent("E",new RGB(1,1,1)))
+                .name("E")
                 .build()
         ;
 
@@ -167,7 +166,7 @@ public class Main {
         inventory.set(5, Item.of(type));
         inventory.setCount(0,5);
 
-        InventoryViewer viewer = new InventoryViewer(screen,fontRenderer, window,3);
+        InventoryGridViewer viewer = new InventoryGridViewer(screen,fontRenderer, window,3);
         viewer.setCellSize(128);
         viewer.linkInventory(inventory);
         screen.register(viewer);
