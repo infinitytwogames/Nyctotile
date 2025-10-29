@@ -7,7 +7,6 @@ import org.infinitytwo.umbralore.core.entity.Entity;
 import org.infinitytwo.umbralore.core.model.Model;
 import org.infinitytwo.umbralore.core.model.builder.ModelBuilder;
 import org.infinitytwo.umbralore.core.registry.ModelRegistry;
-import org.infinitytwo.umbralore.core.world.GridMap;
 import org.infinitytwo.umbralore.core.world.dimension.Dimension;
 
 public class ItemEntity extends Entity {
@@ -29,5 +28,10 @@ public class ItemEntity extends Entity {
         super("item", map, window, new Inventory(1));
 
         setModelIndex(index);
+    }
+
+    @Override
+    public Entity newInstance() {
+        return new ItemEntity(null,null);
     }
 }

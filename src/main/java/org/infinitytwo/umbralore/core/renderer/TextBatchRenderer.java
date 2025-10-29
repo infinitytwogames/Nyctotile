@@ -33,7 +33,7 @@ public class TextBatchRenderer {
 
     public TextBatchRenderer(FontRenderer font, float scale) {
         this.font = font;
-        EventBus.register(this);
+        EventBus.connect(this);
 
         vaoId = glGenVertexArrays();
         vboId = glGenBuffers();

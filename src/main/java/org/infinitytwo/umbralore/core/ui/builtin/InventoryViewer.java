@@ -3,17 +3,13 @@ package org.infinitytwo.umbralore.core.ui.builtin;
 import org.infinitytwo.umbralore.core.data.Inventory;
 import org.infinitytwo.umbralore.core.data.Item;
 import org.infinitytwo.umbralore.core.event.SubscribeEvent;
-import org.infinitytwo.umbralore.core.event.bus.LocalEventBus;
+import org.infinitytwo.umbralore.core.event.bus.EventBus;
 import org.infinitytwo.umbralore.core.event.input.MouseButtonEvent;
 import org.infinitytwo.umbralore.core.event.input.MouseHoverEvent;
-import org.infinitytwo.umbralore.core.renderer.UIBatchRenderer;
 import org.infinitytwo.umbralore.core.ui.UI;
 import org.infinitytwo.umbralore.core.ui.display.Screen;
 
-import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Map;
-import java.util.Set;
 
 public class InventoryViewer extends UI {
     private final Screen screen;
@@ -82,7 +78,7 @@ public class InventoryViewer extends UI {
         return inventory.isEmpty();
     }
 
-    public LocalEventBus getEventBus() {
+    public EventBus getEventBus() {
         return inventory.getEventBus();
     }
 

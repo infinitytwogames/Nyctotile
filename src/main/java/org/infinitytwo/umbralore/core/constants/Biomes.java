@@ -2,6 +2,8 @@ package org.infinitytwo.umbralore.core.constants;
 
 import org.infinitytwo.umbralore.core.world.generation.Biome;
 
+import java.util.Arrays;
+
 public enum Biomes {
     DESERT(
             new Biome(
@@ -45,5 +47,13 @@ public enum Biomes {
     public final Biome biome;
     Biomes(Biome biome) {
         this.biome = biome;
+    }
+    
+    public static Biome[] getBiomes() {
+        Biome[] biomes = new Biome[Biomes.values().length];
+        Biomes[] v = Biomes.values();
+        
+        Arrays.fill(biomes, v[ 0 ].biome);
+        return biomes;
     }
 }

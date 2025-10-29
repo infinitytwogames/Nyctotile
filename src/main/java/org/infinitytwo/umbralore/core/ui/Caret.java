@@ -11,18 +11,21 @@ public class Caret extends UpdatableUI {
     private boolean visible = true;
     private boolean active = true;
 
-    public static CaretBuilder builder(UIBatchRenderer renderer, int height) {
-        return new CaretBuilder(renderer,height);
+    public static CaretBuilder builder(UIBatchRenderer renderer) {
+        return new CaretBuilder(renderer);
     }
 
-    public Caret(UIBatchRenderer renderer, int height) {
+    public Caret(UIBatchRenderer renderer) {
         super(renderer);
-        setWidth(5);
-        setHeight(height);
+        setWidth(10);
         setBackgroundColor(new RGBA(1,1,1,1));
     }
 
     public void update(float delta) {
+        if (!active) {
+            return;
+        }
+        
         blinkTimer += delta;
         if (blinkTimer >= 0.5f) {
             blinkTimer = 0f;
@@ -68,10 +71,14 @@ public class Caret extends UpdatableUI {
     public void setActive(boolean active) {
         this.active = active;
     }
-
+    
+    public void forceDraw() {
+        super.draw();
+    }
+    
     public static class CaretBuilder extends UIBuilder<Caret> {
-        public CaretBuilder(UIBatchRenderer renderer, int height) {
-            super(new Caret(renderer, height));
+        public CaretBuilder(UIBatchRenderer renderer) {
+            super(new Caret(renderer));
         }
 
         public CaretBuilder active(boolean active) {

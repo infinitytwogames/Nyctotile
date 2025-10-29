@@ -5,102 +5,120 @@ import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 
 public final class PacketAssembly {
-    private final Map<Integer, List<NetworkThread.Packet>> packets = new ConcurrentHashMap<>();
-    public static final int MAX_UDP_SIZE = 1024;
-    public static final int MAX_HEADER_SIZE = Integer.BYTES + (Short.BYTES * 3);
-
+    
+    // Map of <Packet ID, Map of <Fragment Index, Packet Fragment>>
+    private final Map<Integer, Map<Short, NetworkThread.Packet>> assemblies = new ConcurrentHashMap<>();
+    
     public void addPacket(int packetId, NetworkThread.Packet data) {
-        packets.computeIfAbsent(packetId, i -> new ArrayList<>()).add(data);
+        // Use computeIfAbsent to initialize the inner map, and then store the packet
+        // storing by index automatically handles and discards duplicate fragments.
+        assemblies.computeIfAbsent(packetId, i -> new ConcurrentHashMap<>())
+                .put(data.index(), data);
     }
-
+    
     public NetworkThread.Packet getData(int packetId) throws MissingResourceException, NullPointerException {
-        if (!packets.containsKey(packetId)) {
+        if (!assemblies.containsKey(packetId)) {
             throw new NullPointerException("The packet id does not exist in the registry.");
         }
-
-        List<NetworkThread.Packet> dataList = packets.get(packetId);
-        Map<Integer, byte[]> payloads = new TreeMap<>();
+        
+        Map<Short, NetworkThread.Packet> fragmentMap = assemblies.get(packetId);
+        
+        // Get the total expected fragments from any fragment (the first one is a safe choice)
+        NetworkThread.Packet firstPacket = fragmentMap.values().iterator().next();
+        int expectedChunks = firstPacket.total();
+        
+        // CRITICAL CHECK: Ensure we have all unique fragments
+        if (fragmentMap.size() != expectedChunks) {
+            throw new MissingResourceException("Packet ID " + packetId + " is incomplete or has missing indexes. Found " + fragmentMap.size() + " of " + expectedChunks + " fragments.",
+                    NetworkThread.Packet.class.getName(),
+                    String.valueOf(packetId)
+            );
+        }
+        
+        // Reconstruct final payload by iterating fragments in order (using a TreeMap-like iteration of keys)
         int totalSize = 0;
-        int expectedChunks = -1;
-
-        for (NetworkThread.Packet packet : dataList) {
-            if (payloads.containsKey((int) packet.index())) continue;
-            short index = packet.index();
-            short max = packet.total();
-
-            if (expectedChunks == -1) expectedChunks = max;
-
-            byte[] payload = packet.payload();
-
-            payloads.put((int) index, payload);
-            totalSize += payload.length;
+        
+        // Calculate total size first
+        for (NetworkThread.Packet fragment : fragmentMap.values()) {
+            totalSize += fragment.payload().length;
         }
-
-        // Check if we received all chunks
-        if (payloads.size() < expectedChunks) {
-            throw new MissingResourceException("Packet ID " + packetId + " is incomplete.",
-                    PacketAssembly.class.getName(), String.valueOf(packetId));
-        }
-
-        // Reconstruct final payload
+        
         byte[] finalPayload = new byte[totalSize];
         int offset = 0;
-        for (byte[] payload : payloads.values()) {
+        
+        // Iterate from index 0 up to total-1 to ensure correct order
+        for (short i = 0; i < expectedChunks; i++) {
+            byte[] payload = fragmentMap.get(i).payload();
             System.arraycopy(payload, 0, finalPayload, offset, payload.length);
             offset += payload.length;
         }
-
-        NetworkThread.Packet packet = dataList.get(0);
-        NetworkThread.Packet newPacket = new NetworkThread.Packet(packetId, packet.nonce(), (short) 0, (short) 0,packet.type(),finalPayload,packet.address(),packet.port());
-
+        
+        // Create the final assembled packet using data from the first fragment
+        NetworkThread.Packet newPacket = new NetworkThread.Packet(
+                packetId,
+                firstPacket.nonce(),
+                (short) 0,
+                (short) 1, // Total is 1 for an assembled packet
+                firstPacket.type(),
+                finalPayload,
+                firstPacket.address(),
+                firstPacket.port()
+        );
+        
         discard(packetId);
-
+        
         return newPacket;
     }
-
+    
     public void discard(int packetId) {
-        packets.remove(packetId);
+        assemblies.remove(packetId);
     }
-
+    
     public List<Integer> getFilledPacketsId() {
         List<Integer> ids = new ArrayList<>();
-
-        for (Map.Entry<Integer, List<NetworkThread.Packet>> entry : packets.entrySet()) {
-            List<NetworkThread.Packet> packetL = entry.getValue();
-
-            if (packetL == null || packetL.isEmpty()) continue;
-
-            short total = packetL.get(0).total();
-            if (packetL.size() >= total) {
+        
+        for (Map.Entry<Integer, Map<Short, NetworkThread.Packet>> entry : assemblies.entrySet()) {
+            Map<Short, NetworkThread.Packet> fragmentMap = entry.getValue();
+            
+            if (fragmentMap.isEmpty()) continue;
+            
+            // Get total expected fragments from any fragment in the map
+            NetworkThread.Packet firstPacket = fragmentMap.values().iterator().next();
+            short total = firstPacket.total();
+            
+            // CRITICAL FIX: Check the size of the unique fragment map against the total expected.
+            if (fragmentMap.size() == total) {
                 ids.add(entry.getKey());
             }
         }
-
+        
         return ids;
     }
-
+    
     public void dropAll() {
-        packets.clear();
+        assemblies.clear();
     }
-
+    
     public PacketResendData getMissingPackets(int id) {
-        if (!packets.containsKey(id)) throw new NullPointerException("The packet id does not exist in the registry.");
-        List<NetworkThread.Packet> receivedPackets = packets.get(id);
-        Set<Short> receivedIndexes = new HashSet<>();
-
-        for (NetworkThread.Packet packet : receivedPackets) {
-            receivedIndexes.add(packet.index());
-        }
-
-        int total = receivedPackets.get(0).total();
+        if (!assemblies.containsKey(id)) throw new NullPointerException("The packet id does not exist in the registry.");
+        
+        Map<Short, NetworkThread.Packet> receivedPackets = assemblies.get(id);
+        
+        // If the map is empty, we can't determine the total, but this shouldn't happen
+        // if called by NetworkHandler, which checks for existence first.
+        if (receivedPackets.isEmpty()) return null;
+        
+        short total = receivedPackets.values().iterator().next().total();
         List<Short> missingIndexes = new ArrayList<>();
-
+        
+        // Iterate through all expected indices (0 to total-1)
         for (short i = 0; i < total; i++) {
-            if (!receivedIndexes.contains(i)) {
+            // Check if the map contains a fragment for this specific index
+            if (!receivedPackets.containsKey(i)) {
                 missingIndexes.add(i);
             }
         }
-
+        
         PacketResendData data = null;
         if (!missingIndexes.isEmpty()) {
             short[] d = new short[missingIndexes.size()];
@@ -109,22 +127,26 @@ public final class PacketAssembly {
             }
             data = new PacketResendData(id,d);
         }
-
+        
         return data;
     }
-
+    
     public InetAddress getAddress(int id) {
-        if (packets.containsKey(id) && !packets.get(id).isEmpty()) return packets.get(id).get(0).address();
-        else return null;
+        if (assemblies.containsKey(id) && !assemblies.get(id).isEmpty()) {
+            // Get the address from the first fragment in the assembly
+            return assemblies.get(id).values().iterator().next().address();
+        } else return null;
     }
-
+    
     public boolean exists(int id) {
-        return packets.containsKey(id) && !packets.get(id).isEmpty();
+        return assemblies.containsKey(id) && !assemblies.get(id).isEmpty();
     }
-
+    
     public NetworkThread.Packet getFirstPacket(int id) {
-        List<NetworkThread.Packet> p = packets.get(id);
-        if (p == null) return null;
-        return p.get(0);
+        Map<Short, NetworkThread.Packet> p = assemblies.get(id);
+        if (p == null || p.isEmpty()) return null;
+        
+        // Return the fragment at index 0, which holds the original metadata
+        return p.get((short) 0);
     }
 }

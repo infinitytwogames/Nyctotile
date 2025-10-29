@@ -22,7 +22,7 @@ public class Hotbar extends InventoryGridViewer {
     public Hotbar(Screen renderer, FontRenderer fontRenderer, Window window, int slots) {
         super(renderer, fontRenderer, window, new ItemFactory(), slots);
 
-        EventBus.register(this);
+        EventBus.connect(this);
         rows = 1;
         columns = slots;
         padding = 5;
@@ -58,7 +58,7 @@ public class Hotbar extends InventoryGridViewer {
     @Override
     public void cleanup() {
         super.cleanup();
-        EventBus.unregister(this);
+        EventBus.disconnect(this);
     }
 
     @SubscribeEvent

@@ -25,7 +25,7 @@ public class AspectRatio implements Component {
         this.defaultHeight = (float) defaultHeight;
         this.defaultWidth = (float) defaultWidth;
 
-        EventBus.register(this);
+        EventBus.connect(this);
 
         // Initial ratio calculation and dimension update
         recalculateRatio();

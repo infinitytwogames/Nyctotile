@@ -38,6 +38,10 @@ public class ChunkData {
         this.map = map;
     }
 
+    public static ChunkData of(byte[] data) throws IOException {
+        return unserialize(data);
+    }
+
     public void setData(int x, int y, int z, byte[] data) throws IllegalChunkAccessException {
         if (isInBounds(x,y,z)) blockData.replace(new Vector3i(x,y,z), data);
         else throw new IllegalChunkAccessException("Position ("+x+", "+y+", "+z+") is out of bounds");
@@ -58,10 +62,6 @@ public class ChunkData {
         else throw new IllegalChunkAccessException("Position ("+pos.x+", "+pos.y+", "+pos.z+") is out of bounds");
     }
 
-    public ChunkData(Vector2i position, ServerGridMap map) {
-        this.position = position;
-    }
-
     public ChunkData(ServerGridMap.ChunkPos position) {
         this.position = new Vector2i(position.x(),position.z());
     }
@@ -70,18 +70,34 @@ public class ChunkData {
         this.position = pos;
     }
 
-    public static ChunkData unserialize(byte[] data, GridMap map) throws IOException {
+    public static ChunkData unserialize(byte[] data) throws IOException {
         ByteArrayInputStream arrayInputStream = new ByteArrayInputStream(data);
         DataInputStream inStream = new DataInputStream(arrayInputStream);
 
         int x = inStream.readInt();
         int y = inStream.readInt();
 
-        ChunkData chunk = new ChunkData(new Vector2i(x,y), map);
+        ChunkData chunk = new ChunkData(new Vector2i(x,y));
         NIntBuffer buffer = new NIntBuffer();
 
         for (int i = 0; i < buffer.capacity(); i++) {
             buffer.put(inStream.readInt());
+        }
+
+        chunk.blocks = buffer.array();
+        buffer.cleanup();
+
+        return chunk;
+    }
+
+    public static ChunkData unserialize(ByteBuffer data) {
+        int x = data.getInt(), y = data.getInt();
+
+        ChunkData chunk = new ChunkData(new Vector2i(x,y));
+        NIntBuffer buffer = new NIntBuffer();
+
+        for (int i = 0; i < buffer.capacity(); i++) {
+            buffer.put(data.getInt());
         }
 
         chunk.blocks = buffer.array();

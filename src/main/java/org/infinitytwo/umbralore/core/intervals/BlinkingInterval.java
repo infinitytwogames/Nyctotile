@@ -1,7 +1,7 @@
 package org.infinitytwo.umbralore.core.intervals; // Or wherever you want to put utility classes
 
 import org.infinitytwo.umbralore.core.event.Event;
-import org.infinitytwo.umbralore.core.event.bus.LocalEventBus;
+import org.infinitytwo.umbralore.core.event.bus.EventBus;
 import org.infinitytwo.umbralore.core.event.SubscribeEvent;
 
 @Deprecated
@@ -13,7 +13,7 @@ public class BlinkingInterval {
     private final long activeDurationNanos;   // Time for the "on" phase in nanoseconds
     private final long inactiveDurationNanos; // Time for the "off" phase in nanoseconds
     private volatile boolean isCurrentlyActive; // Current state of the blink: true for "on", false for "off"
-    private final LocalEventBus eventBus;
+    private final EventBus eventBus;
 
     /**
      * Creates a new blinking/pulsing interval timer that runs on its own background thread.
@@ -41,7 +41,7 @@ public class BlinkingInterval {
         this.inactiveDurationNanos = inactiveMillis * 1_000_000L;
         this.isCurrentlyActive = true; // Start in the active phase
 
-        this.eventBus = new LocalEventBus("BlinkingInterval");
+        this.eventBus = new EventBus("BlinkingInterval");
         eventBus.register(this); // Register this instance to handle its own events
 
         // Initialize the thread but don't start it yet

@@ -2,6 +2,7 @@ package org.infinitytwo.umbralore.core.network;
 
 import org.infinitytwo.umbralore.core.context.CommandContext;
 
+@Deprecated
 public abstract class NetworkCommand {
     protected String[] args;
     protected String command;

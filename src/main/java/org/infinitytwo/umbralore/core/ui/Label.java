@@ -1,6 +1,8 @@
 package org.infinitytwo.umbralore.core.ui;
 
 import org.infinitytwo.umbralore.core.RGB;
+import org.infinitytwo.umbralore.core.event.input.MouseButtonEvent;
+import org.infinitytwo.umbralore.core.event.input.MouseHoverEvent;
 import org.infinitytwo.umbralore.core.renderer.FontRenderer;
 import org.infinitytwo.umbralore.core.renderer.UIBatchRenderer;
 import org.infinitytwo.umbralore.core.ui.component.Text;
@@ -11,7 +13,7 @@ import org.infinitytwo.umbralore.core.ui.builder.UIBuilder;
 import org.infinitytwo.umbralore.core.ui.position.TruncateMode;
 import org.joml.Vector2i;
 
-public abstract class Label extends UI {
+public class Label extends UI {
     protected FontRenderer textRenderer;
     protected Text text;
     protected String ellipsis = "...";
@@ -32,6 +34,21 @@ public abstract class Label extends UI {
     public void draw() {
         super.draw();
         text.draw();
+    }
+
+    @Override
+    public void onMouseClicked(MouseButtonEvent e) {
+
+    }
+
+    @Override
+    public void onMouseHover(MouseHoverEvent e) {
+
+    }
+
+    @Override
+    public void onMouseHoverEnded() {
+
     }
 
     public String getText() {
@@ -76,7 +93,23 @@ public abstract class Label extends UI {
                 return fullText.substring(0, cut) + ellipsis;
             }
             case MIDDLE: {
-                return getVisibleText(renderer, fullText, fullText.length() / 2, maxWidth); // reuse your caret-based logic
+                int ellipsisWidth = (int) renderer.getStringWidth(ellipsis);
+                int remainingWidth = maxWidth - ellipsisWidth;
+
+                // Find how many characters can fit on both sides combined
+                int totalChars = 0;
+                while (totalChars < fullText.length() && renderer.getStringWidth(fullText.substring(0, totalChars + 1)) <= remainingWidth) {
+                    totalChars++;
+                }
+
+                // Split the available characters evenly
+                int startChars = totalChars / 2;
+                int endChars = totalChars - startChars;
+
+                String start = fullText.substring(0, startChars);
+                String end = fullText.substring(fullText.length() - endChars);
+
+                return start + ellipsis + end;
             }
             default:
                 return fullText;

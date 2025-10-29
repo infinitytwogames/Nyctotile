@@ -11,7 +11,6 @@ import org.infinitytwo.umbralore.core.entity.Entity;
 import org.infinitytwo.umbralore.core.entity.Player;
 import org.infinitytwo.umbralore.core.event.SubscribeEvent;
 import org.infinitytwo.umbralore.core.event.bus.EventBus;
-import org.infinitytwo.umbralore.core.event.bus.LocalEventBus;
 import org.infinitytwo.umbralore.core.event.input.KeyPressEvent;
 import org.infinitytwo.umbralore.core.event.state.WindowResizedEvent; // ADDED: Import for the explicit resize call
 import org.infinitytwo.umbralore.core.exception.IllegalChunkAccessException;
@@ -74,7 +73,7 @@ public class Main {
     private static BlockRegistry registry = new BlockRegistry();
     private static ServerThread serverThread;
     private static ClientNetworkThread networkThread;
-    private static LocalEventBus eventBus = new LocalEventBus("Network");
+    private static EventBus eventBus = new EventBus("Network");
     private static boolean locked = false;
     private static UIBatchRenderer renderer;
     private static Screen pauseScreen;
@@ -233,7 +232,7 @@ public class Main {
         window = new Window(1000, 512, "Umbralore");
         Display.init();
         window.initOpenGL();
-        EventBus.register(Main.class);
+        EventBus.connect(Main.class);
 
         Display.onWindowResize(new WindowResizedEvent(1000, 512, window));
     }
@@ -307,7 +306,8 @@ public class Main {
             throw new RuntimeException(e);
         }
 
-        org.infinitytwo.umbralore.core.data.ItemType i = new org.infinitytwo.umbralore.core.data.ItemType.Builder()
+        org.infinitytwo.umbralore.core.data.ItemType
+                i = new org.infinitytwo.umbralore.core.data.ItemType.Builder()
                 .material(Material.GRASS)
                 .type(Item.ItemBehaviour.ITEM)
                 .name("")
@@ -369,6 +369,10 @@ public class Main {
         int index = ModelRegistry.register(model);
 
         entity = new Entity("item", window, overworld, new Inventory(0), box) {
+            @Override
+            public Entity newInstance() {
+                return null;
+            }
         };
         entity.setModelIndex(index);
 
@@ -478,7 +482,6 @@ public class Main {
         textRenderer.renderText(ortho, player.getVelocity().toString(), new Vector2i(0, 2 + 24 * 2), new RGB(1f, 1f, 1f));
 
         camera.update((float) delta);
-        player.handleInput((float) delta);
 
         GL20.glUseProgram(0);
         Display.prepare2d();

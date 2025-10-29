@@ -39,7 +39,7 @@ public class Screen {
 
         renderer = new FontRenderer("src/main/resources/font.ttf",32);
 
-        EventBus.register(this);
+        EventBus.connect(this);
     }
 
     public UIBatchRenderer getUIBatchRenderer() {

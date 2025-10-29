@@ -2,10 +2,14 @@ package org.infinitytwo.umbralore.core.security;
 
 import java.io.*;
 import java.net.*;
+import java.security.*;
 import java.security.cert.CertificateFactory;
 import java.security.cert.X509Certificate;
 import java.security.interfaces.RSAPublicKey;
+import java.security.spec.X509EncodedKeySpec;
 import java.util.Map;
+import javax.crypto.KeyGenerator;
+import javax.crypto.SecretKey;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.nimbusds.jose.JWSVerifier;
@@ -16,6 +20,7 @@ import org.json.*;
 public class Authentication {
     private static final String GOOGLE_CERTS_URL = "https://www.googleapis.com/robot/v1/metadata/x509/securetoken@system.gserviceaccount.com";
     private static final String PROJECT_ID = "umbralore-mysical-engine";
+    private static final int AES_KEY_SIZE = 256;
 
     private static final ObjectMapper mapper = new ObjectMapper();
 
@@ -83,5 +88,43 @@ public class Authentication {
             String error = new String(err.readAllBytes());
             throw new IOException("Firebase error: " + error);
         }
+    }
+
+    // ----------------------------------------------------------------------
+    // --- NETWORK SECURITY HELPERS ---
+    // ----------------------------------------------------------------------
+
+    /**
+     * Generates a random 256-bit AES secret key.
+     * @return The generated AES SecretKey.
+     * @throws GeneralSecurityException if key generation fails.
+     */
+    public static SecretKey generateAESKey() throws GeneralSecurityException {
+        KeyGenerator keyGen = KeyGenerator.getInstance("AES");
+        keyGen.init(AES_KEY_SIZE);
+        return keyGen.generateKey();
+    }
+
+    /**
+     * Decodes a raw byte array into an RSA Public Key object.
+     * This is used by the client to receive the server's public key.
+     * @param encodedKey The raw byte array of the public key (X509 format).
+     * @return The decoded PublicKey object.
+     * @throws GeneralSecurityException if key decoding fails.
+     */
+    public static PublicKey decodePublicKey(byte[] encodedKey) throws GeneralSecurityException {
+        KeyFactory keyFactory = KeyFactory.getInstance("RSA");
+        X509EncodedKeySpec keySpec = new X509EncodedKeySpec(encodedKey);
+        return keyFactory.generatePublic(keySpec);
+    }
+
+    /**
+     * Encodes a PublicKey object into a raw byte array.
+     * This is used by the server to prepare its public key for transmission.
+     * @param publicKey The PublicKey object to encode.
+     * @return The raw byte array of the encoded public key.
+     */
+    public static byte[] encodePublicKey(PublicKey publicKey) {
+        return publicKey.getEncoded();
     }
 }

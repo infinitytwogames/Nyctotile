@@ -1,14 +1,10 @@
 package org.infinitytwo.umbralore.core;
 
 import org.infinitytwo.umbralore.block.ServerBlockType;
-import org.infinitytwo.umbralore.core.network.NetworkCommands;
+import org.infinitytwo.umbralore.core.event.bus.EventBus;
 import org.infinitytwo.umbralore.core.event.SubscribeEvent;
-import org.infinitytwo.umbralore.core.event.bus.LocalEventBus;
 import org.infinitytwo.umbralore.core.event.network.PacketReceived;
 import org.infinitytwo.umbralore.core.logging.Logger;
-import org.infinitytwo.umbralore.core.network.NetworkCommandHandler;
-import org.infinitytwo.umbralore.core.network.NetworkHandler;
-import org.infinitytwo.umbralore.core.network.server.ServerNetworkHandler;
 import org.infinitytwo.umbralore.core.network.server.ServerNetworkThread;
 import org.infinitytwo.umbralore.core.registry.BlockRegistry;
 import org.infinitytwo.umbralore.core.world.ServerGridMap;
@@ -19,7 +15,7 @@ import org.infinitytwo.umbralore.core.world.dimension.Overworld;
 public final class ServerThread extends Thread {
     private volatile boolean closing = false;
     private volatile boolean ready = false;
-    private final LocalEventBus eventBus = new LocalEventBus("Server Network Thread");
+    private final EventBus eventBus = new EventBus("Server Network Thread");
     private Dimension overworld;
     private int seed;
     private BlockRegistry registry;
@@ -28,8 +24,8 @@ public final class ServerThread extends Thread {
     private ServerBlockType mantle;
     private ServerBlockType stone;
     private ServerNetworkThread networkThread;
-    private NetworkHandler handler;
-    private NetworkCommandHandler commandHandler;
+//    private NetworkHandler handler;
+//    private NetworkCommandHandler commandHandler;
     private final Logger logger = new Logger("Server");
 
     public ServerThread(int seed) {
@@ -75,10 +71,10 @@ public final class ServerThread extends Thread {
         registry.register(mantle);
 
         networkThread = new ServerNetworkThread(eventBus,5555);
-        handler = new ServerNetworkHandler(eventBus,networkThread,this);
-        commandHandler = new NetworkCommandHandler();
-
-        NetworkCommands.register(commandHandler);
+//        handler = new ServerNetworkHandler(eventBus,networkThread,this);
+//        commandHandler = new NetworkCommandHandler();
+//
+//        NetworkCommands.register(commandHandler);
     }
 
     @SubscribeEvent
@@ -125,9 +121,9 @@ public final class ServerThread extends Thread {
         return ready;
     }
 
-    public NetworkHandler getNetworkHandler() {
-        return handler;
-    }
+//    public NetworkHandler getNetworkHandler() {
+//        return handler;
+//    }
 
     public BlockRegistry getBlockRegistry() {
         return registry;

@@ -15,7 +15,7 @@ public class Text implements Component {
     protected Pivot pivot = new Pivot(0, 0);
     protected Vector2i offset = new Vector2i();
     protected UI parent = null;
-    protected final FontRenderer renderer;
+    protected FontRenderer renderer;
     protected String text = "";
     protected RGB color = new RGB(1, 1, 1);
     protected boolean centerY = true;
@@ -73,6 +73,7 @@ public class Text implements Component {
     }
 
     public Vector2i getPosition() {
+        if (renderer == null) return new Vector2i();
         int xa, ya;
         Vector2i o;
         if (parent == null) {
@@ -111,6 +112,7 @@ public class Text implements Component {
     }
 
     public void draw() {
+//        if (renderer == null) return;
         screen.run(() -> renderer.renderText(text, getPosition(), color));
     }
 
@@ -125,5 +127,13 @@ public class Text implements Component {
 
     public void setOffset(int x, int y) {
         offset.set(x,y);
+    }
+
+    public void setRenderer(FontRenderer textRenderer) {
+        renderer = textRenderer;
+    }
+
+    public FontRenderer getRenderer() {
+        return renderer;
     }
 }

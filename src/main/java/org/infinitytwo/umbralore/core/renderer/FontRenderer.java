@@ -14,6 +14,7 @@ import org.lwjgl.system.MemoryStack;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.FloatBuffer;
+import java.nio.IntBuffer;
 import java.nio.channels.SeekableByteChannel;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -30,10 +31,26 @@ import static org.lwjgl.stb.STBTruetype.*;
  * Pass the compiled shader program ID in the constructor.
  */
 public class FontRenderer {
-    private static final int BITMAP_W   = 512;
-    private static final int BITMAP_H   = 512;
+    private static final int BITMAP_W   = 1024;
+    private static final int BITMAP_H   = 1024;
     private static final int FIRST_CHAR = 32;
-    private static final int CHAR_COUNT = 96;
+    private static final int CHAR_COUNT = 224;
+    
+    private static final int[] CODEPOINTS;
+    private static final int NUM_CODEPOINTS;
+    
+    static {
+        // Generate ASCII 32 to 126 (95 characters)
+        int count = 127 - 32;
+        // Add 1 for the Em Dash (8212)
+        CODEPOINTS = new int[count + 1];
+        for (int i = 0; i < count; i++) {
+            CODEPOINTS[i] = 32 + i;
+        }
+        // Add the Em Dash (U+2014) at the end
+        CODEPOINTS[count] = 8212;
+        NUM_CODEPOINTS = CODEPOINTS.length;
+    }
 
     private int texID;
     private STBTTBakedChar.Buffer charData;
@@ -64,7 +81,7 @@ public class FontRenderer {
         this.shaderProgramId = program.getProgramId();
         this.fontPath = fontPath;
         this.logger = new Logger("FontRenderer");
-        EventBus.register(this);
+        EventBus.connect(this);
         init();
     }
 
@@ -79,16 +96,35 @@ public class FontRenderer {
         // Load font data
         ByteBuffer fontBuffer;
         try {
-            fontBuffer = loadFont(fontPath);
+            fontBuffer = loadFont(fontPath); // Buffer is loaded and flipped (position=0, limit=size)
         } catch (IOException e) {
             throw new RuntimeException("Failed to load font: " + fontPath, e);
         }
-
+        
+        // CRITICAL FIX: Reset the buffer's position to the beginning (0)
+        // before calling the baking function, ensuring it reads from the start.
+        fontBuffer.position(0);
+        
         // Bake glyphs
-        charData = STBTTBakedChar.malloc(CHAR_COUNT);
-        ByteBuffer bitmap = BufferUtils.createByteBuffer(BITMAP_W * BITMAP_H); // CONVERTED
-        stbtt_BakeFontBitmap(fontBuffer, fontHeight, bitmap, BITMAP_W, BITMAP_H, FIRST_CHAR, charData);
-
+        // Ensure the size of the memory buffer matches the intended range exactly
+        charData = STBTTBakedChar.malloc(NUM_CODEPOINTS);
+        ByteBuffer bitmap = BufferUtils.createByteBuffer(BITMAP_W * BITMAP_H);
+        
+        // 2. Prepare the array of code points.
+        IntBuffer codePointsBuffer = BufferUtils.createIntBuffer(NUM_CODEPOINTS);
+        codePointsBuffer.put(CODEPOINTS).flip();
+        
+        // CRITICAL: Check the return value of stbtt_BakeFontBitmap.
+        // A non-zero return value indicates how many more characters *could* fit,
+        // but a negative value indicates a failure or insufficient buffer.
+        int result = stbtt_BakeFontBitmap(fontBuffer, fontHeight, bitmap, BITMAP_W, BITMAP_H, FIRST_CHAR, charData);
+        
+        // Add logging to see if the baking failed
+        if (result <= 0) {
+            logger.error("STBTT Bake failed or returned zero chars fit! Result: " + result);
+        } else {
+            logger.info("STBTT Baked " + result + " characters successfully.");
+        }
         // Upload texture atlas
         texID = glGenTextures();
         glBindTexture(GL_TEXTURE_2D, texID);
@@ -207,7 +243,7 @@ public class FontRenderer {
             FloatBuffer xb = stack.floats(currentX);
             FloatBuffer yb = stack.floats(currentY); // Y doesn't matter for width
             STBTTAlignedQuad quad = STBTTAlignedQuad.mallocStack(stack);
-
+            
             for (char c : text.toCharArray()) {
                 if (c < FIRST_CHAR || c >= FIRST_CHAR + CHAR_COUNT) continue;
                 // The 'true' at the end means it modifies xb and yb in-place.

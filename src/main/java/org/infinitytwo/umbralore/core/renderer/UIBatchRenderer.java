@@ -61,7 +61,7 @@ public class UIBatchRenderer {
     }
 
     private void init() {
-        EventBus.register(this);
+        EventBus.connect(this);
 
         vaoId = GL30.glGenVertexArrays();
         vboId = GL15.glGenBuffers();

@@ -1,226 +1,268 @@
 package org.infinitytwo.umbralore.core.network.client;
 
 import org.infinitytwo.umbralore.core.constants.LogicalSide;
-import org.infinitytwo.umbralore.core.event.bus.LocalEventBus;
-import org.infinitytwo.umbralore.core.event.network.NetworkFailure;
-import org.infinitytwo.umbralore.core.logging.Logger;
+import org.infinitytwo.umbralore.core.event.bus.EventBus;
+import org.infinitytwo.umbralore.core.event.network.PacketReceived;
+import org.infinitytwo.umbralore.core.network.NetworkHandler;
 import org.infinitytwo.umbralore.core.network.NetworkThread;
-
-import java.net.*;
-import java.nio.ByteBuffer;
-import java.nio.charset.StandardCharsets;
-import java.security.*;
-import java.security.spec.InvalidKeySpecException;
-import java.security.spec.X509EncodedKeySpec;
-import java.util.concurrent.ConcurrentLinkedQueue;
-import java.util.concurrent.ThreadLocalRandom;
+import org.infinitytwo.umbralore.core.security.Authentication;
 
 import javax.crypto.Cipher;
-import javax.crypto.KeyGenerator;
 import javax.crypto.SecretKey;
 import javax.crypto.spec.GCMParameterSpec;
+import java.net.InetAddress;
+import java.nio.ByteBuffer;
+import java.security.GeneralSecurityException;
+import java.security.PublicKey;
+import java.security.SecureRandom;
+import java.net.UnknownHostException;
+import java.util.concurrent.ThreadLocalRandom;
 
+import static java.nio.charset.StandardCharsets.UTF_8;
 import static org.infinitytwo.umbralore.core.constants.PacketType.*;
 
 public final class ClientNetworkThread extends NetworkThread {
-    private final ConcurrentLinkedQueue<String> messages = new ConcurrentLinkedQueue<>();
-    private final InetAddress host;
-    private final int serverPort;
-
-    private PublicKey serverPublicKey;   // Interestingly, it's used once
-    private PrivateKey clientPrivateKey; // Interestingly, it's used once
-    private PublicKey clientPublicKey;
-    private boolean authenticated = false;
-    private String tokenId = "";
-    private int authenticationId;
-    private SecretKey aesKey;
-    private byte[] uuid;
-    private Logger logger = new Logger("Client Network");
-
-    public ClientNetworkThread(LocalEventBus eventBus, int port, String host, int serverPort) throws UnknownHostException {
-        super(LogicalSide.CLIENT, eventBus, port);
-        this.host = InetAddress.getByName(host);
-        this.serverPort = serverPort;
-
-        setName("Client Network Thread");
+    public enum ConnectionState {
+        DISCONNECTED,
+        HANDSHAKE_START,
+        AWAITING_KEY,
+        KEY_ESTABLISHED,
+        AWAITING_AUTH_ACK,
+        CONNECTED
     }
-
-    public void initEncryption(PublicKey serverPublicKey) {
-        this.serverPublicKey = serverPublicKey;
-
-        try {
-            // Generate RSA key pair
-            KeyPairGenerator keyGen = KeyPairGenerator.getInstance("RSA");
-            keyGen.initialize(2048);
-            KeyPair pair = keyGen.generateKeyPair();
-            this.clientPublicKey = pair.getPublic();
-            this.clientPrivateKey = pair.getPrivate();
-
-            // Generate AES key (256-bit)
-            KeyGenerator aesGen = KeyGenerator.getInstance("AES");
-            aesGen.init(256);
-            this.aesKey = aesGen.generateKey();
-
-            // Send AES key encrypted with RSA
-            Cipher rsaCipher = Cipher.getInstance("RSA");
-            rsaCipher.init(Cipher.ENCRYPT_MODE, serverPublicKey);
-            byte[] encryptedAesKey = rsaCipher.doFinal(aesKey.getEncoded());
-            send(encryptedAesKey, host, serverPort, EXCHANGE.getType(), true, false);
-
-        } catch (Exception e) {
-            e.printStackTrace();
+    
+    // ClientNetworkThread.java (Add to fields)
+    private volatile ConnectionState state = ConnectionState.DISCONNECTED;
+    private final SecureRandom secureRandom = new SecureRandom();
+    private PublicKey serverPublicKey;
+    private SecretKey aesKey;
+    
+    private InetAddress serverAddress;
+    private int serverPort;
+    private final NetworkHandler handler;
+    private int initialHandshakePacketId;
+    
+    public ClientNetworkThread(EventBus eventBus, int port, String host, int serverPort) throws UnknownHostException {
+        super(LogicalSide.CLIENT, eventBus, port);
+        setName("Client Network Thread");
+        
+        serverAddress = InetAddress.getByName(host);
+        this.serverPort = serverPort;
+        handler = new NetworkHandler(eventBus,this,((packets, thread) ->
+                System.out.println("Successfully Received All packets of: "+packets.id()+ "With size: "+packets.payload().length+" bytes")
+        )); // Why isn't it printing?
+        
+        if (handler.getState() == Thread.State.NEW) {
+            handler.start();
         }
     }
-
+    
+    public void connect() {
+        connect(serverAddress, serverPort);
+    }
+    
+    /**
+     * Initiates the connection handshake with the server.
+     * @param host The hostname or IP address of the server.
+     * @param port The port of the server.
+     */
+    public void connect(InetAddress host, int port) {
+        this.serverAddress = host;
+        this.serverPort = port;
+        
+        System.out.println("Starting handshake: Requesting Server Public Key.");
+        
+        byte[] payload = "publicKey".getBytes(UTF_8);
+        
+        int packetId = ThreadLocalRandom.current().nextInt();
+        this.initialHandshakePacketId = packetId; // Store the ID
+        
+        send(packetId, payload, serverAddress, serverPort, UNENCRYPTED.getType(), true, false);
+    }
+    
+    // --- ENCRYPTION LOGIC: Confirmed to match corrected server output (no redundant byte) ---
     @Override
     protected byte[] encrypt(Packet packet) {
-        if (aesKey == null) return packet.toBytes(); // not encrypted yet
-
+        if (aesKey == null) {
+            // RSA Encrypt the AES Key bytes during key exchange
+            if (packet.type() == EXCHANGE.getType() && serverPublicKey != null) {
+                try {
+                    return rsaEncrypt(packet.payload());
+                } catch (GeneralSecurityException e) {
+                    System.err.println("RSA Encryption failed during key exchange.");
+                    return packet.toBytes();
+                }
+            }
+            // All other non-encrypted traffic (e.g., handshake ping)
+            return packet.toBytes();
+        }
+        
         try {
+            System.out.println("Encrypting packet ID: " + packet.id());
             byte[] plain = packet.toBytes();
             byte[] iv = new byte[12];
-            ThreadLocalRandom.current().nextBytes(iv);
-
+            secureRandom.nextBytes(iv);
+            
             Cipher cipher = Cipher.getInstance("AES/GCM/NoPadding");
             GCMParameterSpec spec = new GCMParameterSpec(128, iv);
             cipher.init(Cipher.ENCRYPT_MODE, aesKey, spec);
             byte[] cipherText = cipher.doFinal(plain);
-
-            ByteBuffer buffer = ByteBuffer.allocate(1 + iv.length + cipherText.length);
-            buffer.put((byte) 1);  // encryption flag
+            
+            // --- CONFIRMED FIX: Buffer correctly contains only IV (12) + CipherText + Tag (16) ---
+            ByteBuffer buffer = ByteBuffer.allocate(iv.length + cipherText.length);
             buffer.put(iv);
             buffer.put(cipherText);
+            
             return buffer.array();
-
         } catch (Exception e) {
+            System.err.println("AES Encryption failed:");
             e.printStackTrace();
             return packet.toBytes();
         }
     }
-
+    
+    
+    public void ping() {
+        ping(serverAddress, serverPort);
+    }
+    
+    private byte[] rsaEncrypt(byte[] aesKeyBytes) throws GeneralSecurityException {
+        Cipher rsa = Cipher.getInstance("RSA/ECB/PKCS1Padding");
+        rsa.init(Cipher.ENCRYPT_MODE, serverPublicKey);
+        return rsa.doFinal(aesKeyBytes);
+    }
+    
+    // --- DECRYPTION LOGIC: Remains valid for single-client AES key ---
     @Override
-    protected byte[] decrypt(byte[] data) {
-        if (aesKey == null || data[0] != 1) return data; // not encrypted
-
+    protected byte[] decrypt(byte[] data, InetAddress address, int p) {
+        if (aesKey == null) {
+            // During handshake, return the raw data (expected to be public key)
+            return data;
+        }
+        
         try {
-            ByteBuffer buffer = ByteBuffer.wrap(data);
-            buffer.get(); // Skip flag
-
+            // Decryption expects IV (12) + Ciphertext + Tag (16)
             byte[] iv = new byte[12];
-            buffer.get(iv);
-
-            byte[] cipherText = new byte[buffer.remaining()];
-            buffer.get(cipherText);
-
+            System.arraycopy(data, 0, iv, 0, 12);
+            
+            byte[] cipherText = new byte[data.length - 12];
+            System.arraycopy(data, 12, cipherText, 0, data.length - 12);
+            
             Cipher cipher = Cipher.getInstance("AES/GCM/NoPadding");
             GCMParameterSpec spec = new GCMParameterSpec(128, iv);
             cipher.init(Cipher.DECRYPT_MODE, aesKey, spec);
+            
             return cipher.doFinal(cipherText);
-
         } catch (Exception e) {
+            System.err.println("AES Decryption failed:");
             e.printStackTrace();
-            return data;
+            return new byte[0];
         }
     }
-
+    
     @Override
     protected boolean preProcessPacket(Packet packet) {
-        logger.info(packet.id(),"Received!");
-
-        if (packet.type() == UNENCRYPTED.getType()) {
-            String cmd = new String(packet.payload(), StandardCharsets.UTF_8).split(" ")[0];
-            if (cmd.equals("pong") &&
-                    !authenticated
-            ) {
-                logger.info("Received! Authenticating...");
-                authenticate();
-            } else if (cmd.equals("publicKey")) {
-                logger.info("Public Key requested! sending...");
-                byte[] keyBytes = clientPublicKey.getEncoded();
-                send(packet.id(), keyBytes, host, EXCHANGE.getType(), true, false);
-            }
-        } else if (packet.id() == authenticationId &&
-                    packet.type() == ACK.getType()
-        ) {
-            authenticated = true;
-        } else if (packet.type() == CONNECTION.getType()) {
-            authenticated = true;
-            uuid = packet.payload();
-            verifyConnection();
-            ping();
-        } else if (packet.type() == EXCHANGE.getType()) {
-            X509EncodedKeySpec spec = new X509EncodedKeySpec(packet.payload());
-            KeyFactory keyFactory;
-            try {
-                keyFactory = KeyFactory.getInstance("RSA");
-                initEncryption(keyFactory.generatePublic(spec));
-            } catch (NoSuchAlgorithmException ignored) {
-            } catch (InvalidKeySpecException e) {
-                eventBus.post(new NetworkFailure(e));
-            }
+        // --- STAGE 0 & 1: HANDSHAKE ---
+        if (aesKey == null) {
+            return handleHandshake(packet);
         }
+        
+        // --- STAGE 2: AUTHENTICATED/ENCRYPTED TRAFFIC ---
+        
+        if (packet.type() == CONNECTION.getType()) {
+            System.out.println("Connection successful! Server sent connection ACK.");
+            this.state = ConnectionState.CONNECTED; // Final state
+            
+            System.out.println("Client is connected. Sending test command...");
+            // Assuming COMMAND is PacketType 1 (based on the log 'Packet: 1/1, 1')
+            send("echo Hello Secure World!", serverAddress, serverPort, COMMAND.getType(), true, true);
+            return false;
+        }
+        
+        if (state == ConnectionState.CONNECTED) eventBus.post(new PacketReceived(packet,packet.address())); // Turns out, this causes "Traffic from unauthenticated client: 127.0.0.1:5555. Dropping."
         return true;
     }
-
-    private void send(int id, byte[] keyBytes, InetAddress host, byte type, boolean critical, boolean encrypted) {
-        send(id,keyBytes,host,serverPort,type,critical,encrypted);
-    }
-
-    private void ping() {
-        super.ping(host,serverPort);
-    }
-
-    private void verifyConnection() {
-        logger.info("Verifying Connection...");
-
-        if (serverPublicKey != null || uuid.length == 0) {
-            logger.error("Connection was unsuccessful!");
+    
+    private boolean handleHandshake(Packet packet) {
+        // Public Key Received
+        if (packet.type() == EXCHANGE.getType() && serverPublicKey == null) {
+            
+            // --- FIX 2: Clear the packet from the reliable queue (Initial Request) ---
+            // Clears the initial request (ID: 1859381700 in this log)
+            removePacketSent(packet.id());
+            
+            System.out.println("Received server public key.");
+            try {
+                this.serverPublicKey = Authentication.decodePublicKey(packet.payload());
+                
+                SecretKey generatedAesKey = Authentication.generateAESKey();
+                
+                this.aesKey = generatedAesKey;
+                
+                byte[] encryptedKey = rsaEncrypt(generatedAesKey.getEncoded());
+                
+                int newPacketId = ThreadLocalRandom.current().nextInt();
+                // Send the encrypted AES key back to the server. Must be RELIABLE.
+                send(newPacketId, encryptedKey, serverAddress, serverPort, EXCHANGE.getType(), true, false);
+                state = ConnectionState.KEY_ESTABLISHED;
+                
+                System.out.println("Sent encrypted AES key to server. Awaiting ACK.");
+                
+            } catch (GeneralSecurityException e) {
+                System.err.println("Error processing public key or generating/encrypting AES key.");
+                e.printStackTrace();
+            }
+            return false;
         }
-
-        logger.info("Server's Public Key is",(serverPublicKey != null ? "not":""),"received");
-        logger.info("Session UUID is", uuid.length == 0 ? "not" : "", "received");
-    }
-
-    private void send(int id, byte[] keyBytes, InetAddress host, byte type, boolean b) {
-        send(id,keyBytes,host,serverPort,type,b,true);
-    }
-
-    public void connect(String tokenId) {
-        ping(host, serverPort);
-        this.tokenId = tokenId;
-        authenticationId = ThreadLocalRandom.current().nextInt();
-    }
-
-    public void connect() {
-        ping(host,serverPort);
-        authenticationId = ThreadLocalRandom.current().nextInt();
-    }
-
-    private void authenticate() {
-        byte[] msg = tokenId.getBytes(StandardCharsets.UTF_8);
-
-        ByteBuffer b = ByteBuffer.allocate(Integer.BYTES + msg.length);
-        b.put(msg);
-        byte[] payload = b.array();
-
-        send(authenticationId,payload,host,serverPort,AUTHENTICATION.getType(),true,false);
-        send("publicKey",host,serverPort,UNENCRYPTED.getType(),true,false);
-    }
-
-    @Override
-    public void send(int id, byte[] bytes, InetAddress clientAddress, int port, byte type, boolean isCritical, boolean e) {
-        if (uuid == null) {
-            if (e || type == AUTHENTICATION.getType()) uuid = new byte[16];
-            else uuid = new byte[0];
-//            throw new IllegalStateException("UUID not assigned yet. Wait for CONNECTION packet.");
+        
+        // ACK from Server for AES Key Exchange OR Initial Connection
+        else if (packet.type() == ACK.getType() && this.state == ConnectionState.KEY_ESTABLISHED) {
+            
+            // --- CRITICAL FIX 4: Explicitly remove the ACKed packet from the client's sent queue. ---
+            // This ensures the reliable packet tracking is immediately updated, regardless of which ACK it is.
+            removePacketSent(packet.id());
+            
+            if (packet.id() == initialHandshakePacketId) {
+                System.out.println("Server acknowledged final handshake step (Initial ID: " + initialHandshakePacketId + "). Sending authentication...");
+                
+                sendAuthentication(packet.address(), packet.port());
+                this.state = ConnectionState.AWAITING_AUTH_ACK;
+                
+            } else {
+                // This is the ACK for the AES key exchange packet. We are now waiting for the final initial packet ACK.
+                System.out.println("Received ACK for AES Key Exchange. Tracking complete for ID " + packet.id() + ". Waiting for final ACK.");
+            }
+            
+            return false;
         }
-        ByteBuffer buffer = ByteBuffer.allocate(uuid.length + bytes.length);
-        buffer.put(uuid);
-        buffer.put(bytes);
-        super.send(id, buffer.array(), clientAddress, port, type, isCritical, e);
+        
+        // Drop unhandled packets during handshake
+        return false;
     }
-
-    public void send(String cmd, boolean b, boolean b1) {
-        send(cmd,host,serverPort,b,b1);
+    
+    
+    public void sendAuthentication() {
+        sendAuthentication(serverAddress, serverPort);
+    }
+    
+    // Helper method to trigger the first encrypted packet
+    public void sendAuthentication(InetAddress serverAddress, int serverPort) {
+        int authPacketId = ThreadLocalRandom.current().nextInt();
+        
+        String dummyToken = "FAKE_FIREBASE_TOKEN_FOR_OFFLINE_TESTING";
+        byte[] tokenBytes = dummyToken.getBytes(UTF_8);
+        
+        ByteBuffer buffer = ByteBuffer.allocate(Integer.BYTES + tokenBytes.length);
+        buffer.putInt(tokenBytes.length);
+        buffer.put(tokenBytes);
+        
+        byte[] authPayload = buffer.array();
+        
+        // Send the authentication packet. It must be RELIABLE (true) and ENCRYPTED (true).
+        send(authPacketId, authPayload, serverAddress, serverPort, AUTHENTICATION.getType(), true, true);
+    }
+    
+    public void send(String msg, boolean critical, boolean encrypted) {
+        send(msg, serverAddress, serverPort, critical, encrypted);
     }
 }

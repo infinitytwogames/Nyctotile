@@ -83,4 +83,37 @@ public class RGB {
         this.blue = b;
         this.green = g;
     }
+    
+    // Inside the RGB class
+    /**
+     * Calculates the perceived luminosity (brightness) of this color and returns
+     * either pure black (0, 0, 0) or pure white (1, 1, 1) for maximum contrast.
+     * <p>
+     * The standard formula weights green highest, then red, then blue.
+     * The threshold is typically half the max luminosity.
+     *
+     * @return RGB color (Black or White) with max contrast.
+     */
+    public RGB getContrastColor() {
+        // 1. Calculate Relative Luminance (Luminosity)
+        // Formula: L = 0.2126 * R + 0.7152 * G + 0.0722 * B
+        // These coefficients account for human eye sensitivity.
+        float luminosity = (0.2126f * this.red) +
+                (0.7152f * this.green) +
+                (0.0722f * this.blue);
+        
+        // 2. Determine the contrast color based on a mid-luminosity threshold.
+        // A standard threshold for 0.0-1.0 scale is 0.5, but using the actual
+        // Luminosity (L) directly as a threshold is more accurate for perceptually
+        // dark/light. We'll use 0.5 as a simple threshold.
+        float threshold = 0.5f;
+        
+        if (luminosity < threshold) {
+            // The Background is dark, return White (1.0, 1.0, 1.0)
+            return new RGB(1.0f, 1.0f, 1.0f);
+        } else {
+            // Background is light, return Black (0.0, 0.0, 0.0)
+            return new RGB(0.0f, 0.0f, 0.0f);
+        }
+    }
 }

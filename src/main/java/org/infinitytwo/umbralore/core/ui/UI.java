@@ -4,10 +4,15 @@ import org.infinitytwo.umbralore.core.Display;
 import org.infinitytwo.umbralore.core.RGBA;
 import org.infinitytwo.umbralore.core.event.input.MouseButtonEvent;
 import org.infinitytwo.umbralore.core.event.input.MouseHoverEvent;
+import org.infinitytwo.umbralore.core.logging.Logger;
 import org.infinitytwo.umbralore.core.renderer.UIBatchRenderer;
+import org.infinitytwo.umbralore.core.ui.component.Component;
 import org.infinitytwo.umbralore.core.ui.position.Anchor;
 import org.infinitytwo.umbralore.core.ui.position.Pivot;
 import org.joml.Vector2i;
+
+import java.util.HashMap;
+import java.util.Map;
 
 public abstract class UI {
     protected final UIBatchRenderer renderer;
@@ -22,9 +27,18 @@ public abstract class UI {
     protected Pivot pivot = new Pivot(0,0);
     protected Vector2i offset = new Vector2i();
     protected UI parent;
+    protected Map<String, Component> components = new HashMap<>();
 
     public UI(UIBatchRenderer renderer) {
         this.renderer = renderer;
+    }
+
+    public void addComponent(String name, Component component) {
+        components.put(name,component);
+    }
+
+    public void addComponent(Component component) {
+        components.put(Logger.formatClassName(component.getClass()),component);
     }
 
     public boolean isHovering() {
@@ -144,8 +158,9 @@ public abstract class UI {
         this.backgroundColor.set(r,g,b,a);
     }
 
-    public void draw() { // Can be used as "update"
+    public void draw() {
         renderer.queue(this);
+        for (Component component : components.values()) component.draw();
     }
 
     public Vector2i getEnd() {

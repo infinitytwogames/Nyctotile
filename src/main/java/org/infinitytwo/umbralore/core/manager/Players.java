@@ -8,7 +8,7 @@ import java.util.*;
 public final class Players {
     private static final List<PlayerData> PLAYER_DATA = Collections.synchronizedList(new ArrayList<>());
 
-    public static PlayerData getPlayerByAddress(InetAddress address) {
+    public static PlayerData getPlayerByAddress(InetAddress address, int port) {
         for (PlayerData playerData : PLAYER_DATA) {
             if (playerData.address.equals(address)) return playerData;
         }

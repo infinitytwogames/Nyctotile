@@ -1,18 +1,17 @@
 package org.infinitytwo.umbralore.core.data;
 
 import org.infinitytwo.umbralore.core.event.Event;
-import org.infinitytwo.umbralore.core.event.bus.LocalEventBus;
+import org.infinitytwo.umbralore.core.event.bus.EventBus;
 
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Map;
-import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 
 public class Inventory {
     protected final int maxSlots;
     protected final Map<Integer, Item> items = new ConcurrentHashMap<>();
-    protected final LocalEventBus eventBus = new LocalEventBus("Inventory");
+    protected final EventBus eventBus = new EventBus("Inventory");
 
     public Inventory(int maxSlots) {
         this.maxSlots = maxSlots;
@@ -66,7 +65,7 @@ public class Inventory {
         return items.isEmpty();
     }
 
-    public LocalEventBus getEventBus() {
+    public EventBus getEventBus() {
         return eventBus;
     }
 

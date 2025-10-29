@@ -85,7 +85,7 @@ public class Window {
             public void invoke(long window, int newWidth, int newHeight) {
                 width = newWidth;
                 height = newHeight;
-                EventBus.post(new WindowResizedEvent(width,height,instance));
+                EventBus.dispatch(new WindowResizedEvent(width,height,instance));
                 GL11.glViewport(0, 0, width, height);
             }
         });
@@ -93,7 +93,7 @@ public class Window {
         GLFW.glfwSetScrollCallback(window, scrollCallback = new GLFWScrollCallback(){
             @Override
             public void invoke(long handle, double x, double y) {
-                EventBus.post(new MouseScrollEvent(instance, (int) x, (int) y));
+                EventBus.dispatch(new MouseScrollEvent(instance, (int) x, (int) y));
             }
         });
 
@@ -113,18 +113,18 @@ public class Window {
 //        EventBus.post(new WindowResizedEvent(width,height,this));
 
         glfwKeyCallback = GLFW.glfwSetKeyCallback(window, (windowHandle, key, scancode, action, mods) -> {
-            if (isFocused()) EventBus.post(new KeyPressEvent(key, action, mods));
+            if (isFocused()) EventBus.dispatch(new KeyPressEvent(key, action, mods));
         });
 
         glfwMouseButtonCallback = GLFW.glfwSetMouseButtonCallback(window, (windowHandle, button, action, mods) -> {
             if (isFocused()) {
                 Vector2f p = getMousePosition();
-                EventBus.post(new MouseButtonEvent(button, action, mods,p.x, p.y, instance));
+                EventBus.dispatch(new MouseButtonEvent(button, action, mods,p.x, p.y, instance));
             }
         });
 
         glfwCharCallback = GLFW.glfwSetCharCallback(window, (windowHandle, codepoint) -> {
-            if (isFocused()) EventBus.post(new CharacterInputEvent(codepoint, Character.toChars(codepoint)));
+            if (isFocused()) EventBus.dispatch(new CharacterInputEvent(codepoint, Character.toChars(codepoint)));
         });
     }
 
@@ -213,7 +213,6 @@ public class Window {
     }
 
     public boolean isFocused() {
-        // glfwGetWindowAttrib returns GLFW_TRUE (1) if focused, GLFW_FALSE (0) otherwise
         return glfwGetWindowAttrib(window, GLFW_FOCUSED) == GLFW.GLFW_TRUE;
     }
 

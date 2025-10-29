@@ -57,6 +57,34 @@ public abstract class Entity implements Registerable {
         uuid = UUID.randomUUID();
     }
 
+    public abstract Entity newInstance();
+
+    public static <E extends Entity> Entity copy(E entity) {
+        Entity e = new Entity(entity.id,entity.window, entity.getDimension(),entity.inventory,entity.hitbox) {
+            @Override
+            public Entity newInstance() {
+                return null;
+            }
+        };
+        e.gravity = entity.gravity;
+        e.velocity = entity.velocity;
+        e.isGrounded = entity.isGrounded();
+        e.modelIndex = entity.modelIndex;
+        e.jumpStrength = entity.jumpStrength;
+        e.movementSpeed = entity.movementSpeed;
+        e.scale = entity.getScale();
+        return e;
+    }
+
+    public static Entity nullType() {
+        return new Entity("",null,null,null) {
+            @Override
+            public Entity newInstance() {
+                return null;
+            }
+        };
+    }
+
     @Override
     public String getId() {
         return id;

@@ -99,4 +99,8 @@ public enum PacketType {
         }
         throw new IllegalArgumentException("Unknown PacketType ID: " + id);
     }
+    
+    public static PacketType valueOf(byte type) {
+        return fromId(type);
+    }
 }

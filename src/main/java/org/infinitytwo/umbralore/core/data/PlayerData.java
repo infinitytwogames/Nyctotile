@@ -12,7 +12,7 @@ public class PlayerData {
 
     public final boolean authenticated;
 
-    public PlayerData(InetAddress address, String name, UUID id, String token, boolean authenticated) {
+    public PlayerData(InetAddress address, int port, String name, UUID id, String token, boolean authenticated) {
         this.address = address;
         this.name = name;
         this.id = id;
@@ -21,6 +21,6 @@ public class PlayerData {
     }
 
     public static PlayerData shell(String name) {
-        return new PlayerData(null,name,UUID.randomUUID(),"",false);
+        return new PlayerData(null, 0, name,UUID.randomUUID(),"",false);
     }
 }

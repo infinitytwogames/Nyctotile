@@ -60,4 +60,10 @@ public class RGBA extends RGB {
     public void a(int a) {
         setAlpha(a);
     }
+    
+    @Override
+    public RGBA getContrastColor() {
+        RGB rgb = super.getContrastColor();
+        return new RGBA(rgb.red, rgb.green, rgb.blue, a());
+    }
 }

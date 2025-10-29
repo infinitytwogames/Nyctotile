@@ -1,5 +1,6 @@
 package org.infinitytwo.umbralore.core.registry;
 
+import org.infinitytwo.umbralore.block.BlockType;
 import org.infinitytwo.umbralore.core.exception.UnknownRegistryException;
 
 import java.util.Collection;
@@ -14,10 +15,10 @@ public abstract class Registry<T extends Registerable> {
 
     private short nextId = 1;
 
-    public int register(T block) {
+    public int register(T data) {
         int id = nextId++;
-        idToData.put(id, block);
-        nameToId.put(block.getId(), id);
+        idToData.put(id, data);
+        nameToId.put(data.getId(), id);
         return id;
     }
 
@@ -48,5 +49,10 @@ public abstract class Registry<T extends Registerable> {
 
     public Set<Map.Entry<Integer,T>> getEntries() {
         return idToData.entrySet();
+    }
+
+    public void register(int id, T data) {
+        idToData.put(id,data);
+        nameToId.put(data.getId(),id);
     }
 }

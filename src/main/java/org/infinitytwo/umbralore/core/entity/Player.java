@@ -56,36 +56,45 @@ public class Player extends Entity {
         camera.setPosition(position.x, position.y, position.z);
     }
 
-    public void handleInput(float delta) {
+    private Player() {
+        // This empty constructor is for the registry to create a blank shell
+        super("player", null, null, new Inventory(36), new AABB(-0.3f, 0, -0.3f, 0.3f, 1.8f, 0.3f));
+        this.camera = new Camera(); // Create a minimal camera shell
+        // PlayerData is left as 'data' from the field initialization
+    }
+
+    @Override
+    public void update(float deltaTime) {
+        // 1. Handle player input and set desired horizontal velocity
         Vector3f forward = camera.getDirection();
-        forward.y = 0; // ignore pitch for walking
+        forward.y = 0;
         forward.normalize();
 
         Vector3f right = new Vector3f(forward).cross(new Vector3f(0, 1, 0)).normalize();
+        Vector3f wishDir = new Vector3f();
 
-        Vector3f move = new Vector3f();
+        if (Main.isKeyPressed(GLFW.GLFW_KEY_W)) wishDir.add(forward);
+        if (Main.isKeyPressed(GLFW.GLFW_KEY_S)) wishDir.sub(forward);
+        if (Main.isKeyPressed(GLFW.GLFW_KEY_D)) wishDir.add(right);
+        if (Main.isKeyPressed(GLFW.GLFW_KEY_A)) wishDir.sub(right);
 
-        if (Main.isKeyPressed(GLFW.GLFW_KEY_W)) move.add(forward);
-        if (Main.isKeyPressed(GLFW.GLFW_KEY_S)) move.sub(forward);
-        if (Main.isKeyPressed(GLFW.GLFW_KEY_D)) move.add(right);
-        if (Main.isKeyPressed(GLFW.GLFW_KEY_A)) move.sub(right);
+        // If there is movement input, normalize the direction and apply speed.
+        if (wishDir.lengthSquared() > 0) {
+            wishDir.normalize().mul(movementSpeed);
 
-        // Apply movement
-//        if (move.lengthSquared() > 0) {
-//            move.normalize().mul(movementSpeed);
-//            velocity.x = move.x;
-//            velocity.z = move.z;
-//        } else {
-//            velocity.x = lerp(velocity.x, 0, delta * 8f);
-//            velocity.z = lerp(velocity.z, 0, delta * 8f);
-//        }
+            // Directly set the horizontal velocity components for controlled movement
+            velocity.x = wishDir.x;
+            velocity.z = wishDir.z;
+        }
+        // If no input, the base Entity.update() friction logic will handle damping.
 
-        velocity.add(move);
-
-        // Jump
+        // 2. Handle Jump (Vertical Velocity)
         if (Main.isKeyPressed(GLFW.GLFW_KEY_SPACE) && isGrounded()) {
             velocity.y = jumpStrength;
         }
+
+        // 3. Run base Entity physics (gravity, collision, friction/damping, and final move)
+        super.update(deltaTime);
     }
 
     public void adjust() {
@@ -95,6 +104,11 @@ public class Player extends Entity {
                 break;
             }
         }
+    }
+
+    @Override
+    public Entity newInstance() {
+        return new Player();
     }
 
     @Override

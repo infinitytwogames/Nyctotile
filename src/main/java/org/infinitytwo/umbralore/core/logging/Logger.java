@@ -191,7 +191,7 @@ public class Logger {
         log(formatStacktrace(e));
     }
 
-    public String formatStacktrace(Throwable e) {
+    public static String formatStacktrace(Throwable e) {
         StringBuilder builder = new StringBuilder();
         builder
                 .append("An exception has been occurred!\n")
@@ -224,7 +224,7 @@ public class Logger {
         return "\033[31m" + builder + "\033[0m";
     }
 
-    public String formatClassName(Class<?> classProvided) {
+    public static String formatClassName(Class<?> classProvided) {
         String fullName = classProvided.getName();
         String packageName = classProvided.getPackageName();
         return fullName.replaceAll(packageName + ".", "");

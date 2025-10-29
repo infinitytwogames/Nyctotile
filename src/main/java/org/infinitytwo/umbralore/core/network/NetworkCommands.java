@@ -3,6 +3,7 @@ package org.infinitytwo.umbralore.core.network;
 import org.infinitytwo.umbralore.core.context.CommandContext;
 import org.joml.Vector2i;
 
+@Deprecated
 public class NetworkCommands {
     public static class ChunkCommand extends NetworkCommand {
         private ChunkCommand setup() {

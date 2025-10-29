@@ -31,7 +31,7 @@ public abstract class AspectRatioPanel extends UI {
         this.anchor = new Anchor(0.5f, 0.5f);
         this.pivot = new Pivot(0.5f, 0.5f);
 
-        EventBus.register(this);
+        EventBus.connect(this);
         // Call the resize logic immediately to set initial size
         updateDimensions();
     }

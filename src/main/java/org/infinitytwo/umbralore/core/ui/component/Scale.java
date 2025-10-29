@@ -4,8 +4,10 @@ import org.infinitytwo.umbralore.core.Display;
 import org.infinitytwo.umbralore.core.event.SubscribeEvent;
 import org.infinitytwo.umbralore.core.event.bus.EventBus;
 import org.infinitytwo.umbralore.core.event.state.WindowResizedEvent;
+import org.infinitytwo.umbralore.core.ui.UI;
 
 public class Scale implements Component {
+    protected UI parent;
     protected float xRatio, yRatio;
     protected int width, height;
 
@@ -14,12 +16,27 @@ public class Scale implements Component {
         this.yRatio = yRatio;
 
         updateSize(); // initialize once
-        EventBus.register(this);
+        EventBus.connect(this);
+    }
+
+    public Scale(float xRatio, float yRatio, UI ui) {
+        this.xRatio = xRatio;
+        this.yRatio = yRatio;
+        this.parent = ui;
+
+        updateSize(); // initialize once
+        EventBus.connect(this);
     }
 
     private void updateSize() {
-        width = (int) (Display.width * xRatio);
-        height = (int) (Display.height * yRatio);
+        if (parent != null) {
+            width = xRatio < 0 ? parent.getWidth() : (int) (Display.width * xRatio);
+            height = yRatio < 0 ? parent.getHeight() : (int) (Display.height * yRatio);
+            parent.setSize(width, height);
+        } else {
+            width = (int) (Display.width * xRatio);
+            height = (int) (Display.height * yRatio);
+        }
     }
 
     public void setRatios(float xRatio, float yRatio) {

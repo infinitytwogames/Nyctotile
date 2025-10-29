@@ -32,6 +32,10 @@ public class EntitySerializer {
         ByteBuffer buffer = ByteBuffer.allocate(data.length);
 
         buffer.put(data);
+        return unserialize(buffer);
+    }
+
+    public static Data unserialize(ByteBuffer buffer) {
         buffer.position(0);
 
         return new Data(
@@ -61,5 +65,15 @@ public class EntitySerializer {
     public record Data(int id, UUID uuid, int dimension, Vector3f position, Vector3f velocity,
                        Vector3f rotation, Vector3f scale, float gravity, float speed,
                        float jump
-    ) {}
+    ) {
+        public void apply(Entity entity) {
+            entity.setPosition(position);
+            entity.setVelocity(velocity);
+            entity.setRotation(rotation);
+            entity.setScale(scale);
+            entity.setGravity(gravity);
+            entity.setMovementSpeed(speed);
+            entity.setJumpStrength(jump);
+        }
+    }
 }

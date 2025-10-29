@@ -17,7 +17,7 @@ public final class Display {
     private static volatile boolean enabled = true;
 
     public static void init() {
-        EventBus.register(Display.class);
+        EventBus.connect(Display.class);
     }
 
     public static Vector2i transformVirtualToWindow(Window window, int virtualX, int virtualY) {

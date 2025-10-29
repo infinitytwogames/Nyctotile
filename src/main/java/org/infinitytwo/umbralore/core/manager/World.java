@@ -10,7 +10,7 @@ import java.util.Map;
 public class World {
     private static Dimension dimension;
     private static Map<String, Dimension> loadedDimension = new HashMap<>();
-    private static int seed;
+    private static long seed;
 
     public static Dimension getCurrentDimension() {
         return dimension;
@@ -32,11 +32,17 @@ public class World {
         return Collections.unmodifiableCollection(loadedDimension.values());
     }
 
-    public static int getSeed() {
+    public static long getSeed() {
         return seed;
     }
 
-    public static void setSeed(int seed) {
+    public static void setSeed(long seed) {
         World.seed = seed;
+    }
+
+    public static void clear() {
+        dimension = null;
+        loadedDimension.clear();
+        seed = 0;
     }
 }
