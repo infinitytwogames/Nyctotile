@@ -21,7 +21,8 @@ public class Text implements Component {
     protected boolean centerY = true;
     protected Screen screen;
     protected float angle;
-
+    private int drawOrder;
+    
     public Text(FontRenderer renderer, Screen screen) {
         this.renderer = renderer;
         this.screen = screen;
@@ -113,7 +114,7 @@ public class Text implements Component {
     }
 
     public void draw() {
-        screen.run(() -> renderer.renderText(text, getPosition(), color, angle));
+        screen.run(() -> renderer.renderText(text, getPosition(),drawOrder, color, angle));
     }
 
     public void setPosition(Anchor anchor, Pivot pivot) {

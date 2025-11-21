@@ -33,7 +33,7 @@ public class UIBatchRenderer {
     private float[] vertexData;
     private int vertexDataIndex = 0;
     private final int MAX_QUADS = 1000;
-    private final int VERTEX_SIZE = 8;
+    private final int VERTEX_SIZE = 9;
     private final int VERTICES_PER_QUAD = 6;
     private final int FLOATS_PER_QUAD = VERTEX_SIZE * VERTICES_PER_QUAD;
     
@@ -72,8 +72,8 @@ public class UIBatchRenderer {
         GL15.glBufferData(GL15.GL_ARRAY_BUFFER, (long) vertexData.length * Float.BYTES, GL15.GL_DYNAMIC_DRAW);
         
         // Attribute Pointers remain correct
-        GL20.glVertexAttribPointer(0, 2, GL11.GL_FLOAT, false, VERTEX_SIZE * Float.BYTES, 0);
-        GL20.glVertexAttribPointer(1, 4, GL11.GL_FLOAT, false, VERTEX_SIZE * Float.BYTES, 2 * Float.BYTES);
+        GL20.glVertexAttribPointer(0, 3, GL11.GL_FLOAT, false, VERTEX_SIZE * Float.BYTES, 0);
+        GL20.glVertexAttribPointer(1, 4, GL11.GL_FLOAT, false, VERTEX_SIZE * Float.BYTES, 3 * Float.BYTES);
         GL20.glVertexAttribPointer(2, 2, GL11.GL_FLOAT, false, VERTEX_SIZE * Float.BYTES, 6 * Float.BYTES);
         
         GL20.glEnableVertexAttribArray(0);
@@ -149,17 +149,18 @@ public class UIBatchRenderer {
             float finalX = rotatedX + pivotX;
             float finalY = rotatedY + pivotY;
             
-            // 2. Populate Vertex Data (8 FLOATS per vertex)
+            // 2. Populate Vertex Data (9 FLOATS per vertex)
             quad[vertexOffset] = finalX;
             quad[vertexOffset + 1] = finalY;
+            quad[vertexOffset + 2] = ui.getDrawOrder();
             
-            quad[vertexOffset + 2] = color.getRed();
-            quad[vertexOffset + 3] = color.getGreen();
-            quad[vertexOffset + 4] = color.getBlue();
-            quad[vertexOffset + 5] = color.getAlpha();
+            quad[vertexOffset + 3] = color.getRed();
+            quad[vertexOffset + 4] = color.getGreen();
+            quad[vertexOffset + 5] = color.getBlue();
+            quad[vertexOffset + 6] = color.getAlpha();
             
-            quad[vertexOffset + 6] = u[cornerIndex]; // U
-            quad[vertexOffset + 7] = v[cornerIndex]; // V
+            quad[vertexOffset + 7] = u[cornerIndex]; // U
+            quad[vertexOffset + 8] = v[cornerIndex]; // V
         }
         
         System.arraycopy(quad, 0, vertexData, vertexDataIndex, quad.length);
@@ -231,14 +232,15 @@ public class UIBatchRenderer {
             // 2. Populate Vertex Data (8 FLOATS per vertex)
             quad[vertexOffset] = finalX;
             quad[vertexOffset + 1] = finalY;
+            quad[vertexOffset + 2] = ui.getDrawOrder();
             
-            quad[vertexOffset + 2] = foregroundColor.getRed();
-            quad[vertexOffset + 3] = foregroundColor.getGreen();
-            quad[vertexOffset + 4] = foregroundColor.getBlue();
-            quad[vertexOffset + 5] = foregroundColor.getAlpha();
+            quad[vertexOffset + 3] = foregroundColor.getRed();
+            quad[vertexOffset + 4] = foregroundColor.getGreen();
+            quad[vertexOffset + 5] = foregroundColor.getBlue();
+            quad[vertexOffset + 6] = foregroundColor.getAlpha();
             
-            quad[vertexOffset + 6] = u[cornerIndex]; // U
-            quad[vertexOffset + 7] = v[cornerIndex]; // V
+            quad[vertexOffset + 7] = u[cornerIndex]; // U
+            quad[vertexOffset + 8] = v[cornerIndex]; // V
         }
         
         System.arraycopy(quad, 0, vertexData, vertexDataIndex, quad.length);

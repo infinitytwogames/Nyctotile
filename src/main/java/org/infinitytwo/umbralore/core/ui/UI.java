@@ -14,13 +14,14 @@ import org.joml.Vector2i;
 import java.util.HashMap;
 import java.util.Map;
 
-public abstract class UI {
+public abstract class UI implements Comparable<UI> {
     protected UIBatchRenderer renderer;
     protected RGBA backgroundColor = new RGBA();
 
     protected int width = 0;
     protected int height = 0;
     protected float angle = 0;
+    protected int drawOrder = 0; // z
 
     protected boolean hovering = false;
     protected boolean hidden = false;
@@ -166,7 +167,7 @@ public abstract class UI {
     }
 
     public Vector2i getEnd() {
-        return getPosition().add(width,height);
+        return new Vector2i(getPosition()).add(width,height);
     }
 
     public void addOffset(Vector2i v) {
@@ -225,5 +226,18 @@ public abstract class UI {
     
     public void setHidden(boolean hidden) {
         this.hidden = hidden;
+    }
+    
+    public int getDrawOrder() {
+        return drawOrder;
+    }
+    
+    public void setDrawOrder(int drawOrder) {
+        this.drawOrder = drawOrder;
+    }
+    
+    @Override
+    public int compareTo(@NotNull UI ui) {
+        return drawOrder - ui.drawOrder;
     }
 }

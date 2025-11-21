@@ -8,6 +8,7 @@ import org.infinitytwo.umbralore.core.ui.UI;
 
 public class Scale implements Component {
     protected UI parent;
+    protected UI scaleTo;
     protected float xRatio, yRatio;
     protected int width, height;
 
@@ -27,12 +28,22 @@ public class Scale implements Component {
         updateSize(); // initialize once
         EventBus.connect(this);
     }
-
+    
+    public void setScaleTo(UI scaleTo) {
+        this.scaleTo = scaleTo;
+    }
+    
     private void updateSize() {
         if (parent != null) {
-            width = xRatio < 0 ? parent.getWidth() : (int) (Display.width * xRatio);
-            height = yRatio < 0 ? parent.getHeight() : (int) (Display.height * yRatio);
-            parent.setSize(width, height);
+            if (scaleTo == null) {
+                width = xRatio < 0? parent.getWidth() : (int) (Display.width * xRatio);
+                height = yRatio < 0? parent.getHeight() : (int) (Display.height * yRatio);
+                parent.setSize(width, height);
+            } else {
+                width = xRatio < 0? parent.getWidth() : (int) (Display.width * xRatio);
+                height = yRatio < 0? parent.getHeight() : (int) (Display.height * yRatio);
+                parent.setSize(width, height);
+            }
         } else {
             width = (int) (Display.width * xRatio);
             height = (int) (Display.height * yRatio);

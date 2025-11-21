@@ -4,7 +4,7 @@ public abstract class ShaderFiles {
     public static final String uiVertex = """
 #version 330 core
 
-layout (location = 0) in vec2 aPos;      // Position (x, y)
+layout (location = 0) in vec3 aPos;      // Position (x, y, drawOrder)
 layout (location = 1) in vec4 aColor;    // Color (r, g, b, a)
 layout (location = 2) in vec2 aTexCoord; // Texture coordinates (u, v)
 
@@ -18,7 +18,7 @@ out vec2 vTexCoord;
 void main() {
     // gl_Position is directly calculated using the pre-transformed aPos and the projection matrix.
     // The z-component is 0.0, and w-component is 1.0 for a 2D position.
-    gl_Position = projection * vec4(aPos.x, aPos.y, 0.0, 1.0);
+    gl_Position = projection * vec4(aPos, 1.0);
 
     vColor = aColor;
     vTexCoord = aTexCoord;

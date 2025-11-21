@@ -86,7 +86,6 @@ public class FontRenderer {
 
     private void init() {
         // Query uniforms once
-
         locProj      = glGetUniformLocation(program.getProgramId(), "uProj");
         locTextColor = glGetUniformLocation(program.getProgramId(), "uTextColor");
         locFontAtlas = glGetUniformLocation(program.getProgramId(), "uFontAtlas");
@@ -120,7 +119,7 @@ public class FontRenderer {
         
         // Add logging to see if the baking failed
         if (result <= 0) {
-            logger.error("STBTT Bake failed or returned zero chars fit! Result: " + result);
+            logger.error("STBTT Bake failed or returned zero chars fit! Result: {}", result);
         }
         
         // Upload texture atlas
@@ -138,23 +137,26 @@ public class FontRenderer {
         glBindVertexArray(vaoId);
         glBindBuffer(GL_ARRAY_BUFFER, vboId);
         glBufferData(GL_ARRAY_BUFFER, 2048 * 6 * 4 * Float.BYTES, GL_DYNAMIC_DRAW);
+        
         glEnableVertexAttribArray(0);
-        glVertexAttribPointer(0, 2, GL_FLOAT, false, 4 * Float.BYTES, 0);
         glEnableVertexAttribArray(1);
+        
+        glVertexAttribPointer(0, 2, GL_FLOAT, false, 4 * Float.BYTES, 0);
         glVertexAttribPointer(1, 2, GL_FLOAT, false, 4 * Float.BYTES, 2 * Float.BYTES);
+        
         glBindBuffer(GL_ARRAY_BUFFER, 0);
         glBindVertexArray(0);
         initialized = true;
     }
 
-    public void renderText(Matrix4f projView, String text, float x, float y, float r, float g, float b, float angle) {
+    public void renderText(Matrix4f projView, String text, float x, float y, int z, float r, float g, float b, float angle) {
         if (!initialized) {
             logger.error("FontRenderer is not initialized",new IllegalStateException("FontRenderer is not initialized"));
             return;
         }
         program.bind();
         Matrix4f model = new Matrix4f()
-                .translate(x, y, 0.0f) // 1. Move to the desired position
+                .translate(x, y, z) // 1. Move to the desired position
                 .rotateZ((float)Math.toRadians(angle));
         
         // Upload projection
@@ -216,8 +218,8 @@ public class FontRenderer {
     /**
      * Render text at screen coordinates (x, y).
      */
-    public void renderText(String text, float x, float y, float r, float g, float b, float angle) {
-        renderText(projection,text,x,y,r,g,b,angle);
+    public void renderText(String text, float x, float y, int z, float r, float g, float b, float angle) {
+        renderText(projection,text,x,y, z, r,g,b,angle);
     }
 
     /** Cleanup GPU resources */
@@ -265,16 +267,16 @@ public class FontRenderer {
         renderText(projView,text,position,color,0);
     }
     
-    public void renderText(String text, Vector2i position, RGB color, float angle) {
-        renderText(text,position.x(),position.y(),color.getRed(),color.getGreen(),color.getBlue(), angle);
+    public void renderText(String text, Vector2i position, int z, RGB color, float angle) {
+        renderText(text,position.x(),position.y(),z,color.getRed(),color.getGreen(),color.getBlue(), angle);
     }
 
-    public void renderText(String text, int x, int y, RGB color, float angle) {
-        renderText(text,x,y,color.getRed(),color.getGreen(),color.getBlue(), angle);
+    public void renderText(String text, int x, int y, int z, RGB color, float angle) {
+        renderText(text,x,y,z,color.getRed(),color.getGreen(),color.getBlue(), angle);
     }
 
     public void renderText(Matrix4f projView, String text, Vector2i pos, RGB color, float angle) {
-        renderText(projView,text,pos.x,pos.y,color.r(),color.g(),color.b(), angle);
+        renderText(projView,text,pos.x,pos.y, 0, color.r(),color.g(),color.b(), angle);
     }
 
     public float getFontHeight() {
@@ -324,6 +326,6 @@ public class FontRenderer {
     }
     
     public void renderText(Matrix4f projView, String text, int x, int y, int r, int g, int b) {
-        renderText(projView,text,x,y,r,g,b,0);
+        renderText(projView,text,x,y, 0, r,g,b,0);
     }
 }
