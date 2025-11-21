@@ -1,6 +1,5 @@
 package org.infinitytwo.umbralore.core.world;
 
-import org.infinitytwo.umbralore.core.VectorMath;
 import org.infinitytwo.umbralore.core.data.Block;
 import org.infinitytwo.umbralore.block.BlockType;
 import org.infinitytwo.umbralore.core.data.ChunkData;
@@ -22,7 +21,6 @@ import java.util.concurrent.ConcurrentHashMap;
 
 public class ServerGridMap extends GMap {
     protected final ConcurrentHashMap<ChunkPos, ChunkData> chunks = new ConcurrentHashMap<>();
-    protected boolean isReady = false;
     protected final BlockRegistry registry;
 
     public ServerGridMap(BlockRegistry registry) {
@@ -36,8 +34,12 @@ public class ServerGridMap extends GMap {
 
         if (chunks.containsKey(pos)) {
             int id = chunks.get(pos).getBlockId(x,y,z);
-            if (id != 0) return new Block(registry.get(id));
-        } else return null;
+            if (id != 0) {
+                Block block = new Block(registry.get(id));
+                block.setPosition(x,y,z);
+                return block;
+            }
+        }
         return null;
     }
 
@@ -86,7 +88,35 @@ public class ServerGridMap extends GMap {
         ChunkData chunk = chunks.get(worldToChunkPos(pos.x, pos.z));
         return reader.getData(chunk.getBlockId(pos.x,pos.y,pos.z), chunk.getData(pos), name);
     }
-
+    
+    @Override
+    public boolean isBlockLoaded(int x, int y, int z) {
+        Vector2i p = convertToChunkPosition(x, z);
+        ChunkPos pos = new ChunkPos(p.x, p.y);
+        
+        // This method is primarily used by physics/rendering for safety.
+        // It only checks the 'chunks' map because the parent class doesn't know
+        // about the 'activeGenerations' futures.
+        // However, since the ServerThread only interacts with the *subclass* (ServerProcedureGridMap),
+        // the check should be performed there.
+        
+        return chunks.containsKey(pos);
+    }
+    
+    @Override
+    public Block getTopBlock(int x, int z) {
+        ChunkData chunk = chunks.get(worldToChunkPos(x,z));
+        
+        if (chunk != null) {
+            for (int y = ChunkData.SIZE_Y; y >= 0; y--) {
+                if (chunk.getBlockId(x, y, z) > 0) {
+                    return getBlock(x,y,z).setPosition(x,y,z);
+                }
+            }
+        }
+        return null;
+    }
+    
     @Override
     public BlockType getBlockType(Vector3i pos) {
         return getBlock(pos.x,pos.y,pos.z).getType();

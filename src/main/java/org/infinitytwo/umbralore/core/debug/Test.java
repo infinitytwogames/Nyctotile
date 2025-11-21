@@ -16,7 +16,6 @@ import org.infinitytwo.umbralore.core.event.state.WindowResizedEvent; // ADDED: 
 import org.infinitytwo.umbralore.core.exception.IllegalChunkAccessException;
 import org.infinitytwo.umbralore.core.data.Item;
 import org.infinitytwo.umbralore.core.exception.IllegalDataTypeException;
-import org.infinitytwo.umbralore.core.logging.Logger;
 import org.infinitytwo.umbralore.core.manager.CrashHandler;
 import org.infinitytwo.umbralore.core.manager.Mouse;
 import org.infinitytwo.umbralore.core.manager.WorkerThreads;
@@ -24,7 +23,6 @@ import org.infinitytwo.umbralore.core.model.Model;
 import org.infinitytwo.umbralore.core.model.TextureAtlas;
 import org.infinitytwo.umbralore.core.model.builder.CubeModelBuilder;
 import org.infinitytwo.umbralore.core.model.builder.ModelBuilder;
-import org.infinitytwo.umbralore.core.network.client.ClientNetworkThread;
 import org.infinitytwo.umbralore.core.registry.*;
 import org.infinitytwo.umbralore.core.renderer.*;
 import org.infinitytwo.umbralore.core.ui.builtin.InventoryGridViewer;
@@ -38,11 +36,12 @@ import org.infinitytwo.umbralore.core.world.GridMap;
 import org.infinitytwo.umbralore.core.world.dimension.Overworld;
 import org.joml.*;
 import org.lwjgl.opengl.GL20;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import javax.swing.*;
 import java.io.IOException;
 import java.lang.Math;
-import java.net.UnknownHostException;
 import java.util.HashMap;
 import java.util.List;
 import java.util.concurrent.ConcurrentLinkedQueue;
@@ -50,16 +49,16 @@ import java.util.concurrent.ConcurrentLinkedQueue;
 import static org.lwjgl.glfw.GLFW.*;
 import static org.lwjgl.opengl.GL11.*;
 
-public class Main {
+public class Test {
     private static Window window;
-    private static final Logger logger = new Logger(Main.class);
+    private static final Logger logger = LoggerFactory.getLogger(Test.class);
     private static final ConcurrentLinkedQueue<Runnable> tasks = new ConcurrentLinkedQueue<>();
-
+    
     private static final HashMap<Integer, Boolean> keyStates = new HashMap<>();
     private static final HashMap<Integer, Boolean> lastKeyStates = new HashMap<>();
     private static final HashMap<Integer, Boolean> mouseStates = new HashMap<>();
     private static final HashMap<Integer, Boolean> lastMouseStates = new HashMap<>();
-
+    
     private static Camera camera;
     private static GridMap map;
     private static FontRenderer textRenderer;
@@ -68,11 +67,10 @@ public class Main {
     private static Environment env;
     private static Outline outliner;
     private static double delta;
-
+    
     private static Overworld overworld;
     private static BlockRegistry registry = new BlockRegistry();
     private static ServerThread serverThread;
-    private static ClientNetworkThread networkThread;
     private static EventBus eventBus = new EventBus("Network");
     private static boolean locked = false;
     private static UIBatchRenderer renderer;
@@ -85,31 +83,31 @@ public class Main {
     private static Entity entity;
     private static BlockDataReader reader;
     private static int dynamic;
-
+    
     public static void launchConsole() {
         // ⚠️ CRITICAL: Enforce that the Console setup runs on the EDT
         SwingUtilities.invokeLater(() -> {
             Console console = new Console(); // Constructor creates the JFrame components
-
+            
             // Final JFrame commands must be here
             console.setDefaultCloseOperation(JFrame.HIDE_ON_CLOSE);
             console.setLocation(100, 100);
             console.setSize(700, 500);
-
+            
             // This makes the window appear!
             console.setVisible(true);
-
+            
             // Now that the UI is visible, start the *worker* thread for log consumption
             Thread consoleWorker = new Thread(console, "Console-Worker-Thread");
             consoleWorker.setDaemon(true);
             consoleWorker.start();
         });
     }
-
+    
     public static void main(String[] args) {
         Display.enable();
         Display.init();
-
+        
         Thread.currentThread().setName("Renderer Thread");
         CrashHandler.init();
         
@@ -120,59 +118,59 @@ public class Main {
         logger.info("Initializing Engine's classes...");
         init();
         logger.info("Initialization completed!");
-
+        
         double lastTime = glfwGetTime();
         locked = false; // Initial state: Locked (Cursor visible, Menu often shows on start)
         glfwSetInputMode(window.getWindowHandle(), GLFW_CURSOR, GLFW_CURSOR_DISABLED);
-
+        
         while (!glfwWindowShouldClose(window.getWindowHandle())) {
             glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
             runTasks();
-
+            
             double current = glfwGetTime();
             delta = current - lastTime;
             lastTime = current;
-
+            
             accumulator += delta;
-
+            
             // --- fixed-step physics loop (run here, not in render) ---
             while (accumulator >= fixedDelta) {
                 applyPhysics(fixedDelta);
                 accumulator -= fixedDelta;
             }
-
+            
             // --- interpolation factor for rendering ---
             float alpha = (float) (accumulator / fixedDelta);
-
+            
             // --- ESC TOGGLE LOGIC (Kept as is, it's correct) ---
             boolean escIsDown = glfwGetKey(window.getWindowHandle(), GLFW_KEY_ESCAPE) == GLFW_PRESS;
-
+            
             if (escIsDown && !isEscKeyDown) {
                 pauseGame();
             }
             isEscKeyDown = escIsDown;
             // ----------------------------------------------------
-
+            
             // Copy current -> last
             lastKeyStates.clear();
             lastKeyStates.putAll(keyStates);
-
+            
             for (int key = GLFW_KEY_SPACE; key <= GLFW_KEY_LAST; key++) {
                 keyStates.put(key, glfwGetKey(window.getWindowHandle(), key) == GLFW_PRESS);
             }
-
+            
             lastMouseStates.clear();
             lastMouseStates.putAll(mouseStates);
-
+            
             for (int button = GLFW_MOUSE_BUTTON_1; button <= GLFW_MOUSE_BUTTON_LAST; button++) {
                 mouseStates.put(button, glfwGetMouseButton(window.getWindowHandle(), button) == GLFW_PRESS);
             }
-
+            
             // --- GAME LOGIC GATED BY PAUSE STATE ---
             if (!locked) {
                 // 1. Camera Look (Must be disabled when paused)
                 camera.rotate((float) Mouse.getDeltaX(), (float) -Mouse.getDeltaY());
-
+                
                 // 2. Block Interaction (Must be disabled when paused)
                 if (isMouseJustPressed(GLFW_MOUSE_BUTTON_RIGHT)) {
                     handleBlockInteraction();
@@ -190,13 +188,13 @@ public class Main {
             
             handleInput(locked);
             render();
-
+            
             glfwPollEvents();
             glfwSwapBuffers(window.getWindowHandle());
         }
         cleanup();
     }
-
+    
     private static void handleBlockInteraction() {
         RaycastResult hit = map.raycast(camera.getPosition(), camera.getDirection(), 6);
         if (hit != null) {
@@ -208,7 +206,7 @@ public class Main {
             );
             if (map.getBlock(pos.x, pos.y, pos.z) == null) {
                 // FIX: Get the correct grass block ID from the registry.
-                Block block = new Block(Main.getBlockRegistry().get(dynamic)); // 1 is the ID for grass
+                Block block = new Block(Test.getBlockRegistry().get(dynamic)); // 1 is the ID for grass
                 block.setPosition(pos.x, pos.y, pos.z);
                 try {
                     map.placeBlock(block);
@@ -218,31 +216,31 @@ public class Main {
             }
         }
     }
-
+    
     private static void applyPhysics(double fixedDelta) {
         player.update((float) fixedDelta);
         entity.update((float) fixedDelta);
     }
-
+    
     private static void earlySetup() {
         window = new Window(1000, 512, "Umbralore");
         Display.init();
         window.initOpenGL();
-        EventBus.connect(Main.class);
-
+        EventBus.connect(Test.class);
+        
         Display.onWindowResize(new WindowResizedEvent(1000, 512, window));
     }
-
+    
     private static Screen setPos;
-
+    
     private static void construction() {
         atlas = new TextureAtlas(2, 4);
-
+        
         registry = BlockRegistry.getMainBlockRegistry();
         textRenderer = new FontRenderer("src/main/resources/font.ttf", 16);
-
+        
         renderer = new UIBatchRenderer();
-
+        
         try {
             registry.register(new GrassBlockType(atlas.addTexture("src/main/resources/grass_side.png", true)));
             registry.register(new DirtBlockType(atlas.addTexture("src/main/resources/dirt.png", true)));
@@ -252,9 +250,9 @@ public class Main {
             throw new RuntimeException(e);
         }
         atlas.build();
-
+        
         overworld = new Overworld(486486, registry);
-
+        
         shaderProgram = new ShaderProgram(
                 """
                         #version 330 core
@@ -290,62 +288,56 @@ public class Main {
                         }
                         """
         );
-
+        
         env = new Environment();
         serverThread = new ServerThread(84653);
         camera = new Camera();
 //        textRenderer = new FontRenderer("src/main/resources/font.ttf",16);
-
-        try {
-            networkThread = new ClientNetworkThread(eventBus, 5000, "localhost", 5555);
-        } catch (UnknownHostException e) {
-            throw new RuntimeException(e);
-        }
-
+        
         org.infinitytwo.umbralore.core.data.ItemType
                 i = new org.infinitytwo.umbralore.core.data.ItemType.Builder()
                 .material(Material.GRASS)
                 .type(Item.ItemBehaviour.ITEM)
                 .name("")
                 .build();
-
+        
         try {
             itemRegistry = ItemRegistry.getMainRegistry();
             itemAtlas = ItemRegistry.getTextureAtlas();
             itemRegistry.register(i, itemAtlas.addTexture("src/main/resources/pickaxe.png", false));
-
+            
             itemAtlas.build();
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
-
+        
         map = new GridMap(registry);
-
-        player = new Player(PlayerData.shell(""), overworld, camera, window);
+        
+        player = new Player(PlayerData.shell(""), overworld, window);
         player.setPosition(0, 150, 0);
         player.adjust();
         player.getInventory().set(0, Item.of(i));
         player.getInventory().set(6, Item.of(i));
-
+        
         // "PAUSE" SCREEN
         pauseScreen = new Screen(renderer, window);
-
+        
         InventoryGridViewer viewer = new InventoryGridViewer(pauseScreen, new FontRenderer(Constants.fontFilePath, 16), window, (InventoryGridViewer.Factory) (slot, item, screen, fontRenderer, window) -> {
-            ItemSlot ie = new ItemSlot(screen,fontRenderer,window);
+            ItemSlot ie = new ItemSlot(screen, fontRenderer, window);
             ie.setAtlas(itemAtlas);
-            ie.setBackgroundColor(0,0,0,1);
+            ie.setBackgroundColor(0, 0, 0, 1);
             return ie;
         }, 9);
         viewer.linkInventory(player.getInventory());
         viewer.setAtlas(itemAtlas);
         viewer.setCellSize(128);
-        viewer.setBackgroundColor(1,1,1,0.5f);
-        viewer.setPosition(new Anchor(0.5f,0.5f),new Pivot(0.5f,0.5f));
+        viewer.setBackgroundColor(1, 1, 1, 0.5f);
+        viewer.setPosition(new Anchor(0.5f, 0.5f), new Pivot(0.5f, 0.5f));
         viewer.updateSize();
-
+        
         pauseScreen.register(viewer);
         pauseScreen.register(new Background.Builder(renderer).applyDefault().backgroundColor(0, 0, 0, 0.5f).build());
-
+        
         mainScreen = new Screen(renderer, window);
         Hotbar hotbar = new Hotbar(mainScreen, textRenderer, window, 9);
         hotbar.setAtlas(itemAtlas);
@@ -355,15 +347,15 @@ public class Main {
         hotbar.updateSize();
         hotbar.linkInventory(player.getInventory());
         mainScreen.register(hotbar);
-
+        
         Mouse.init(itemAtlas, mainScreen, -1, textRenderer, window);
-
+        
         // MODEL RENDERING TEST
         Model model = new Model("test");
         AABB box = new AABB(0, 0, 0, 1, 1, 1);
-        new ModelBuilder(box).cube(model.getVerticesBuffer(), new float[]{0, 0, 1, 1});
+        new ModelBuilder(box).cube(model.getVerticesBuffer(), new float[] {0, 0, 1, 1});
         int index = ModelRegistry.register(model);
-
+        
         entity = new Entity("item", window, overworld, new Inventory(0), box) {
             @Override
             public Entity newInstance() {
@@ -371,46 +363,45 @@ public class Main {
             }
         };
         entity.setModelIndex(index);
-
+        
         entityRenderer = new EntityRenderer(atlas);
         entityRenderer.insert(entity);
-
+        
         // BLOCK READING TEST
         BlockType type = new BlockType("", false, "", 0) {
             @BlockRegistry.Property
             public int data = 5;
-
+            
             @Override
             public void buildModel(GridMap gridMap, int x, int y, int z, TextureAtlas atlas, BlockRegistry registry, NFloatBuffer buffer) {
                 CubeModelBuilder.standardVerticesList(map, x, y, z, atlas.getUVCoords(2), buffer);
             }
         };
-
+        
         try {
             dynamic = registry.registerDynamicBlock(type);
         } catch (IllegalDataTypeException e) {
             throw new RuntimeException(e);
         }
-
+        
         reader = new BlockDataReader(registry);
     }
-
+    
     private static void init() {
         outliner = new Outline();
-
+        
         serverThread.start();
-        networkThread.start();
-
+        
         try {
             Thread.sleep(500);
         } catch (InterruptedException e) {
             throw new RuntimeException(e);
         }
     }
-
-
+    
+    
     private static boolean isEscKeyDown = false;
-
+    
     private static void handleInput(boolean locked) {
         if (!locked) {
             if (isKeyPressed(GLFW_KEY_W)) camera.moveForward((float) delta);
@@ -425,65 +416,65 @@ public class Main {
             if (isKeyPressed(GLFW_KEY_LEFT_SHIFT)) camera.moveDown((float) delta);
         }
     }
-
+    
     // This method handles the state flip and cursor management correctly.
     private static void pauseGame() {
         locked = !locked;
-
+        
         if (locked) { // Now PAUSED: Show cursor
             glfwSetInputMode(window.getWindowHandle(), GLFW_CURSOR, GLFW_CURSOR_NORMAL);
         } else { // Now UNPAUSED: Hide/lock cursor
             glfwSetInputMode(window.getWindowHandle(), GLFW_CURSOR, GLFW_CURSOR_DISABLED);
         }
     }
-
+    
     private static double fixedDelta = 1.0 / 60.0, // 60Hz physics
             accumulator = 0.0;
-
+    
     private static void render() {
         Mouse.update();
         glEnable(GL_DEPTH_TEST);
         update();
         env.render(camera, window);
 //        test.draw(camera, window, 5);
-
+        
         map.draw(camera, window, 16);
         RaycastResult hit = map.raycast(camera.getPosition(), camera.getDirection(), 6);
         if (hit != null) {
-
+            
             outliner.render(new Vector3f(hit.blockPos()), camera, window, new Vector3f());
         }
-
+        
         window.getSize();
         Matrix4f ortho = new Matrix4f().ortho(0, window.getWidth(), window.getHeight(), 0, -1, 1);
-
+        
         textRenderer.renderText(ortho, player.getPosition().toString(), new Vector2i(0, 24), new RGB(1f, 1f, 1f));
         textRenderer.renderText(ortho, player.getVelocity().toString(), new Vector2i(0, 2 + 24 * 2), new RGB(1f, 1f, 1f));
-
+        
         camera.update((float) delta);
-
+        
         GL20.glUseProgram(0);
         Display.prepare2d();
-
+        
         mainScreen.draw();
         if (locked) pauseScreen.draw();
-
+        
         Display.prepare3d();
     }
-
+    
     private static void update() {
         int chunkX = (int) Math.floor(camera.getPosition().x / ChunkData.SIZE);
         int chunkZ = (int) Math.floor(camera.getPosition().z / ChunkData.SIZE);
-
+        
         List<ChunkPos> chunks = map.getMissingSurroundingChunks(
                 new ChunkPos(chunkX, chunkZ), 5
         );
-
+        
         for (ChunkPos pos : chunks) {
             getChunk(new Vector2i(pos.x(), pos.z()));
         }
     }
-
+    
     private static void getChunk(Vector2i pos) {
         ChunkData data = serverThread.getCurrentWorld().getChunkOrGenerate(pos); // From ServerProcedureGridMap
         for (int id : registry.getIds()) {
@@ -492,7 +483,7 @@ public class Main {
             }
         }
         if (data == null) return;
-
+        
         // This ensures all modifications to the GridMap are synchronized.
         // Disabled temporary
 //        dispatchTask(() -> {
@@ -500,62 +491,61 @@ public class Main {
         try {
             chunk = Chunk.of(data, map, shaderProgram, atlas, registry); // Passed ChunkData from ServerProcedureGridMap
         } catch (IllegalChunkAccessException e) {
-
+        
         }
         map.addChunk(chunk);
 //        });
     }
-
+    
     protected static void cleanup() {
         window.cleanup();
         serverThread.shutdown();
-        networkThread.shutdown();
     }
-
+    
     public static boolean isKeyPressed(int keyCode) {
         return keyStates.getOrDefault(keyCode, false);
     }
-
+    
     @SubscribeEvent
     public static void onKeyPress(KeyPressEvent event) {
         if (event.getAction() == GLFW_PRESS) {
             keyStates.put(event.getKey(), event.getAction() == GLFW_PRESS || event.getAction() == GLFW_REPEAT);
         }
     }
-
+    
     private static void drop() {
         RaycastResult hit = map.raycast(camera.getPosition(), camera.getDirection(), 6);
         map.getChunk(GridMap.worldToChunk(hit.blockPos())).setData(GridMap.convertToLocalChunk(hit.blockPos()), reader.serialize(registry.get(dynamic), dynamic));
     }
-
+    
     public static boolean isKeyJustPressed(int key) {
         return keyStates.getOrDefault(key, false) && !lastKeyStates.getOrDefault(key, false);
     }
-
+    
     public static boolean isMouseJustPressed(int button) {
         return mouseStates.getOrDefault(button, false) && !lastMouseStates.getOrDefault(button, false);
     }
-
+    
     public static void dispatchTask(Runnable task) {
         WorkerThreads.dispatch(task);
     }
-
+    
     private static void runTasks() {
         WorkerThreads.run();
     }
-
+    
     public static GridMap getGridMap() {
         return map;
     }
-
+    
     public static ServerThread getServerThread() {
         return serverThread;
     }
-
+    
     public static BlockRegistry getBlockRegistry() {
         return registry;
     }
-
+    
     public static Screen getCurrentScreen() {
         return pauseScreen;
     }

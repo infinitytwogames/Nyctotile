@@ -1,7 +1,7 @@
 package org.infinitytwo.umbralore.core;
 
-import org.joml.Vector2i;
-import org.joml.Vector3f;
+import org.joml.*;
+import org.joml.Math;
 
 import java.nio.ByteBuffer;
 
@@ -36,5 +36,17 @@ public final class VectorMath {
         ByteBuffer buffer = ByteBuffer.allocate(3 * Float.BYTES);
         buffer.putFloat(v.x); buffer.putFloat(v.y); buffer.putFloat(v.z);
         return buffer.array();
+    }
+    
+    public static Vector3f toFloat(Vector3i vector) {
+        return new Vector3f(vector);
+    }
+    
+    public static Vector3i toInt(Vector3f vector) {
+        return new Vector3i(Math.round(vector.x), Math.round(vector.y), Math.round(vector.z));
+    }
+    
+    public static String toString(Vector3i vector) {
+        return "x: "+vector.x + ", y: "+ vector.y+ ", z: "+vector.z;
     }
 }

@@ -1,16 +1,13 @@
-package org.infinitytwo.umbralore.core.network.modern;
+package org.infinitytwo.umbralore.core.network;
 
 import com.esotericsoftware.kryonet.Connection;
 import com.esotericsoftware.kryonet.Server;
 import org.infinitytwo.umbralore.core.data.PlayerData;
-import org.infinitytwo.umbralore.core.entity.Player;
-import org.infinitytwo.umbralore.core.exception.UnknownRegistryException;
-import org.infinitytwo.umbralore.core.logging.Logger;
 import org.infinitytwo.umbralore.core.manager.Players;
-import org.infinitytwo.umbralore.core.registry.DimensionRegistry;
-import org.infinitytwo.umbralore.core.security.AntiCheat;
-import org.infinitytwo.umbralore.core.world.dimension.Dimension;
-import org.joml.Vector2i;
+import org.infinitytwo.umbralore.core.network.data.NetworkCommandProcessor;
+import org.infinitytwo.umbralore.core.security.Authentication;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import javax.crypto.Cipher;
 import javax.crypto.SecretKey;
@@ -24,13 +21,12 @@ import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 
 import static org.infinitytwo.umbralore.core.data.io.DataSchematica.Data;
-import static org.infinitytwo.umbralore.core.network.modern.NetworkPackets.*;
+import static org.infinitytwo.umbralore.core.network.data.NetworkPackets.*;
 
 public class ServerNetwork extends Network {
     private final Server server;
-    private final Logger logger = new Logger(ServerNetwork.class);
+    private final Logger logger = LoggerFactory.getLogger(ServerNetwork.class);
     private final SecureRandom secureRandom = new SecureRandom();
-    private final AntiCheat antiCheat = new AntiCheat(9);
     private final NetworkCommandProcessor processor;
     
     // --- Key Management ---
@@ -38,6 +34,7 @@ public class ServerNetwork extends Network {
     private PublicKey serverPublicKey;
     private final Map<Connection, SecretKey> clientAesKeys = new ConcurrentHashMap<>();
     private volatile boolean started;
+    private boolean online;
     
     public ServerNetwork(int udp, int tcp, NetworkCommandProcessor processor) {
         super(udp, tcp);
@@ -45,7 +42,7 @@ public class ServerNetwork extends Network {
         
         // Initialize the KryoNet Server
         int readBufferSize = 131072;  // Keep this the same or slightly larger
-        int writeBufferSize = 131072; // Increased from 16384 to 32768 (32 KB)
+        int writeBufferSize = 131072; // Increased from 16,384 to 32,768 (32 KB)
         
         this.server = new Server(readBufferSize, writeBufferSize);
         
@@ -66,7 +63,7 @@ public class ServerNetwork extends Network {
         try {
             server.bind(tcp, udp);
             server.start(); // Start the KryoNet server thread
-            logger.info("Server bound and listening on TCP/" + tcp + " and UDP/" + udp);
+            logger.info("Server bound and listening on TCP/{} and UDP/{}", tcp, udp);
             started = true;
         } catch (IOException e) {
             logger.error("Server failed to bind/start.", e);
@@ -87,21 +84,18 @@ public class ServerNetwork extends Network {
     
     // --- Send Implementations ---
     
-    // Note: Server typically sends to a specific connection, not to all (sendToAll... methods are for broadcast)
+    // FIX 1: Removed unnecessary synchronization block to prevent performance bottleneck.
     @Override
     public void sendTCP(MPacket packet, Connection connection) {
-        synchronized (server) { // <--- CRITICAL SYNCHRONIZATION POINT
-            // Your logic to determine which connection to use, then:
-            connection.sendTCP(packet); // KryoNet uses Kryo here
-        }
+        // KryoNet's connection.sendTCP is thread-safe.
+        connection.sendTCP(packet);
     }
     
+    // FIX 1: Removed unnecessary synchronization block to prevent performance bottleneck.
     @Override
     public void sendUDP(MPacket packet, Connection connection) {
-        synchronized (server) { // <--- CRITICAL SYNCHRONIZATION POINT
-            // Your logic to determine which connection to use, then:
-            connection.sendUDP(packet); // KryoNet uses Kryo here
-        }
+        // KryoNet's connection.sendUDP is thread-safe.
+        connection.sendUDP(packet);
     }
     
     // --- Security Implementations ---
@@ -180,7 +174,7 @@ public class ServerNetwork extends Network {
     
     @Override
     public void onConnect(Connection connection) {
-        logger.info("Client connected: " + connection.getID());
+        logger.info("Client connected: {}", connection.getID());
         // Initiate handshake by requesting the client to send their AES key
         connection.sendTCP(new PUnencrypted("requestAesKey"));
     }
@@ -188,14 +182,14 @@ public class ServerNetwork extends Network {
     @Override
     public void onReceive(Connection connection, Data packet) {
         // This is where you process fully decrypted and unserialized application data
-        logger.debug("Received application data (" + packet.getClass().getSimpleName() + ") from " + connection.getID());
+        logger.debug("Received application data ({}) from {}", packet.getClass().getSimpleName(), connection.getID());
         
         processor.process(packet,connection);
     }
     
     @Override
     public void onDisconnect(Connection connection) {
-        logger.info("Client disconnected: " + connection.getID());
+        logger.info("Client disconnected: {}", connection.getID());
         clientAesKeys.remove(connection);
         
         // FIX 3: Clean up Player manager state
@@ -214,7 +208,7 @@ public class ServerNetwork extends Network {
         // 1. Client requests Public Key
         if (object instanceof PUnencrypted unencrypted) {
             if ("requestAesKey".equals(unencrypted.command)) {
-                logger.info("Client " + connection.getID() + " requested public key. Sending...");
+                logger.info("Client {} requested public key. Sending...", connection.getID());
                 
                 PKey keyPacket = new PKey();
                 keyPacket.rsaKey = serverPublicKey.getEncoded();
@@ -225,7 +219,7 @@ public class ServerNetwork extends Network {
         // 2. Client sends Encrypted AES Key
         else if (object instanceof PKey receivedKeyPacket) {
             try {
-                logger.info("Handling encrypted AES key from client " + connection.getID() + " (RSA decrypt)...");
+                logger.info("Handling encrypted AES key from client {} (RSA decrypt)...", connection.getID());
                 
                 Cipher rsa = Cipher.getInstance("RSA/ECB/PKCS1Padding");
                 rsa.init(Cipher.DECRYPT_MODE, serverPrivateKey);
@@ -234,27 +228,66 @@ public class ServerNetwork extends Network {
                 SecretKey aesKey = new SecretKeySpec(aesKeyBytes, "AES");
                 clientAesKeys.put(connection, aesKey);
                 
-                // IMPORTANT: The PlayerData object needs to be fully instantiated (with UUID, name, etc.)
-                // during a proper login handshake AFTER the key exchange.
-                // This line is a temporary placeholder for testing the PlayerManager integration:
-                Players.join(new PlayerData(connection.getRemoteAddressTCP().getAddress(),0,"TestUser" + connection.getID(), UUID.randomUUID(),"",false), connection);
+                // FIX 2: Removed the temporary PlayerData join here.
+                // A player should only be "joined" after receiving PUserData (login) to avoid ghost players/UUID conflicts.
                 
-                logger.info("AES key established for connection " + connection.getID() + ". Handshake complete.");
-                
-                connection.sendTCP(new PUnencrypted("connection TestUser" + connection.getID())); // Send confirmation
+                logger.info("AES key established for connection {}. Handshake complete.", connection.getID());
+                connection.sendTCP(new PHandshakeComplete()); // Send confirmation
                 
             } catch (GeneralSecurityException e) {
-                logger.error("RSA Decryption of AES key failed. Closing connection " + connection.getID(), e);
+                logger.error("RSA Decryption of AES key failed. Closing connection {}", connection.getID(), e);
                 connection.close();
+            }
+        } else if (object instanceof PUserData data) {
+            // Player login/authentication logic (Correctly handles joining the Player manager)
+            if (online) {
+                try {
+                    Authentication.FirebaseTokenPayload payload = Authentication.verify(data.token);
+                    String name = payload.name() + "#" + payload.uid().substring(0, 3);
+                    
+                    Players.join(new PlayerData(name, payload.uid(),data.token,true, connection));
+                    connection.sendTCP(new PConnection(name, payload.uid()));
+                    
+                } catch (Exception e) {
+                    logger.error("Failed to login",e);
+                    sendFailure(connection,"AUTHENTICATION_ERROR token is invalid");
+                }
+            } else {
+                UUID uid = UUID.randomUUID();
+                
+                Players.join(new PlayerData(data.name, uid.toString(), "",false,connection));
+                connection.sendTCP(new PConnection(data.name, uid.toString()));
             }
         }
     }
     
-    public void offlineMode(boolean offline) {
+    @Override
+    public int getPortTCP() {
+        return tcp;
+    }
     
+    @Override
+    public int getPortUDP() {
+        return udp;
+    }
+    
+    public void offlineMode(boolean offline) {
+        online = !offline;
     }
     
     public boolean isStarted() {
         return started;
+    }
+    
+    public void broadcastTCP(Data data) {
+        for (Connection connection : server.getConnections()) send(data,connection,true);
+    }
+    
+    public void broadcastUDP(Data data) {
+        for (Connection connection : server.getConnections()) send(data,connection,false);
+    }
+    
+    public void broadcastUDPExcept(Connection connection, Data data) {
+        server.sendToAllExceptUDP(connection.getID(),data);
     }
 }

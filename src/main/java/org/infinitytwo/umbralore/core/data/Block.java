@@ -41,7 +41,7 @@ public class Block {
     }
 
     public Block setPosition(int x, int y, int z) {
-        this.position = new Vector3i(x,y,z);
+        this.position.set(x,y,z);
         return this;
     }
 
@@ -50,6 +50,11 @@ public class Block {
     }
 
     public Vector3i getPosition() {
-        return position;
+        return new Vector3i(position);
+    }
+    
+    @Override
+    public String toString() {
+        return "Block(Pos: ("+getPosition().x + " "+getPosition().y+ " "+getPosition().z + "), Type: "+getType().getId();
     }
 }

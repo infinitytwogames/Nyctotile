@@ -3,19 +3,19 @@ package org.infinitytwo.umbralore.core.event.input;
 import org.infinitytwo.umbralore.core.event.Event;
 
 public class MouseCoordinatesEvent extends Event {
-    private final float normalizedX;
-    private final float normalizedY;
+    private final float x;
+    private final float y;
 
-    public MouseCoordinatesEvent(float normalizedX, float normalizedY) {
-        this.normalizedX = normalizedX;
-        this.normalizedY = normalizedY;
+    public MouseCoordinatesEvent(float x, float y) {
+        this.x = x;
+        this.y = y;
     }
 
-    public float getNormalizedX() {
-        return normalizedX;
+    public float getX() {
+        return x;
     }
 
-    public float getNormalizedY() {
-        return normalizedY;
+    public float getY() {
+        return y;
     }
 }

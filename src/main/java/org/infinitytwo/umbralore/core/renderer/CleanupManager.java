@@ -4,6 +4,7 @@ import javax.swing.*;
 
 import static org.lwjgl.glfw.GLFW.*;
 
+@Deprecated
 public class CleanupManager {
 
     private static boolean glfwInitialized = false; // Flag to track initialization
@@ -17,6 +18,7 @@ public class CleanupManager {
         }
     }
 
+    
     public static void exit(int code) {
         if (code != 0) {
             createPopup("Application exit with code: "+code);

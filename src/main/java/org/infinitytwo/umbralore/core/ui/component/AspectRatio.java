@@ -98,7 +98,12 @@ public class AspectRatio implements Component {
     public void draw() {
         // Drawing logic goes here. Ratio calculation happens in the constructor and setters.
     }
-
+    
+    @Override
+    public void setAngle(float angle) {
+    
+    }
+    
     // --- Getters and Setters ---
 
     public int getWidth() {

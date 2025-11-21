@@ -2,12 +2,10 @@ package org.infinitytwo.umbralore.core.manager;
 
 import org.infinitytwo.umbralore.core.entity.Entity;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
+import java.util.*;
 
 public class EntityManager {
-    private static final ArrayList<Entity> entities = new ArrayList<>();
+    private static final List<Entity> entities = Collections.synchronizedList(new ArrayList<>());
 
     public static void put(Entity entity) {
         entities.add(entity);
@@ -15,5 +13,16 @@ public class EntityManager {
 
     public static Collection<Entity> getAllEntities() {
         return Collections.unmodifiableCollection(entities);
+    }
+    
+    public static Entity getEntityFromId(UUID uuid) {
+        synchronized (entities) {
+            for (Entity entity : entities) {
+                if (entity.getUUID().equals(uuid)) {
+                    return entity;
+                }
+            }
+        }
+        return null;
     }
 }

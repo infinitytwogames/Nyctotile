@@ -24,7 +24,7 @@ public class ChunkData {
     public static final int SIZE_X = SIZE;
     public static final int SIZE_Z = SIZE;
     protected transient GridMap map;
-    public Vector2i position;
+    protected Vector2i position;
     protected int[] blocks = new int[SIZE * SIZE_Y * SIZE];
     private final Map<Vector3i, byte[]> blockData = new HashMap<>();
     

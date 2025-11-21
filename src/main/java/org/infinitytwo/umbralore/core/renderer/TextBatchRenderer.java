@@ -5,13 +5,14 @@ import org.infinitytwo.umbralore.core.RGB;
 import org.infinitytwo.umbralore.core.event.SubscribeEvent;
 import org.infinitytwo.umbralore.core.event.bus.EventBus;
 import org.infinitytwo.umbralore.core.event.state.WindowResizedEvent;
-import org.infinitytwo.umbralore.core.logging.Logger;
 import org.jetbrains.annotations.NotNull;
 import org.joml.Matrix4f;
 import org.lwjgl.BufferUtils;
 import org.lwjgl.stb.STBTTAlignedQuad;
 import org.lwjgl.stb.STBTTBakedChar;
 import org.lwjgl.system.MemoryStack;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.nio.FloatBuffer;
 
@@ -22,16 +23,16 @@ import static org.lwjgl.opengl.GL20C.glVertexAttribPointer;
 import static org.lwjgl.opengl.GL30.*;
 import static org.lwjgl.stb.STBTruetype.stbtt_GetBakedQuad;
 
+@Deprecated
 public class TextBatchRenderer {
     private final FontRenderer font;
     private final FloatBuffer vertexBuffer;
     private final int vaoId, vboId;
     private int glyphCount = 0;
-    private final Logger logger = new Logger(TextBatchRenderer.class);
     private final Matrix4f proj = new Matrix4f();
     private RGB color;
 
-    public TextBatchRenderer(FontRenderer font, float scale) {
+    public TextBatchRenderer(FontRenderer font) {
         this.font = font;
         EventBus.connect(this);
 
@@ -117,7 +118,7 @@ public class TextBatchRenderer {
         glEnable(GL_BLEND);
         glBlendFunc(GL_SRC_ALPHA,GL_ONE_MINUS_SRC_ALPHA);
 
-        glUseProgram(font.getShaderProgramId());
+        font.getProgram().bind();
         try (MemoryStack stack = MemoryStack.stackPush()) {
             FloatBuffer mat = stack.mallocFloat(16);
             proj.get(mat);

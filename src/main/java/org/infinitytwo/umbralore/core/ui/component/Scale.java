@@ -55,7 +55,12 @@ public class Scale implements Component {
     public void draw() {
 
     }
-
+    
+    @Override
+    public void setAngle(float angle) {
+    
+    }
+    
     public int getWidth() {
         return width;
     }

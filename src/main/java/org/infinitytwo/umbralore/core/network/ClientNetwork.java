@@ -1,8 +1,10 @@
-package org.infinitytwo.umbralore.core.network.modern;
+package org.infinitytwo.umbralore.core.network;
 
 import com.esotericsoftware.kryonet.Client;
 import com.esotericsoftware.kryonet.Connection;
-import org.infinitytwo.umbralore.core.logging.Logger;
+import org.infinitytwo.umbralore.core.network.data.NetworkCommandProcessor;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import javax.crypto.Cipher;
 import javax.crypto.KeyGenerator;
@@ -17,12 +19,11 @@ import java.security.SecureRandom;
 import java.security.spec.X509EncodedKeySpec;
 
 import static org.infinitytwo.umbralore.core.data.io.DataSchematica.Data;
-import static org.infinitytwo.umbralore.core.network.modern.NetworkPackets.*;
+import static org.infinitytwo.umbralore.core.network.data.NetworkPackets.*;
 
 public class ClientNetwork extends Network {
-    
     private final Client client;
-    private final Logger logger = new Logger(ClientNetwork.class);
+    private final Logger logger = LoggerFactory.getLogger(ClientNetwork.class);
     private final SecureRandom secureRandom = new SecureRandom();
     private final String host;
     private final NetworkCommandProcessor processor;
@@ -30,11 +31,15 @@ public class ClientNetwork extends Network {
     
     // The client generates and stores its own Secret AES Key
     private SecretKey clientAesKey;
+    private final String name;
+    private final String token;
     
-    public ClientNetwork(String host, int udp, int tcp, NetworkCommandProcessor processor) {
+    public ClientNetwork(String host, int udp, int tcp, NetworkCommandProcessor processor, String name, String token) {
         super(udp, tcp);
         this.processor = processor;
         this.host = host;
+        this.name = name;
+        this.token = token;
         
         // Initialize the KryoNet Client
         this.client = new Client(131072,131072);
@@ -79,7 +84,7 @@ public class ClientNetwork extends Network {
         // Connection must be run in a separate thread as it is a blocking operation
         new Thread(() -> {
             try {
-                logger.info("Connecting to " + host + ":" + tcp + "...");
+                logger.info("Connecting to {}:{}...", host, tcp);
                 client.connect(5000, host, tcp, udp);
                 logger.info("Client connected.");
             } catch (IOException e) {
@@ -186,8 +191,6 @@ public class ClientNetwork extends Network {
     
     @Override
     public void onReceive(Connection connection, Data packet) {
-        System.out.println("RECEIVED");
-        logger.info("Received application data (" + packet.getClass().getSimpleName() + ")");
         processor.process(packet,connection);
     }
     
@@ -205,12 +208,7 @@ public class ClientNetwork extends Network {
             if ("requestAesKey".equals(unencrypted.command)) {
                 // Server requested the key; send PUnencrypted("publicKey") response
                 logger.debug("Server requested AES key. Waiting for Public Key...");
-            } else if (unencrypted.command.startsWith("connection")) {
-                synchronized (this) { // Lock on the same object that awaitHandshakeCompletion() is waiting on.
-                    isHandshakeComplete = true;
-                    this.notifyAll();          // Wake up the waiting thread.
-                }
-                logger.info("Handshake complete! Ready to send encrypted data.");
+                
             } else if ("ping".equals(unencrypted.command)) {
                 // Respond to server ping
                 connection.sendUDP(new PUnencrypted("pong"));
@@ -241,18 +239,26 @@ public class ClientNetwork extends Network {
                 logger.error("RSA processing error during key exchange.", e);
                 connection.close();
             }
+        } else if (object instanceof PHandshakeComplete) {
+            client.sendTCP(new PUserData(token,name));
+            logger.info("Handshake complete! Sending player's data");
+        } else if (object instanceof PConnection data) {
+            logger.info("Connected to server! Ready to send encrypted data!");
+            synchronized (this) { // Lock on the same object that awaitHandshakeCompletion() is waiting on.
+                isHandshakeComplete = true;
+                this.notifyAll(); // Wake up the waiting thread.
+            }
         }
-        
-        // UNNECESSARY
-//        else if (object instanceof PHandshakeComplete) {
-//            logger.info("Handshake confirmed by server. Ready to send and receive encrypted application data.");
-//
-//            // CRITICAL SYNCHRONIZATION: Set flag and notify waiting thread
-//            synchronized (this) {
-//                this.isHandshakeComplete = true;
-//                this.notifyAll();
-//            }
-//        }
+    }
+    
+    @Override
+    public int getPortTCP() {
+        return client.getRemoteAddressTCP().getPort();
+    }
+    
+    @Override
+    public int getPortUDP() {
+        return client.getRemoteAddressUDP().getPort();
     }
     
     public void send(Data data, boolean critical) {

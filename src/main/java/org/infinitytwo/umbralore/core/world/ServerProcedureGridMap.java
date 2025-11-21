@@ -1,31 +1,30 @@
 package org.infinitytwo.umbralore.core.world;
 
+import org.infinitytwo.umbralore.core.data.Block;
 import org.infinitytwo.umbralore.core.data.ChunkPos;
 import org.infinitytwo.umbralore.core.manager.WorkerThreads;
 import org.infinitytwo.umbralore.core.data.ChunkData;
 import org.infinitytwo.umbralore.core.exception.IllegalChunkAccessException;
-import org.infinitytwo.umbralore.core.logging.Logger;
 import org.infinitytwo.umbralore.core.registry.BlockRegistry;
 import org.infinitytwo.umbralore.core.world.generation.Biome;
 import org.infinitytwo.umbralore.core.world.generation.CaveWorm;
 import org.infinitytwo.umbralore.core.world.generation.NoiseGenerationSettings;
 import org.joml.Vector2i;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import personthecat.fastnoise.FastNoise;
 
 import java.util.*;
 import java.util.concurrent.*;
-import java.util.concurrent.atomic.AtomicInteger;
 
 public class ServerProcedureGridMap extends ServerGridMap {
     private final NoiseGenerationSettings dimension;
     protected long seed;
     private Random random;
-    protected Logger logger = new Logger(ServerProcedureGridMap.class);
+    private final ConcurrentMap<ChunkPos, Future<ChunkData>> activeGenerations = new ConcurrentHashMap<>();
+    protected Logger logger = LoggerFactory.getLogger(ServerProcedureGridMap.class);
     protected WorkerThreads threads = new WorkerThreads(5);
-    protected final List<ChunkData> chunkData = Collections.synchronizedList(new ArrayList<>());
-    protected ChunkData nextData = null;
-    protected final ConcurrentLinkedQueue<ChunkPos> processChunks = new ConcurrentLinkedQueue<>();
-
+    
     private List<BiomeWeight> findTopBiomes(float temperature, float humidity, Biome[] biomes) {
         if (random == null) random = new Random(seed);
         List<BiomeWeight> weighted = new ArrayList<>();
@@ -44,6 +43,27 @@ public class ServerProcedureGridMap extends ServerGridMap {
         float dt = t1 - t2;
         float dh = h1 - h2;
         return dt * dt + dh * dh;
+    }
+    
+    @Override
+    public Block getBlock(int x, int y, int z) {
+        Vector2i p = convertToChunkPosition(x, z);
+        ChunkPos pos = new ChunkPos(p.x, p.y);
+        
+        // 1. NON-BLOCKING CHECK: Check the already loaded chunks map (inherited from ServerGridMap)
+        ChunkData data = chunks.get(pos);
+        
+        if (data != null) {
+            // Chunk is loaded and ready: return the block data.
+            int id = data.getBlockId(x, y, z);
+            if (id != 0) return new Block(registry.get(id));
+            return null; // Block is air (ID 0)
+        }
+        
+        // 2. NON-BLOCKING CHECK: If the chunk is currently generating (or not generating at all),
+        // we treat it as air for physics purposes to prevent blocking.
+        // If it's generating, we rely on the Chunk Manager to load it soon.
+        return null;
     }
 
     public void generateBiomeChunkHeightmap(NoiseGenerationSettings settings, ChunkPos GenChunk, Biome[] biomes) {
@@ -144,7 +164,6 @@ public class ServerProcedureGridMap extends ServerGridMap {
                 }
             }
         }
-        logger.info("Generated x:"+GenChunk.x() * 16+" y:"+GenChunk.z() *16);
     }
 
     private void validate(int id) { // Only used for debugging
@@ -192,58 +211,70 @@ public class ServerProcedureGridMap extends ServerGridMap {
         }
         return worms;
     }
-
-
+    
     public void generate(ChunkPos chunk) {
-        if (!processChunks.contains(chunk)) {
-            processChunks.add(chunk);
-            threads.run(() -> {
-                generateBiomeChunkHeightmap(
-                        dimension,
-                        chunk,
-                        dimension.biomes
-                );
-                processChunks.remove(chunk);
-            });
-        }
+        if (chunks.containsKey(chunk) || activeGenerations.containsKey(chunk)) return;
+        
+        // 2. Submit the task and store the future
+        Future<ChunkData> future = threads.run(() -> {
+            generateBiomeChunkHeightmap(
+                    dimension,
+                    chunk,
+                    dimension.biomes
+            );
+            // The generateBiomeChunkHeightmap method MUST put the chunk into the 'chunks' map
+            return chunks.get(chunk);
+        });
+        
+        // 3. Store the Future for tracking
+        activeGenerations.put(chunk, future);
     }
-
+    
+    public boolean isChunkLoadedOrGenerating(ChunkPos p) {
+        // Check if it's already generated
+        if (chunks.containsKey(p)) {
+            return true;
+        }
+        // Check if it's currently being generated
+        return activeGenerations.containsKey(p);
+    }
+    
     public ChunkData getChunkOrGenerate(Vector2i pos) {
         ChunkPos p = new ChunkPos(pos.x, pos.y);
-
-        // Check if the chunk is already being processed or has been generated
+        
+        // 1. Check if the chunk is already generated and ready
         if (chunks.containsKey(p)) {
             return chunks.get(p);
         }
-        if (processChunks.contains(p)) {
-            // The chunk is already being processed, wait for it to be added to the chunks map
-            while (!chunks.containsKey(p)) {
-                try {
-                    // Sleep for a short period to prevent a busy loop
-                    Thread.sleep(10);
-                } catch (InterruptedException e) {
-                    Thread.currentThread().interrupt();
-                    return null;
-                }
-            }
-            return chunks.get(p);
-        }
-
-        // If not, submit a new generation task and block until it's done
-        try {
-            Future<ChunkData> future = threads.run(() -> {
+        
+        // 2. Check if the chunk is already generating
+        Future<ChunkData> future = activeGenerations.get(p);
+        
+        if (future == null) {
+            // 3. Not generating, so submit a new generation task and get the future
+            // NOTE: This logic ensures only ONE thread creates the Future for this chunk.
+            future = activeGenerations.computeIfAbsent(p, k -> threads.run(() -> {
                 generateBiomeChunkHeightmap(
                         dimension,
-                        p,
+                        k,
                         dimension.biomes
                 );
-                return chunks.get(p);
-            });
-
-            // Wait for the task to complete and return the generated chunk data
-            return future.get(); // This will block until the task is done
+                return chunks.get(k); // Assumes generateBiomeChunkHeightmap puts it in 'chunks'
+            }));
+        }
+        
+        try {
+            // 4. BLOCK UNTIL THE CHUNK IS READY
+            ChunkData data = future.get();
+            
+            // 5. Cleanup: Generation is complete, remove the Future
+            activeGenerations.remove(p);
+            
+            return data;
         } catch (ExecutionException | InterruptedException e) {
-            throw new RuntimeException(e);
+            // Handle failure, ensure the Future is removed if it failed
+            activeGenerations.remove(p);
+            throw new RuntimeException("Chunk generation failed or was interrupted", e);
         }
     }
     

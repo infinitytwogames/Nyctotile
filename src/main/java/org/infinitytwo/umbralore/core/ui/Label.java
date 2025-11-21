@@ -20,6 +20,7 @@ public class Label extends UI {
     protected Text text;
     protected String ellipsis = "...";
     protected final Path path;
+    private String str;
     
     public Label(Screen renderer, Path path) {
         super(renderer.getUIBatchRenderer());
@@ -36,7 +37,12 @@ public class Label extends UI {
     @Override
     public void draw() {
         super.draw();
+        text.setText(getVisibleText());
         text.draw();
+    }
+    
+    private String getVisibleText() {
+        return getVisibleText(textRenderer,str,0,width);
     }
     
     @Override
@@ -68,11 +74,11 @@ public class Label extends UI {
     }
 
     public String getText() {
-        return text.getText();
+        return str;
     }
 
     public void setText(String text) {
-        this.text.setText(text);
+        this.str = text;
     }
 
     public RGB getColor() {
@@ -189,5 +195,11 @@ public class Label extends UI {
         public UIBuilder<T> applyDefault() {
             return this;
         }
+    }
+    
+    @Override
+    public void setAngle(float angle) {
+        super.setAngle(angle);
+        text.setAngle(angle);
     }
 }

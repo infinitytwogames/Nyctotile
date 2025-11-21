@@ -2,8 +2,9 @@ package org.infinitytwo.umbralore.core.data.io;
 
 import org.infinitytwo.umbralore.block.BlockType;
 import org.infinitytwo.umbralore.core.exception.IllegalDataTypeException;
-import org.infinitytwo.umbralore.core.logging.Logger;
 import org.infinitytwo.umbralore.core.registry.BlockRegistry;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.ByteArrayOutputStream;
 import java.io.DataOutputStream;
@@ -15,7 +16,7 @@ import java.nio.ByteBuffer;
 import java.util.Set;
 
 public final class BlockDataReader {
-    private final Logger logger = new Logger(BlockDataReader.class);
+    private final Logger logger = LoggerFactory.getLogger(BlockDataReader.class);
     private final BlockRegistry registry;
 
     public BlockDataReader(BlockRegistry registry) {

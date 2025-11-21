@@ -3,21 +3,19 @@ package org.infinitytwo.umbralore.core;
 import org.infinitytwo.umbralore.block.*;
 import org.infinitytwo.umbralore.core.constants.Constants;
 import org.infinitytwo.umbralore.core.data.*;
+import org.infinitytwo.umbralore.core.entity.Entity;
+import org.infinitytwo.umbralore.core.entity.Player;
+import org.infinitytwo.umbralore.core.event.SubscribeEvent;
 import org.infinitytwo.umbralore.core.event.bus.EventBus;
+import org.infinitytwo.umbralore.core.event.input.KeyPressEvent;
 import org.infinitytwo.umbralore.core.event.input.MouseButtonEvent;
+import org.infinitytwo.umbralore.core.event.input.VelocityChangedEvent;
 import org.infinitytwo.umbralore.core.event.state.WindowResizedEvent;
-import org.infinitytwo.umbralore.core.exception.IllegalChunkAccessException;
-import org.infinitytwo.umbralore.core.logging.Logger;
-import org.infinitytwo.umbralore.core.manager.CrashHandler;
-import org.infinitytwo.umbralore.core.manager.ScreenManager;
-import org.infinitytwo.umbralore.core.manager.WorkerThreads;
-import org.infinitytwo.umbralore.core.manager.World;
+import org.infinitytwo.umbralore.core.manager.*;
 import org.infinitytwo.umbralore.core.model.TextureAtlas;
-import org.infinitytwo.umbralore.core.network.client.ClientNetworkThread;
-import org.infinitytwo.umbralore.core.network.modern.ClientNetwork;
-import org.infinitytwo.umbralore.core.network.modern.Packets;
-import org.infinitytwo.umbralore.core.network.modern.ServerNetwork;
-import org.infinitytwo.umbralore.core.network.server.ServerNetworkThread;
+import org.infinitytwo.umbralore.core.network.ClientNetwork;
+import org.infinitytwo.umbralore.core.network.data.Packets;
+import org.infinitytwo.umbralore.core.network.ServerNetwork;
 import org.infinitytwo.umbralore.core.registry.BlockRegistry;
 import org.infinitytwo.umbralore.core.registry.DimensionRegistry;
 import org.infinitytwo.umbralore.core.renderer.*;
@@ -27,25 +25,27 @@ import org.infinitytwo.umbralore.core.ui.input.Button;
 import org.infinitytwo.umbralore.core.ui.input.TextInput;
 import org.infinitytwo.umbralore.core.ui.position.Anchor;
 import org.infinitytwo.umbralore.core.ui.position.Pivot;
+import org.infinitytwo.umbralore.core.world.GMap;
 import org.infinitytwo.umbralore.core.world.GridMap;
 import org.infinitytwo.umbralore.core.world.dimension.Overworld;
-import org.joml.Vector2i;
 import org.joml.Vector3f;
 import org.lwjgl.glfw.GLFWErrorCallback;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
-import java.nio.ByteBuffer;
 import java.nio.file.Path;
+import java.util.UUID;
 
 import static org.lwjgl.glfw.GLFW.*;
 import static org.lwjgl.opengl.GL11.*;
+import static org.infinitytwo.umbralore.core.Game.delta;
 
 public class Main {
-    private static final Logger logger = new Logger(Main.class);
+    private static final Logger logger = LoggerFactory.getLogger(Main.class);
     private static FontRenderer fontRenderer;
     private static Window window;
     private static UIBatchRenderer renderer;
-    private static TextBatchRenderer textRenderer;
     private static Screen screen;
     
     private static ServerThread server;
@@ -54,7 +54,6 @@ public class Main {
     private static Camera camera;
     private static GridMap map;
     private static Outline outliner;
-    private static double delta;
     private static InputManager input;
     private static Screen mainScreen;
     private static World world;
@@ -63,6 +62,10 @@ public class Main {
     private static ServerNetwork serverNetwork;
     private static ClientNetwork clientNetwork;
     private static Overworld overworld;
+    private static final float fixedDelta = (float) 1 / 60;
+    private static double accumulator;
+    private static boolean locked;
+    private static final float sensitivity = 0.5f;
     
     public static void main(String[] args) {
         // Early Setup
@@ -78,6 +81,12 @@ public class Main {
             delta = current - lastTime;
             lastTime = current;
             
+            accumulator += delta;
+            while (accumulator >= fixedDelta) {
+                applyPhysics();
+                accumulator -= fixedDelta;
+            }
+            
             glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
             WorkerThreads.run();
             render();
@@ -87,6 +96,12 @@ public class Main {
         cleanup();
     }
     
+    private static void applyPhysics() {
+        if (world.getLocalPlayer() != null && world.getCurrent() != null &&
+                world.getMap().getChunk(GMap.worldToChunk((int) world.getLocalPlayer().getPosition().x, (int) world.getLocalPlayer().getPosition().z)) != null)
+            World.getInstance().getLocalPlayer().update(fixedDelta, map);
+    }
+    
     private static void earlySetup() {
         GLFWErrorCallback.createPrint(System.err).set();
         CrashHandler.init();
@@ -94,14 +109,13 @@ public class Main {
         window = new Window(1024, 512, "Umbralore: Test Run");
         logger.info("Early Setup");
         window.initOpenGL();
-        window.setBackgroundColor(RGBA.fromRGBA(11,27,69,0));
+        window.setBackgroundColor(RGBA.fromRGBA(11, 27, 69, 0));
     }
     
     private static void construction() {
         // IMPORTANT CONSTRUCTION
         EventBus.connect(Main.class);
         fontRenderer = new FontRenderer(Constants.fontFilePath, 32);
-        textRenderer = new TextBatchRenderer(fontRenderer, 1);
         renderer = new UIBatchRenderer();
         screen = new Screen(renderer, window);
         logger.info("Constructing...");
@@ -114,14 +128,13 @@ public class Main {
         outliner = new Outline();
         input = new InputManager(window);
         clientEventBus = new EventBus("Client");
+        Mouse.setWindow(window);
         
         // NETWORK
-        clientNetwork = new ClientNetwork("127.0.0.1",5896,4789,(packet, connection) -> {
-            System.out.println("RECEIVED PACKET "+packet.getClass().getSimpleName());
+        clientNetwork = new ClientNetwork("127.0.0.1", 5896, 4789, (packet, connection) -> {
             if (packet instanceof Packets.PCommandData data) {
                 String fullCommand = data.command();
                 String[] args = fullCommand.split("\\s+");
-                String command = args[0];
                 
             } else if (packet instanceof Packets.PCommand data) {
                 String[] args = data.command().split("\\s+");
@@ -129,27 +142,80 @@ public class Main {
                 
                 if (command.equals("dimension")) {
                     System.out.println(args[1]);
-                    World.getInstance().setCurrent(DimensionRegistry.getRegistry().get(args[1]));
+                    world.setCurrent(DimensionRegistry.getRegistry().get(args[1]));
                 }
             } else if (packet instanceof Packets.PChunk chunkP) {
                 int chunkX = chunkP.x();
                 int chunkZ = chunkP.y();
-                System.out.println("Reading chunk ("+chunkX+" "+chunkZ+")");
                 
-                ChunkData chunkData = ChunkData.of(chunkX,chunkZ,chunkP.blocks());
+                ChunkData chunkData = ChunkData.of(chunkX, chunkZ, chunkP.blocks());
                 
                 WorkerThreads.dispatch(() -> {
                     Chunk chunk = Chunk.of(chunkData, World.getInstance().getMap(), World.getInstance().getTextureAtlas(), BlockRegistry.getMainBlockRegistry());
                     World.getInstance().getMap().addChunk(chunk);
-                    System.out.println("CHUNK HAS BEEN CREATED: "+chunk.getPosition()); // NEVER PRINTED
+//                    world.getRequested().remove(new ChunkPos(chunkX,chunkZ));
                 });
+            } else if (packet instanceof Packets.PPosition pos) {
+                logger.info("GOT POSITION: X={}, Y={}, Z={}",
+                        pos.x(), pos.y(), pos.z());
+                
+                // The LERP factor controls the smoothness (e.g., 0.2f corrects 20% of the distance each time).
+                final float LERP_FACTOR = 0.3f;
+                
+                // --- 1. LOCAL PLAYER (Position Correction) ---
+                if (pos.leastSignificant() == 0 || pos.mostSignificant() == 0) {
+                    
+                    // Target position from the server
+                    Vector3f serverPos = new Vector3f(pos.x(), pos.y(), pos.z());
+                    Entity player = world.getLocalPlayer();
+                    Vector3f currentPos = player.getPosition();
+                    
+                    // Calculate distance squared to check for drift
+                    float distSq = currentPos.distanceSquared(serverPos);
+                    
+                    if (distSq > 0.0001f) {
+                        // Only apply LERP if there is noticeable drift
+                        
+                        // LERP calculation: current + (target - current) * factor
+                        float newX = currentPos.x + (serverPos.x - currentPos.x) * LERP_FACTOR;
+                        float newY = 0;
+                        if (currentPos.y < serverPos.y + 1.5 && player.isGrounded()) newY = currentPos.y + (serverPos.y - currentPos.y) * LERP_FACTOR;
+                        else newY = currentPos.y;
+                        float newZ = currentPos.z + (serverPos.z - currentPos.z) * LERP_FACTOR;
+                        
+                        player.setPosition(newX, newY, newZ);
+                        
+                        if (distSq > 1.0f) {
+                            logger.warn("Drift Detected: Correcting local position by LERP (Distance: {}).", Math.sqrt(distSq));
+                        }
+                    }
+                    
+                    // --- 2. REMOTE ENTITIES (Smooth Visualization) ---
+                } else {
+                    // This handles other entities (other players).
+                    Entity entity = EntityManager.getEntityFromId(new UUID(pos.mostSignificant(), pos.leastSignificant()));
+                    
+                    if (entity != null) {
+                        // Target position from the server
+                        Vector3f serverPos = new Vector3f(pos.x(), pos.y(), pos.z());
+                        Vector3f currentPos = entity.getPosition();
+                        
+                        // LERP calculation: current + (target - current) * factor
+                        float newX = currentPos.x + (serverPos.x - currentPos.x) * LERP_FACTOR;
+                        float newY = currentPos.y + (serverPos.y - currentPos.y) * LERP_FACTOR;
+                        float newZ = currentPos.z + (serverPos.z - currentPos.z) * LERP_FACTOR;
+                        
+                        entity.setPosition(newX, newY, newZ);
+                    }
+                }
             }
-        });
+        },"Dev","");
         
         // SCREENS
-        mainScreen = new Screen(renderer,window);
+        mainScreen = new Screen(renderer, window);
         world = World.getInstance();
-        overworld = new Overworld(1,BlockRegistry.getMainBlockRegistry());
+        overworld = new Overworld(1, BlockRegistry.getMainBlockRegistry());
+        world.setCurrent(overworld);
     }
     
     private static void init() {
@@ -162,7 +228,7 @@ public class Main {
         // ----------------------------
         // INITIALIZATION
         BlockRegistry registry = BlockRegistry.getMainBlockRegistry();
-        atlas = new TextureAtlas(486,22);
+        atlas = new TextureAtlas(486, 22);
         
         try {
             registry.register(new GrassBlockType(atlas.addTexture("src/main/resources/grass_side.png", true)));
@@ -174,12 +240,37 @@ public class Main {
         }
         
         atlas.build();
-        world.prepareForConnection(clientNetwork,server,atlas);
-        World.setLocation(new SpawnLocation(new Vector3f(), overworld));
+        world.prepareForConnection(camera, window, clientNetwork, server, atlas);
         world.setMap(map);
+        world.getLocalPlayer().setInputHandler(input);
+        world.getLocalPlayer().getEventBus().register(new Object() {
+            // We can reuse lastSentVelocity to hold the last sent position for throttling.
+            private final Vector3f lastSentPosition = new Vector3f();
+            private static final float EPSILON = 0.01f; // Tolerance for movement distance
+            
+            @SubscribeEvent
+            public void e(VelocityChangedEvent e) {
+                // VelocityChangedEvent is now a misnomer; it's triggered when the player moves.
+                Player player = world.getLocalPlayer();
+                Vector3f currentPosition = player.getPosition(); // Get the final, authoritative client position
+                
+                // Check for significant change in position
+                if (Math.abs(currentPosition.x - lastSentPosition.x) > EPSILON ||
+                        Math.abs(currentPosition.y - lastSentPosition.y) > EPSILON ||
+                        Math.abs(currentPosition.z - lastSentPosition.z) > EPSILON) {
+                    
+                    // Send the authoritative position packet
+                    clientNetwork.send(new Packets.PCommand(String.format("setposition %.3f %.3f %.3f",
+                            currentPosition.x, currentPosition.y, currentPosition.z)), false);
+                    
+                    // Update the last-sent position
+                    lastSentPosition.set(currentPosition);
+                }
+            }
+        });
         
         Path fontPath = Path.of(Constants.fontFilePath);
-        Button play = new Button(mainScreen, fontPath,"Start the Test"){
+        Button play = new Button(mainScreen, fontPath, "Start the Test") {
             
             @Override
             public void onMouseClicked(MouseButtonEvent e) {
@@ -187,36 +278,39 @@ public class Main {
                     server.start();
                 }
                 
+                glfwSetInputMode(window.getWindow(),GLFW_CURSOR,GLFW_CURSOR_DISABLED);
                 world.connectToServer();
                 started = true;
                 ScreenManager.popScreen();
             }
         };
-        play.setSize(512,128);
-        play.setPosition(new Anchor(0.5f,0.5f),new Pivot(0.5f,0.5f));
-        play.setBackgroundColor(new RGBA(0,0,0,1));
+        play.setSize(512, 128);
+        play.setPosition(new Anchor(0.5f, 0.5f), new Pivot(0.5f, 0.5f));
+        play.setBackgroundColor(new RGBA(0, 0, 0, 1));
         
         TextInput i = new TextInput(screen, fontPath) {
             @Override
             public void submit(String data) {
-                clientNetwork.send(new Packets.PCommand(data),true);
+                clientNetwork.send(new Packets.PCommand(data), true);
             }
         };
-        i.setPosition(new Anchor(0,0.5f),new Pivot(0,0.5f));
-        i.addComponent(new Scale(1,-1,i));
+        i.setPosition(new Anchor(0, 0.5f), new Pivot(0, 0.5f));
+        i.addComponent(new Scale(1, -1, i));
         i.setHeight(128);
-        i.setBackgroundColor(0,0,0,0.5f);
+        i.setBackgroundColor(0, 0, 0, 0.5f);
         i.setText("HELLO");
-        i.setTextPosition(new Anchor(),new Pivot());
+        i.setTextPosition(new Anchor(), new Pivot());
         
         mainScreen.register(play);
         
-        ScreenManager.register("main",mainScreen);
+        ScreenManager.register("main", mainScreen);
         ScreenManager.setScreen("main");
     }
     
-    private static void handleInput(boolean locked) {
-        if (!locked) {
+    private static void handleInput() {
+        if (Game.isLocked()) {
+            camera.rotate((float) Mouse.getDeltaX() * sensitivity, (float) -Mouse.getDeltaY() * sensitivity);
+            
             if (input.isKeyPressed(GLFW_KEY_W)) camera.moveForward((float) delta);
             if (input.isKeyPressed(GLFW_KEY_S)) camera.moveBackward((float) delta);
             if (input.isKeyPressed(GLFW_KEY_A)) camera.moveLeft((float) delta);
@@ -234,33 +328,16 @@ public class Main {
         if (!started) {
             Display.prepare2d();
             ScreenManager.draw();
-        }
+        } else
+            fontRenderer.renderText(Display.get3DProjectionMatrix(camera,window),"Velocity: "+VectorMath.toString(VectorMath.toInt(world.getLocalPlayer().getVelocity())),0,32,0,0,0);
         input.update();
-        handleInput(false);
+        handleInput();
         
-        if (started) env.render(camera,window);
-        world.draw(camera,window,5);
+        if (started) env.render(camera, window);
+        world.draw(5);
+        
         camera.update((float) delta);
-    }
-    
-    private static void getChunk(Vector2i pos) {
-        BlockRegistry registry = BlockRegistry.getMainBlockRegistry();
-        
-        ChunkData data = server.getCurrentWorld().getChunkOrGenerate(pos); // From ServerProcedureGridMap
-        for (int id : registry.getIds()) {
-            if (registry.get(id) instanceof ServerBlockType) {
-                throw new RuntimeException("Somehow registry is server-side...");
-            }
-        }
-        if (data == null) return;
-        
-        Chunk chunk = null;
-        try {
-            chunk = Chunk.of(data, map, atlas, registry); // Passed ChunkData from ServerProcedureGridMap
-        } catch (IllegalChunkAccessException ignored) {
-        
-        }
-        map.addChunk(chunk);
+        Mouse.update();
     }
     
     public static void cleanup() {
@@ -268,22 +345,18 @@ public class Main {
         renderer.cleanup();
         window.cleanup();
         
-        CleanupManager.exit(0);
+        System.exit(0);
     }
     
     public static Window getWindow() {
         return window;
     }
     
-    public static FontRenderer getFontRenderer() {
-        return fontRenderer;
-    }
-    
-    public static UIBatchRenderer getUIBatchRenderer() {
-        return renderer;
-    }
-    
-    public static TextBatchRenderer getFontBatchRenderer() {
-        return textRenderer;
+    @SubscribeEvent
+    public static void onKeyPressed(KeyPressEvent e) {
+        if (e.getAction() == GLFW_RELEASE) return;
+        if (e.getKey() == GLFW_KEY_ESCAPE) {
+            Game.pauseGame(window);
+        }
     }
 }

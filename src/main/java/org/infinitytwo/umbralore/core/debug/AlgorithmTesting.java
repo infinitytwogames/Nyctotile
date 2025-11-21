@@ -5,6 +5,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.*;
 
+@Deprecated
 public class AlgorithmTesting {
 
     private final Runtime runtime = Runtime.getRuntime();

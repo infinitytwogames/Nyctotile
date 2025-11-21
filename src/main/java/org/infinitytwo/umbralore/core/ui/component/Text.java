@@ -20,6 +20,7 @@ public class Text implements Component {
     protected RGB color = new RGB(1, 1, 1);
     protected boolean centerY = true;
     protected Screen screen;
+    protected float angle;
 
     public Text(FontRenderer renderer, Screen screen) {
         this.renderer = renderer;
@@ -112,7 +113,7 @@ public class Text implements Component {
     }
 
     public void draw() {
-        screen.run(() -> renderer.renderText(text, getPosition(), color));
+        screen.run(() -> renderer.renderText(text, getPosition(), color, angle));
     }
 
     public void setPosition(Anchor anchor, Pivot pivot) {
@@ -134,5 +135,14 @@ public class Text implements Component {
 
     public FontRenderer getRenderer() {
         return renderer;
+    }
+    
+    public float getAngle() {
+        return angle;
+    }
+    
+    @Override
+    public void setAngle(float angle) {
+        this.angle = angle;
     }
 }

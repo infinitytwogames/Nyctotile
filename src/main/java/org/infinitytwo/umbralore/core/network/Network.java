@@ -1,10 +1,11 @@
-package org.infinitytwo.umbralore.core.network.modern;
+package org.infinitytwo.umbralore.core.network;
 
 import com.esotericsoftware.kryo.Kryo;
 import com.esotericsoftware.kryonet.Connection;
 import org.infinitytwo.umbralore.core.data.buffer.NByteBuffer;
 import org.infinitytwo.umbralore.core.data.io.DataSchematica;
-import org.infinitytwo.umbralore.core.logging.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
@@ -14,12 +15,12 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ThreadLocalRandom;
 
 import static org.infinitytwo.umbralore.core.data.io.DataSchematica.Data;
-import static org.infinitytwo.umbralore.core.network.modern.NetworkPackets.*;
+import static org.infinitytwo.umbralore.core.network.data.NetworkPackets.*;
 
 public abstract class Network {
     protected final int udp, tcp;
     protected final Map<Integer, List<EncryptedPacket>> packets = new ConcurrentHashMap<>();
-    private final Logger logger = new Logger(Network.class);
+    private final Logger logger = LoggerFactory.getLogger(Network.class);
     
     private final NetworkListener listener = new NetworkListener() {
         @Override
@@ -62,7 +63,7 @@ public abstract class Network {
                                 buffer.get(fullEncryptedData);
                                 
                                 byte[] dataRaw = decrypt(fullEncryptedData, connection);
-                                Data data = DataSchematica.unserialize(ByteBuffer.wrap(dataRaw));
+                                Data data = DataSchematica.deserialize(ByteBuffer.wrap(dataRaw));
                                 
                                 onReceive(connection, data);
                                 
@@ -72,7 +73,7 @@ public abstract class Network {
                     } else {
                         // --- Unfragmented Packet (UDP or small TCP) ---
                         byte[] dataRaw = decrypt(e.encrypted, connection);
-                        Data data = DataSchematica.unserialize(ByteBuffer.wrap(dataRaw));
+                        Data data = DataSchematica.deserialize(ByteBuffer.wrap(dataRaw));
                         onReceive(connection, data);
                     }
                     
@@ -106,6 +107,9 @@ public abstract class Network {
         kryo.register(EncryptedPacket.class);
         kryo.register(PUnencrypted.class);
         kryo.register(Failure.class);
+        kryo.register(PHandshakeComplete.class);
+        kryo.register(PConnection.class);
+        kryo.register(PUserData.class);
         
         kryo.register(byte[].class);
         kryo.register(String.class);
@@ -116,7 +120,6 @@ public abstract class Network {
     // HERE IS THE CONFUSING PART!
     // THIS FRAGMENTS DATA SO BUFFER OVERFLOW SHOULDN'T HAPPEN
     public void send(Data packet, Connection connection, boolean critical) {
-        System.out.println("Sending Packet...");
         byte[] payload = packet.serialize();
         
         // 2. CREATE THE DATASCHEMATICA HEADER
@@ -139,7 +142,7 @@ public abstract class Network {
         
         try {
             byte[] encrypted = encrypt(finalPayload, connection);
-            List<byte[]> bytes = splitBytes(encrypted, 1024);
+            List<byte[]> bytes = splitBytes(encrypted, 4096);
             int id = ThreadLocalRandom.current().nextInt();
             
             if (!critical) {
@@ -147,19 +150,11 @@ public abstract class Network {
                 return;
             }
             
-            System.out.println("Sending Packets... id:"+id+" total packets: "+bytes.size());
-            
             for (short i =0; i < bytes.size(); i++) {
                 sendTCP(new EncryptedPacket(bytes.get(i),ThreadLocalRandom.current().nextInt(),i, (short) bytes.size(),id), connection);
-                try {
-                    // Adjust this value (e.g., 0ms, 1ms, 5ms) until the error stops.
-                    // Start with 1ms.
-                    Thread.sleep(1);
-                } catch (InterruptedException e) {
-                    Thread.currentThread().interrupt();
-                    logger.warn("Send thread interrupted during throttle.");
-                    return;
-                }
+                
+                // Start with 1ms.
+                Thread.sleep(0,32);
             }
             
         } catch (Exception e) {
@@ -187,28 +182,21 @@ public abstract class Network {
     
     // Lifecycle and operations
     public abstract void start();
-    
     public abstract void shutdown();
-    
     public abstract void ping(Connection connection);
-    
     public abstract void sendTCP(MPacket packet, Connection connection);
-    
     public abstract void sendUDP(MPacket packet, Connection connection);
     
     // Encryption/decryption
     protected abstract byte[] encrypt(byte[] packet, Connection connection) throws Exception;
-    
     protected abstract byte[] decrypt(byte[] packet, Connection connection) throws Exception;
     
     // Event callbacks
     public abstract void onConnect(Connection connection);
-    
     public abstract void onDisconnect(Connection connection);
-    
     public abstract void onReceive(Connection connection, Data object);
-    
     public abstract void sendFailure(Connection connection, String s);
-    
     public abstract void onControlPacket(Connection connection, Object object);
+    public abstract int getPortTCP();
+    public abstract int getPortUDP();
 }

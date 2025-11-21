@@ -3,6 +3,7 @@ package org.infinitytwo.umbralore.core;
 import org.infinitytwo.umbralore.core.event.SubscribeEvent;
 import org.infinitytwo.umbralore.core.event.bus.EventBus;
 import org.infinitytwo.umbralore.core.event.state.WindowResizedEvent;
+import org.infinitytwo.umbralore.core.renderer.Camera;
 import org.joml.Matrix4f;
 import org.joml.Vector2i;
 import org.lwjgl.opengl.*;
@@ -39,6 +40,10 @@ public final class Display {
         int screenX = (int) (pos.x * scale);
         int screenY = (int) (pos.y * scale);
         return new Vector2i(screenX, screenY);
+    }
+    
+    public static Matrix4f get3DProjectionMatrix(Camera camera, Window window) {
+        return projection = new Matrix4f().perspective((float) Math.toRadians(camera.getFov()), (float) window.getWidth() / window.getHeight(), 0.1f, 1024f);
     }
     
     public static Vector2i transformWindowToVirtual(Window window, int windowX, int windowY) {

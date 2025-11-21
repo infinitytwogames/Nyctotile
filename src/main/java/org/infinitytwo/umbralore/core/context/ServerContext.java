@@ -6,6 +6,7 @@ import org.infinitytwo.umbralore.core.constants.PhysicalSide;
 import org.infinitytwo.umbralore.core.world.ServerGridMap;
 import org.infinitytwo.umbralore.core.world.dimension.Dimension;
 
+@Deprecated
 public class ServerContext extends Context {
     protected final ServerGridMap world;
     protected final Dimension dimension;

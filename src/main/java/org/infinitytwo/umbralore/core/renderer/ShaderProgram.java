@@ -98,4 +98,8 @@ public class ShaderProgram {
             glUniform3f(location, value.x, value.y, value.z);
         }
     }
+    
+    public int getUniformLocation(String name) {
+        return glGetUniformLocation(programId,name);
+    }
 }

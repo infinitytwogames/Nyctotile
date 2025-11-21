@@ -8,19 +8,22 @@ import org.infinitytwo.umbralore.core.renderer.UIBatchRenderer;
 import org.infinitytwo.umbralore.core.ui.component.Component;
 import org.infinitytwo.umbralore.core.ui.position.Anchor;
 import org.infinitytwo.umbralore.core.ui.position.Pivot;
+import org.jetbrains.annotations.NotNull;
 import org.joml.Vector2i;
 
 import java.util.HashMap;
 import java.util.Map;
 
 public abstract class UI {
-    protected final UIBatchRenderer renderer;
+    protected UIBatchRenderer renderer;
     protected RGBA backgroundColor = new RGBA();
 
     protected int width = 0;
     protected int height = 0;
+    protected float angle = 0;
 
     protected boolean hovering = false;
+    protected boolean hidden = false;
 
     protected Anchor anchor = new Anchor();
     protected Pivot pivot = new Pivot(0,0);
@@ -157,6 +160,7 @@ public abstract class UI {
     }
 
     public void draw() {
+        if (hidden) return;
         renderer.queue(this);
         for (Component component : components.values()) component.draw();
     }
@@ -201,5 +205,25 @@ public abstract class UI {
 
     public void addOffset(int same) {
         addOffset(same,same);
+    }
+    
+    public float getAngle() {
+        return angle;
+    }
+    
+    public void setAngle(float angle) {
+        this.angle = angle;
+        
+        for (Component c : components.values()) {
+            c.setAngle(angle);
+        }
+    }
+    
+    public boolean isHidden() {
+        return hidden;
+    }
+    
+    public void setHidden(boolean hidden) {
+        this.hidden = hidden;
     }
 }

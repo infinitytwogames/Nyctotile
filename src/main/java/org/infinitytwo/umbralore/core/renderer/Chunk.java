@@ -44,7 +44,6 @@ public class Chunk extends ChunkData {
     private volatile boolean isDirty = false;
     private final TextureAtlas atlas;
     private final BlockRegistry registry;
-    private final NFloatBuffer nBuffer; // Native Float Buffer
 
     public Chunk(Vector2i position, ShaderProgram shaderProgram, TextureAtlas atlas, GridMap map, BlockRegistry registry) {
         super(position);
@@ -54,7 +53,6 @@ public class Chunk extends ChunkData {
         this.registry = registry;
         this.blocks = new int[SIZE_X * SIZE_Y * SIZE_Z];
         setupMeshBuffers();
-        nBuffer = new NFloatBuffer();
     }
     
     public Chunk(Vector2i position, TextureAtlas atlas, GridMap map, BlockRegistry registry) {
@@ -99,7 +97,6 @@ public class Chunk extends ChunkData {
         this.registry = registry;
         this.blocks = new int[SIZE_X * SIZE_Y * SIZE_Z];
         setupMeshBuffers();
-        nBuffer = new NFloatBuffer();
     }
 
     private static int getIndex(int x, int y, int z) {
@@ -136,16 +133,16 @@ public class Chunk extends ChunkData {
         if (z == SIZE_Z - 1) map.rebuildChunk(currentChunkPos.x, currentChunkPos.y + 1);
     }
 
-    private void setupMeshBuffers() {
+    private synchronized void setupMeshBuffers() {
         vaoId = glGenVertexArrays();
         vboId = glGenBuffers();
     }
 
-    public void buildMeshData() {
+    public synchronized void buildMeshData() {
         isDirty = false;
+        NFloatBuffer buffer = new NFloatBuffer();
+        
         ChunkManager.run(() -> {
-            nBuffer.reset();
-
             for (int x = 0; x < SIZE_X; x++) {
                 for (int y = 0; y < SIZE_Y; y++) {
                     for (int z = 0; z < SIZE_Z; z++) {
@@ -155,17 +152,20 @@ public class Chunk extends ChunkData {
                         BlockType type = registry.get(id);
                         if (type == null) continue;
 
-                        type.buildModel(map, GridMap.convertToWorldPosition(position, x, y, z), atlas, registry, nBuffer);
+                        type.buildModel(map, GridMap.convertToWorldPosition(position, x, y, z), atlas, registry, buffer);
                     }
                 }
             }
 
-            WorkerThreads.dispatch(this::uploadMesh);
+            WorkerThreads.dispatch(() -> {
+                uploadMesh(buffer);
+                buffer.close();
+            });
         });
     }
 
-    private void uploadMesh() {
-        int totalFloats = nBuffer.getWritten(); // Total USED floats
+    private synchronized void uploadMesh(NFloatBuffer nBuffer) {
+        int totalFloats = nBuffer.getWritten();
         FloatBuffer buffer = nBuffer.getBuffer();
 
         vertexCount = totalFloats / 6;
@@ -207,7 +207,7 @@ public class Chunk extends ChunkData {
         isDirty = false;
     }
 
-    public void draw(Camera camera, Window window) {
+    public synchronized void draw(Camera camera, Window window) {
         if (isDirty) rebuild();
         if (vertexCount == 0) return;
 
@@ -236,7 +236,7 @@ public class Chunk extends ChunkData {
         shaderProgram.unbind();
     }
 
-    public void cleanup() {
+    public synchronized void cleanup() {
         glDisableVertexAttribArray(0);
         glDisableVertexAttribArray(1);
         glDisableVertexAttribArray(2);
@@ -244,8 +244,7 @@ public class Chunk extends ChunkData {
         glDeleteBuffers(vboId);
         glBindVertexArray(0);
         glDeleteVertexArrays(vaoId);
-
-        nBuffer.cleanup();
+        shaderProgram.cleanup();
     }
 
     public int[] getBlockData() {
@@ -284,7 +283,7 @@ public class Chunk extends ChunkData {
     public static Chunk of(ChunkData data, GridMap map, TextureAtlas atlas, BlockRegistry registry) throws IllegalChunkAccessException {
         Chunk chunk = new Chunk(data.getPosition(), atlas, map, registry);
         int[] sourceBlocks = data.getBlockIds();
-        System.arraycopy(sourceBlocks, 0, chunk.blocks, 0, chunk.blocks.length); // FAILS HERE
+        System.arraycopy(sourceBlocks, 0, chunk.blocks, 0, chunk.blocks.length);
         
         chunk.dirty();
         return chunk;

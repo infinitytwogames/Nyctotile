@@ -3,6 +3,7 @@ package org.infinitytwo.umbralore.core.debug;
 import javax.swing.*;
 import java.util.concurrent.ConcurrentLinkedQueue;
 
+@Deprecated
 public class Console extends JFrame implements Runnable {
     private final JTextArea consoleOutputArea = new JTextArea();
     // This is the thread-safe queue for messages

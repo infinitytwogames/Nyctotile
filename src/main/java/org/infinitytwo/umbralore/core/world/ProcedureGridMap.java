@@ -4,7 +4,6 @@ import org.infinitytwo.umbralore.core.Window;
 import org.infinitytwo.umbralore.core.data.ChunkData;
 import org.infinitytwo.umbralore.core.data.ChunkPos;
 import org.infinitytwo.umbralore.core.exception.IllegalChunkAccessException;
-import org.infinitytwo.umbralore.core.logging.Logger;
 import org.infinitytwo.umbralore.core.model.TextureAtlas;
 import org.infinitytwo.umbralore.core.registry.BlockRegistry;
 import org.infinitytwo.umbralore.core.renderer.Camera;
@@ -13,6 +12,8 @@ import org.infinitytwo.umbralore.core.renderer.ShaderProgram;
 import org.infinitytwo.umbralore.core.world.generation.Biome;
 import org.infinitytwo.umbralore.core.world.generation.NoiseGenerationSettings;
 import org.joml.Vector2i;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import personthecat.fastnoise.FastNoise;
 
 import java.util.*;
@@ -26,7 +27,7 @@ public class ProcedureGridMap extends GridMap {
     private final NoiseGenerationSettings dimension;
     protected long seed;
     private Random random;
-    protected Logger logger = new Logger(ProcedureGridMap.class);
+    protected Logger logger = LoggerFactory.getLogger(ProcedureGridMap.class);
     protected static AtomicInteger generationLimit = new AtomicInteger(8);
     protected static AtomicInteger current = new AtomicInteger(0);
     protected final List<ChunkData> chunkData = Collections.synchronizedList(new ArrayList<>());

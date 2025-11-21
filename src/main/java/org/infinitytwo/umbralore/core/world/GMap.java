@@ -60,24 +60,14 @@ public abstract class GMap {
     
     public abstract Block getBlock(int x, int y, int z);
     public abstract void removeBlock(int x, int y, int z) throws IllegalChunkAccessException;
-    
     public abstract void removeBlock(Vector3i pos) throws IllegalChunkAccessException;
-    
     public abstract List<ChunkPos> getSurroundingChunks(ChunkPos center, int radius);
-    
     public abstract void insertData(Vector3i pos, byte[] data) throws IllegalChunkAccessException;
-    
     public abstract byte[] getData(Vector3i pos) throws IllegalChunkAccessException;
-    
     public abstract Object getData(Vector3i pos, BlockDataReader reader, String name) throws IllegalChunkAccessException, IllegalDataTypeException;
-    
     public abstract BlockType getBlockType(Vector3i pos);
-    
     public abstract RaycastResult raycast(Vector3f origin, Vector3f direction, float maxDistance);
-    
     public abstract void setBlock(Block block) throws IllegalChunkAccessException;
-    
-    public List<ChunkPos> getMissingSurroundingChunks(int x, int z, int radius) {
-        return getSurroundingChunks(new ChunkPos(x, z),radius);
-    }
+    public abstract boolean isBlockLoaded(int x, int y, int z);
+    public abstract Block getTopBlock(int x, int z);
 }

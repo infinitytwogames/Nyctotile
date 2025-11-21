@@ -2,7 +2,6 @@ package org.infinitytwo.umbralore.core.renderer;
 
 import org.infinitytwo.umbralore.core.RGB;
 import org.infinitytwo.umbralore.core.event.bus.EventBus;
-import org.infinitytwo.umbralore.core.logging.Logger;
 import org.infinitytwo.umbralore.core.constants.ShaderFiles;
 import org.joml.Matrix4f;
 import org.joml.Vector2i;
@@ -10,6 +9,8 @@ import org.lwjgl.BufferUtils;
 import org.lwjgl.stb.STBTTAlignedQuad;
 import org.lwjgl.stb.STBTTBakedChar;
 import org.lwjgl.system.MemoryStack;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.nio.ByteBuffer;
@@ -38,7 +39,26 @@ public class FontRenderer {
     
     private static final int[] CODEPOINTS;
     private static final int NUM_CODEPOINTS;
-    
+
+    private int texID;
+    private STBTTBakedChar.Buffer charData;
+
+    // Shader and uniforms
+    private int locProj;
+    private int locTextColor;
+    private int locFontAtlas;
+    private int locModel;
+
+    // VAO/VBO for vertex data (x,y,s,t)
+    private int vaoId;
+    private int vboId;
+    private final String fontPath;
+
+    private float fontHeight;
+    private final ShaderProgram program;
+    private boolean initialized = false;
+    private final Logger logger = LoggerFactory.getLogger(FontRenderer.class);
+
     static {
         // Generate ASCII 32 to 126 (95 characters)
         int count = 127 - 32;
@@ -51,36 +71,15 @@ public class FontRenderer {
         CODEPOINTS[count] = 8212;
         NUM_CODEPOINTS = CODEPOINTS.length;
     }
-
-    private int texID;
-    private STBTTBakedChar.Buffer charData;
-
-    // Shader and uniforms
-    private final int shaderProgramId;
-    private  int locProj;
-    private  int locTextColor;
-    private  int locFontAtlas;
-
-    // VAO/VBO for vertex data (x,y,s,t)
-    private int vaoId;
-    private int vboId;
-    private String fontPath;
-
-    private float fontHeight;
-    private ShaderProgram program;
-    private boolean initialized = false;
-    private final Logger logger;
-
+    
     /**
-     * @param fontPath    path to TTF file
+     * @param fontPath    path to a TTF file
      * @param height      pixel height
      */
     public FontRenderer(String fontPath, float height) {
         this.fontHeight = height * 2;
         program = new ShaderProgram(ShaderFiles.textVertex,ShaderFiles.textFragment);
-        this.shaderProgramId = program.getProgramId();
         this.fontPath = fontPath;
-        this.logger = new Logger(FontRenderer.class);
         EventBus.connect(this);
         init();
     }
@@ -88,15 +87,15 @@ public class FontRenderer {
     private void init() {
         // Query uniforms once
 
-        logger.info("Initializing Font Renderer");
-        locProj      = glGetUniformLocation(shaderProgramId, "uProj");
-        locTextColor = glGetUniformLocation(shaderProgramId, "uTextColor");
-        locFontAtlas = glGetUniformLocation(shaderProgramId, "uFontAtlas");
+        locProj      = glGetUniformLocation(program.getProgramId(), "uProj");
+        locTextColor = glGetUniformLocation(program.getProgramId(), "uTextColor");
+        locFontAtlas = glGetUniformLocation(program.getProgramId(), "uFontAtlas");
+        locModel     = program.getUniformLocation("uModel");
 
         // Load font data
         ByteBuffer fontBuffer;
         try {
-            fontBuffer = loadFont(fontPath); // Buffer is loaded and flipped (position=0, limit=size)
+            fontBuffer = loadFont(fontPath); // Buffer is loaded, and flipped (position=0, limit=size)
         } catch (IOException e) {
             throw new RuntimeException("Failed to load font: " + fontPath, e);
         }
@@ -122,9 +121,8 @@ public class FontRenderer {
         // Add logging to see if the baking failed
         if (result <= 0) {
             logger.error("STBTT Bake failed or returned zero chars fit! Result: " + result);
-        } else {
-            logger.info("STBTT Baked " + result + " characters successfully.");
         }
+        
         // Upload texture atlas
         texID = glGenTextures();
         glBindTexture(GL_TEXTURE_2D, texID);
@@ -146,21 +144,29 @@ public class FontRenderer {
         glVertexAttribPointer(1, 2, GL_FLOAT, false, 4 * Float.BYTES, 2 * Float.BYTES);
         glBindBuffer(GL_ARRAY_BUFFER, 0);
         glBindVertexArray(0);
-        logger.info("Initialized Successfully");
         initialized = true;
     }
 
-    public void renderText(Matrix4f projView, String text, float x, float y, float r, float g, float b) {
+    public void renderText(Matrix4f projView, String text, float x, float y, float r, float g, float b, float angle) {
         if (!initialized) {
-            logger.error("",new IllegalStateException("FontRenderer is not initialized"),"FontRenderer is not initialized");
+            logger.error("FontRenderer is not initialized",new IllegalStateException("FontRenderer is not initialized"));
             return;
         }
-        glUseProgram(shaderProgramId);
+        program.bind();
+        Matrix4f model = new Matrix4f()
+                .translate(x, y, 0.0f) // 1. Move to the desired position
+                .rotateZ((float)Math.toRadians(angle));
+        
         // Upload projection
         try (MemoryStack stack = MemoryStack.stackPush()) {
             FloatBuffer mat = stack.mallocFloat(16);
+            FloatBuffer modelMat = stack.mallocFloat(16);
+            
             projView.get(mat);
+            model.get(modelMat);
+            
             glUniformMatrix4fv(locProj, false, mat);
+            glUniformMatrix4fv(locModel, false, modelMat);
         }
         // Color & sampler
         glUniform3f(locTextColor, r, g, b);
@@ -176,8 +182,8 @@ public class FontRenderer {
         // Build dynamic vertex buffer
         FloatBuffer buf = BufferUtils.createFloatBuffer(text.length() * 6 * 4);
         try (MemoryStack stack = MemoryStack.stackPush()) {
-            FloatBuffer xb = stack.floats(x);
-            FloatBuffer yb = stack.floats(y);
+            FloatBuffer xb = stack.floats(0.0f);
+            FloatBuffer yb = stack.floats(0.0f);
             STBTTAlignedQuad quad = STBTTAlignedQuad.mallocStack(stack);
             for (char c : text.toCharArray()) {
                 if (c < FIRST_CHAR || c >= FIRST_CHAR + CHAR_COUNT) continue;
@@ -210,8 +216,8 @@ public class FontRenderer {
     /**
      * Render text at screen coordinates (x, y).
      */
-    public void renderText(String text, float x, float y, float r, float g, float b) {
-        renderText(projection,text,x,y,r,g,b);
+    public void renderText(String text, float x, float y, float r, float g, float b, float angle) {
+        renderText(projection,text,x,y,r,g,b,angle);
     }
 
     /** Cleanup GPU resources */
@@ -221,6 +227,7 @@ public class FontRenderer {
         glDeleteVertexArrays(vaoId);
         charData.free();
         initialized = false;
+        program.cleanup();
     }
 
     private ByteBuffer loadFont(String path) throws IOException {
@@ -254,16 +261,20 @@ public class FontRenderer {
         }
     }
 
-    public void renderText(String text, Vector2i position, RGB color) {
-        renderText(text,position.x(),position.y(),color.getRed(),color.getGreen(),color.getBlue());
+    public void renderText(Matrix4f projView, String text, Vector2i position, RGB color) {
+        renderText(projView,text,position,color,0);
+    }
+    
+    public void renderText(String text, Vector2i position, RGB color, float angle) {
+        renderText(text,position.x(),position.y(),color.getRed(),color.getGreen(),color.getBlue(), angle);
     }
 
-    public void renderText(String text, int x, int y, RGB color) {
-        renderText(text,x,y,color.getRed(),color.getGreen(),color.getBlue());
+    public void renderText(String text, int x, int y, RGB color, float angle) {
+        renderText(text,x,y,color.getRed(),color.getGreen(),color.getBlue(), angle);
     }
 
-    public void renderText(Matrix4f projView, String text, Vector2i pos, RGB color) {
-        renderText(projView,text,pos.x,pos.y,color.r(),color.g(),color.b());
+    public void renderText(Matrix4f projView, String text, Vector2i pos, RGB color, float angle) {
+        renderText(projView,text,pos.x,pos.y,color.r(),color.g(),color.b(), angle);
     }
 
     public float getFontHeight() {
@@ -296,10 +307,6 @@ public class FontRenderer {
         return BITMAP_H;
     }
 
-    public int getShaderProgramId() {
-        return shaderProgramId;
-    }
-
     public int getLocProj() {
         return locProj;
     }
@@ -310,5 +317,13 @@ public class FontRenderer {
 
     public int getLocFontAtlas() {
         return locFontAtlas;
+    }
+    
+    public ShaderProgram getProgram() {
+        return program;
+    }
+    
+    public void renderText(Matrix4f projView, String text, int x, int y, int r, int g, int b) {
+        renderText(projView,text,x,y,r,g,b,0);
     }
 }

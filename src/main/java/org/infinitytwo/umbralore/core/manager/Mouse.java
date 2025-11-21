@@ -11,6 +11,8 @@ import org.infinitytwo.umbralore.core.ui.component.ItemHolder;
 import org.joml.Vector2i;
 import org.lwjgl.glfw.GLFW;
 
+import static org.lwjgl.glfw.GLFW.*;
+
 public class Mouse {
     private static ItemHolder itemHolder;
     private static double lastX, lastY;
@@ -36,7 +38,7 @@ public class Mouse {
     public static void update() {
         double[] x = new double[1];
         double[] y = new double[1];
-        GLFW.glfwGetCursorPos(window.getWindow(), x, y);
+        glfwGetCursorPos(window.getWindow(), x, y);
 
         if (first) {
             lastX = x[0];
@@ -50,11 +52,38 @@ public class Mouse {
         lastX = x[0];
         lastY = y[0];
     }
-
+    
+    public static void setDeltaX(double newDeltaX) {
+        // 1. Get the current position
+        double[] x = new double[1];
+        double[] y = new double[1];
+        glfwGetCursorPos(window.getWindow(), x, y);
+        
+        // 2. Set the last tracked position to the current position
+        // This ensures the NEXT delta calculation (x[0] - lastX) is zero.
+        Mouse.lastX = x[0];
+        
+        // 3. Set the delta itself to the desired value (usually 0 when resetting)
+        Mouse.deltaX = newDeltaX;
+    }
+    
+    public static void setDeltaY(double newDeltaY) {
+        // 1. Get the current position
+        double[] x = new double[1];
+        double[] y = new double[1];
+        glfwGetCursorPos(window.getWindow(), x, y);
+        
+        // 2. Set the last tracked position to the current position
+        Mouse.lastY = y[0];
+        
+        // 3. Set the delta itself to the desired value (usually 0 when resetting)
+        Mouse.deltaY = newDeltaY;
+    }
+    
     public static Vector2i getCurrentPosition() {
         double[] x = new double[1];
         double[] y = new double[1];
-        GLFW.glfwGetCursorPos(window.getWindowHandle(), x, y);
+        glfwGetCursorPos(window.getWindowHandle(), x, y);
 
         return new Vector2i((int) x[0], (int) y[0]);
     }

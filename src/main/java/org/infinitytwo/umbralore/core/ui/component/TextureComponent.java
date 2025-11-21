@@ -49,9 +49,8 @@ public class TextureComponent extends UI implements Component {
         super.draw();
 
         if (atlas != null && textureIndex >= 0) {
-            Vector2i v = getPosition();
-            renderer.queueTextured(v.x, v.y, getWidth(), getHeight(),
-                    getTextureIndex(), atlas, foregroundColor);
+            renderer.queueTextured(
+                    getTextureIndex(), atlas, foregroundColor, this);
         }
     }
 

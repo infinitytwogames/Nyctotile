@@ -147,40 +147,14 @@ public class GridMap extends GMap {
     }
 
     public void draw(Camera camera, Window window, int view) {
-        // Calculate the combined View-Projection matrix
-        Matrix4f projection = new Matrix4f().perspective((float) Math.toRadians(camera.getFov()), (float) window.getSize().x / window.getSize().y, 0.1f, 1024f);
-        Matrix4f viewMatrix = camera.getViewMatrix();
-        Matrix4f viewProjection = projection.mul(viewMatrix, new Matrix4f());
-
-        // 1. Update the Frustum Planes once per frame
-//        culler.update(viewProjection);
-
-        // Determine chunks to potentially check (culling region)
         Vector2i chunkP = convertToChunkPosition((int) camera.getPosition().x, (int) camera.getPosition().z);
         ChunkPos pos = new ChunkPos(chunkP.x, chunkP.y);
         List<ChunkPos> r = getSurroundingChunks(pos, view);
-
-        // Chunk AABB corners (y is always fixed)
-        final float MIN_Y = 0;
-        final float MAX_Y = Chunk.SIZE_Y;
-
+        
         for (ChunkPos search : r) {
             if (chunks.containsKey(search)) {
                 Chunk chunk = chunks.get(search);
-
-//                 2. Define the Chunk's AABB World Coordinates
-//                float minX = search.x * Chunk.SIZE_X;
-//                float minZ = search.z * Chunk.SIZE_Z;
-//                float maxX = minX + Chunk.SIZE_X;
-//                float maxZ = minZ + Chunk.SIZE_Z;
-//
-//                Vector3f min = new Vector3f(minX, MIN_Y, minZ);
-//                Vector3f max = new Vector3f(maxX, MAX_Y, maxZ);
-//
-                // 3. Frustum Culling Test
-//                if (culler.isVisible(min, max)) {
-                    chunk.draw(camera, window);
-//                }
+                chunk.draw(camera,window);
             }
         }
     }
@@ -264,20 +238,42 @@ public class GridMap extends GMap {
     }
 
     public List<ChunkPos> getMissingSurroundingChunks(ChunkPos center, int radius) {
-        List<ChunkPos> result = new ArrayList<>();
-        for (int dx = -radius; dx <= radius; dx++) {
-            for (int dz = -radius; dz <= radius; dz++) {
-                ChunkPos p = new ChunkPos(center.x() + dx, center.z() + dz);
-                if (!chunks.containsKey(p)) result.add(p);
-            }
-        }
-        return result;
+        return getMissingSurroundingChunks(center.x(),center.z(),radius);
     }
 
     public void addChunk(ChunkData data, ShaderProgram program, TextureAtlas atlas) {
-        chunks.put(new ChunkPos(data.position.x,data.position.y),data.createChunk(program,atlas,registry));
+        chunks.put(new ChunkPos(data.getPosition().x, data.getPosition().y),data.createChunk(program,atlas,registry));
     }
-
+    
+    @Override
+    public boolean isBlockLoaded(int x, int y, int z) {
+        Vector2i p = convertToChunkPosition(x, z);
+        ChunkPos pos = new ChunkPos(p.x, p.y);
+        
+        // This method is primarily used by physics/rendering for safety.
+        // It only checks the 'chunks' map because the parent class doesn't know
+        // about the 'activeGenerations' futures.
+        // However, since the ServerThread only interacts with the *subclass* (ServerProcedureGridMap),
+        // the check should be performed there.
+        
+        // For now, let's use the simple check available to the parent:
+        return chunks.containsKey(pos);
+    }
+    
+    @Override
+    public Block getTopBlock(int x, int z) {
+        Chunk chunk = chunks.get(worldToChunkPos(x,z));
+        
+        if (chunk != null) {
+            for (int y = 0; y < ChunkData.SIZE_Y; y++) {
+                if (chunk.getBlockId(x, y, z) > 0) {
+                    return getBlock(x,y,z);
+                }
+            }
+        }
+        return null;
+    }
+    
     public List<Chunk> getAllChunks() {
         return new ArrayList<>(chunks.values());
     }
@@ -289,5 +285,16 @@ public class GridMap extends GMap {
 
     public BlockRegistry getRegistry() {
         return registry;
+    }
+    
+    public List<ChunkPos> getMissingSurroundingChunks(int x, int z, int radius) {
+        List<ChunkPos> result = new ArrayList<>();
+        for (int dx = -radius; dx <= radius; dx++) {
+            for (int dz = -radius; dz <= radius; dz++) {
+                ChunkPos p = new ChunkPos(x + dx, z + dz);
+                if (!chunks.containsKey(p)) result.add(p);
+            }
+        }
+        return result;
     }
 }

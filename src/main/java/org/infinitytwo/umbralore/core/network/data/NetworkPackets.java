@@ -1,4 +1,4 @@
-package org.infinitytwo.umbralore.core.network.modern;
+package org.infinitytwo.umbralore.core.network.data;
 
 public abstract class NetworkPackets {
     public static abstract class MPacket {}
@@ -18,6 +18,31 @@ public abstract class NetworkPackets {
         
         public PUnencrypted(String command) {
             this.command = command;
+        }
+    }
+    
+    public static class PUserData extends MPacket {
+        public String token;
+        public String name;
+        
+        public PUserData(String token, String name) {
+            this.token = token;
+            this.name = name;
+        }
+        
+        public PUserData() {}
+    }
+    
+    public static class PConnection extends MPacket {
+        public String name;
+        public String uid;
+        
+        public PConnection() {
+        }
+        
+        public PConnection(String name, String uid) {
+            this.name = name;
+            this.uid = uid;
         }
     }
     
@@ -44,23 +69,11 @@ public abstract class NetworkPackets {
     public static class Failure extends MPacket {
         public String msg;
         
-        public Failure() {
-        }
+        public Failure() {}
         
         public Failure(String msg) {
             this.msg = msg;
         }
     }
     
-    public static class NACK extends MPacket {
-        public short[] indices;
-        public int id;
-        
-        public NACK(short[] indices, int id) {
-            this.indices = indices;
-            this.id = id;
-        }
-        
-        public NACK() {}
-    }
 }

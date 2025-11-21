@@ -21,7 +21,10 @@ public class Camera {
 
     private final Vector3f worldUp = new Vector3f(0, 1, 0);
     private double POV = 70;
-
+    
+    public Camera() {
+    }
+    
     public void update(float delta) {
         // Smoothly interpolate rotation
         if (doLerp) {
