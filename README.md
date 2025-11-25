@@ -45,8 +45,7 @@ Since the project is in a very early stage, there is no runnable game distributi
     ```
 2.  **Open in IDE:**
     Import the project into your IDE as a **Gradle project**.
-3.  **Run Main Class:**
-    Locate the main entry point (`org.infinitytwo.umbralore.core.debug.Main` for 3D only, or `org.infinitytwo.umbralore.core.Main` for the actual game) and run it directly. 
+3. You will see a task called `run` under `application`
 
 -----
 
