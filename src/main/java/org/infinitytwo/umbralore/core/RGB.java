@@ -1,5 +1,7 @@
 package org.infinitytwo.umbralore.core;
 
+import org.joml.Math;
+
 import static org.joml.Math.clamp;
 
 public class RGB {
@@ -19,9 +21,9 @@ public class RGB {
         this(0, 0, 0);
     }
     
+    // Assuming the RGBA class has public fields or accessor methods (r(), g(), b())
     public RGB(RGBA color) {
-        // Delegates to main constructor, ensuring proper component copying and clamping
-        this(color.red, color.green, color.blue);
+        this(color.r(), color.g(), color.b());
     }
     
     // --- Factory Method ---
@@ -47,15 +49,7 @@ public class RGB {
         this.red = other.red;
         this.green = other.green;
         this.blue = other.blue;
-        return this;
-    }
-    
-    public RGB set(RGBA color) {
-        // Direct assignment is safe since the constructor ensures the input RGBA components were clamped
-        this.red = color.red;
-        this.green = color.green;
-        this.blue = color.blue;
-        return this;
+        return this; // Make chainable
     }
     
     // --- Getters and Setters ---
@@ -77,9 +71,10 @@ public class RGB {
     public void g(float g) { setGreen(g); }
     public void b(float b) { setBlue(b); }
     
-    public void set(float r, float g, float b) {
+    public RGB set(float r, float g, float b) {
         // Uses clamped setters
         r(r); g(g); b(b);
+        return this; // Make chainable
     }
     
     // --- Utility Methods ---
@@ -99,17 +94,7 @@ public class RGB {
     }
     
     public RGB getContrastColor() {
-        float luminosity = (0.2126f * this.red) +
-                (0.7152f * this.green) +
-                (0.0722f * this.blue);
-        
-        float threshold = 0.5f;
-        
-        if (luminosity < threshold) {
-            return new RGB(1.0f, 1.0f, 1.0f);
-        } else {
-            return new RGB(0.0f, 0.0f, 0.0f);
-        }
+        return getContrastColor(this.red, this.green, this.blue);
     }
     
     public RGB copy() {
@@ -117,12 +102,33 @@ public class RGB {
     }
     
     public static RGB lerp(RGB a, RGB b, float t) {
-        t = clamp(t, 0f, 1f);
+        t = clamp(0,1,t);
         return new RGB(
-                a.red + (b.red - a.red) * t,
-                a.green + (b.green - a.green) * t,
-                a.blue + (b.blue - a.blue) * t
+                Math.lerp(a.red,b.red,t),
+                Math.lerp(a.green,b.green,t),
+                Math.lerp(a.blue,b.blue,t)
         );
+    }
+    
+    // --- Standard Overrides (Required for Data Integrity) ---
+    
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        RGB rgb = (RGB) o;
+        // Use Float.compare for safe floating-point equality checks
+        return Float.compare(rgb.red, red) == 0 &&
+                Float.compare(rgb.green, green) == 0 &&
+                Float.compare(rgb.blue, blue) == 0;
+    }
+    
+    @Override
+    public int hashCode() {
+        int result = Float.hashCode(red);
+        result = 31 * result + Float.hashCode(green);
+        result = 31 * result + Float.hashCode(blue);
+        return result;
     }
     
     @Override
