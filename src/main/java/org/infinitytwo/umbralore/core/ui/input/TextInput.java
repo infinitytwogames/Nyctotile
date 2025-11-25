@@ -7,7 +7,7 @@ import org.infinitytwo.umbralore.core.event.input.KeyPressEvent;
 import org.infinitytwo.umbralore.core.event.input.MouseButtonEvent;
 import org.infinitytwo.umbralore.core.ui.Caret;
 import org.infinitytwo.umbralore.core.ui.Label;
-import org.infinitytwo.umbralore.core.ui.display.Screen;
+import org.infinitytwo.umbralore.core.ui.display.Scene;
 import org.infinitytwo.umbralore.core.ui.position.Anchor;
 import org.infinitytwo.umbralore.core.ui.position.Pivot;
 import org.joml.Vector2i;
@@ -25,13 +25,13 @@ public abstract class TextInput extends Label {
     private final StringBuilder builder = new StringBuilder();
     private boolean submitted;
     private boolean disabled;
-    private final Screen screen;
+    private final Scene scene;
     
-    public TextInput(Screen screen, Path path) {
-        super(screen, path);
-        this.screen = screen;
+    public TextInput(Scene scene, Path path) {
+        super(scene, path);
+        this.scene = scene;
         
-        caret = new Caret(screen.getUIBatchRenderer());
+        caret = new Caret(scene.getUIBatchRenderer());
         caret.setActive(false);
         caret.setHeight((int) ((textRenderer.getFontHeight()) + 3));
         caret.setParent(this);
@@ -39,7 +39,7 @@ public abstract class TextInput extends Label {
         caret.setWidth(10);
         caret.setBackgroundColor(0, 0, 0, 1);
         
-        screen.register(caret);
+        scene.register(caret);
         setTextPosition(new Anchor(0, 0f), new Pivot(0, 0f), new Vector2i(5, 0));
         
         EventBus.connect(this);
@@ -58,7 +58,7 @@ public abstract class TextInput extends Label {
             submitted = false;
         }
         
-        index = getCaretIndexAtMouse(transformWindowToVirtual(screen.getWindow(), e.x, e.y).x, getPosition().x + 5);
+        index = getCaretIndexAtMouse(transformWindowToVirtual(scene.getWindow(), e.x, e.y).x, getPosition().x + 5);
         System.out.println(index);
         focus();
     }

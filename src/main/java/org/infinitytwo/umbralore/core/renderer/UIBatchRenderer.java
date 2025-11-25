@@ -1,7 +1,9 @@
 package org.infinitytwo.umbralore.core.renderer;
 
+import org.infinitytwo.umbralore.core.Display;
 import org.infinitytwo.umbralore.core.Main;
 import org.infinitytwo.umbralore.core.RGBA;
+import org.infinitytwo.umbralore.core.Window;
 import org.infinitytwo.umbralore.core.constants.ShaderFiles;
 import org.infinitytwo.umbralore.core.event.SubscribeEvent;
 import org.infinitytwo.umbralore.core.event.bus.EventBus;
@@ -9,6 +11,7 @@ import org.infinitytwo.umbralore.core.event.state.WindowResizedEvent;
 import org.infinitytwo.umbralore.core.model.TextureAtlas;
 import org.infinitytwo.umbralore.core.ui.UI;
 import org.joml.Matrix4f;
+import org.joml.Vector2i;
 import org.lwjgl.opengl.GL11;
 import org.lwjgl.opengl.GL15;
 import org.lwjgl.opengl.GL20;
@@ -18,14 +21,15 @@ import org.lwjgl.system.MemoryUtil;
 
 import java.nio.FloatBuffer;
 
+import static org.infinitytwo.umbralore.core.Display.glEnable;
+import static org.infinitytwo.umbralore.core.Display.transformVirtualToWindow;
 import static org.infinitytwo.umbralore.core.constants.Constants.UI_DESIGN_HEIGHT;
-import static org.lwjgl.opengl.GL11.GL_TEXTURE_2D;
+import static org.lwjgl.opengl.GL11.*;
 import static org.lwjgl.opengl.GL20.glGetUniformLocation;
 import static org.lwjgl.opengl.GL20.glUniformMatrix4fv;
 import static org.lwjgl.opengl.GL20.glUniform1i;
 import static org.lwjgl.opengl.GL13.GL_TEXTURE0;
 import static org.lwjgl.opengl.GL13.glActiveTexture;
-import static org.lwjgl.opengl.GL11.glBindTexture;
 
 public class UIBatchRenderer {
     private int vaoId, vboId;
@@ -152,7 +156,7 @@ public class UIBatchRenderer {
             // 2. Populate Vertex Data (9 FLOATS per vertex)
             quad[vertexOffset] = finalX;
             quad[vertexOffset + 1] = finalY;
-            quad[vertexOffset + 2] = ui.getDrawOrder();
+            quad[vertexOffset + 2] = ui.getDrawOrder() * 0.001f;
             
             quad[vertexOffset + 3] = color.getRed();
             quad[vertexOffset + 4] = color.getGreen();
@@ -232,7 +236,7 @@ public class UIBatchRenderer {
             // 2. Populate Vertex Data (8 FLOATS per vertex)
             quad[vertexOffset] = finalX;
             quad[vertexOffset + 1] = finalY;
-            quad[vertexOffset + 2] = ui.getDrawOrder();
+            quad[vertexOffset + 2] = ui.getDrawOrder() * 0.001f;
             
             quad[vertexOffset + 3] = foregroundColor.getRed();
             quad[vertexOffset + 4] = foregroundColor.getGreen();
@@ -293,7 +297,8 @@ public class UIBatchRenderer {
         // 4. OpenGL State Setup
         GL11.glEnable(GL11.GL_BLEND);
         GL11.glBlendFunc(GL11.GL_SRC_ALPHA, GL11.GL_ONE_MINUS_SRC_ALPHA);
-        GL11.glDisable(GL11.GL_DEPTH_TEST);
+        GL11.glEnable(GL11.GL_DEPTH_TEST);
+        glDepthFunc(GL_LEQUAL);
         
         // 5. Draw
         GL11.glDrawArrays(GL11.GL_TRIANGLES, 0, vertexDataIndex / VERTEX_SIZE);
@@ -304,6 +309,48 @@ public class UIBatchRenderer {
         GL30.glBindVertexArray(0);
         // No need to unbind texture here if we unbound it above,
         // but leaving glActiveTexture(GL_TEXTURE0); glBindTexture(GL_TEXTURE_2D, 0); in the else block is cleaner.
+    }
+    
+    /**
+     * Enable OpenGL scissor test with a given rectangle in virtual UI coordinates.
+     */
+    public void enableScissor(int x, int y, int width, int height) {
+        flush(); // Keep this: Must flush before changing OpenGL state!
+        begin(); // like this?
+        
+        glEnable(GL_SCISSOR_TEST);
+        
+        // --- STEP 1: Convert Virtual (UI) Coordinates to Window (Pixel) Coordinates ---
+        Window window = Main.getWindow();
+        
+        // Convert the top-left corner (x, y) to window coordinates (pixel space)
+        Vector2i windowPos = transformVirtualToWindow(window, new Vector2i(x, y));
+        
+        // Convert the width and height to window pixel space
+        // NOTE: This usually involves calculating the scale factor applied to your UI
+        int windowWidth = (int) (width * window.getWidth() / (float) Display.getWidth());
+        int windowHeight = (int) (height * window.getHeight() / UI_DESIGN_HEIGHT);
+        
+        // --- STEP 2: Flip the Y-coordinate ---
+        // OpenGL's glScissor Y origin is BOTTOM-LEFT.
+        // The converted windowPos.y is measured from the TOP-LEFT.
+        // To get the bottom-left y-coordinate (Y_scissor), subtract the bottom edge from the total height:
+        
+        int scissorX = windowPos.x;
+        int scissorY = window.getHeight() - (windowPos.y + windowHeight); // Total height - (Top Y + Height)
+        
+        // --- STEP 3: Apply Scissor Test ---
+        glScissor(scissorX, scissorY, windowWidth, windowHeight);
+    }
+    
+    /**
+     * Disable OpenGL scissor test.
+     */
+    public void disableScissor() {
+        flush(); // Flush current batch before changing OpenGL state!
+        begin();
+        
+        glDisable(GL_SCISSOR_TEST);
     }
     
     public void changeProgramId(int id) {
@@ -336,5 +383,9 @@ public class UIBatchRenderer {
                 -100.0f,
                 100.0f
         );
+    }
+    
+    public void enableScissor(Vector2i position, int width, int height) {
+        enableScissor(position.x,position.y,width,height);
     }
 }

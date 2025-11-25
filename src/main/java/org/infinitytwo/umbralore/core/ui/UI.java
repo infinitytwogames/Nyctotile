@@ -31,19 +31,30 @@ public abstract class UI implements Comparable<UI> {
     protected Vector2i offset = new Vector2i();
     protected UI parent;
     protected Map<String, Component> components = new HashMap<>();
+    private final Vector2i position = new Vector2i();
 
-    public UI(UIBatchRenderer renderer) {
+    public UI(@NotNull UIBatchRenderer renderer) {
         this.renderer = renderer;
     }
 
-    public void addComponent(String name, Component component) {
+    public void addComponent(@NotNull String name, @NotNull Component component) {
         components.put(name,component);
     }
 
-    public void addComponent(Component component) {
+    public void addComponent(@NotNull Component component) {
         components.put(component.getClass().getSimpleName(),component);
     }
-
+    
+    @SuppressWarnings("unchecked")
+    public <T extends Component> T getComponent(String name) {
+        return (T) components.get(name);
+    }
+    
+    public <T extends Component> T getComponent(@NotNull Class<T> componentClass) {
+        // Assuming a simple class name is used as the key for the type-based addComponent
+        return getComponent(componentClass.getSimpleName());
+    }
+    
     public boolean isHovering() {
         return hovering;
     }
@@ -71,7 +82,7 @@ public abstract class UI implements Comparable<UI> {
 
         int x = xa + xp;
         int y = ya + yp;
-        return new Vector2i(x+o.x,y+o.y);
+        return position.set(x+o.x,y+o.y);
     }
 
     public void setPosition(Anchor anchor, Pivot pivot) {
@@ -87,12 +98,16 @@ public abstract class UI implements Comparable<UI> {
     public Vector2i getOffset() {
         return new Vector2i(offset);
     }
+    
+    public Vector2i getMutableOffset() {
+        return offset;
+    }
 
-    protected void setOffset(int same) {
+    public void setOffset(int same) {
         setOffset(same,same);
     }
 
-    public void setOffset(Vector2i offset) {
+    public void setOffset(@NotNull Vector2i offset) {
         setOffset(offset.x,offset.y);
     }
 
@@ -100,7 +115,7 @@ public abstract class UI implements Comparable<UI> {
         offset.set(x,y);
     }
 
-    public void setAnchor(Anchor anchor) {
+    public void setAnchor(@NotNull Anchor anchor) {
         setAnchor(anchor.x,anchor.y);
     }
 
@@ -112,7 +127,7 @@ public abstract class UI implements Comparable<UI> {
         pivot.set(x,y);
     }
 
-    public void setPivot(Pivot pivot) {
+    public void setPivot(@NotNull Pivot pivot) {
         setPivot(pivot.x,pivot.y);
     }
 
@@ -166,15 +181,15 @@ public abstract class UI implements Comparable<UI> {
         for (Component component : components.values()) component.draw();
     }
 
-    public Vector2i getEnd() {
+    public Vector2i getEndPoint() {
         return new Vector2i(getPosition()).add(width,height);
     }
 
-    public void addOffset(Vector2i v) {
+    public void addOffset(@NotNull Vector2i v) {
         addOffset(v.x, v.y);
     }
 
-    public void setSize(Vector2i size) {
+    public void setSize(@NotNull Vector2i size) {
         setSize(size.x,size.y);
     }
 
@@ -187,17 +202,10 @@ public abstract class UI implements Comparable<UI> {
         setSize(same,same);
     }
 
-    public abstract void onMouseClicked(MouseButtonEvent e);
-    public abstract void onMouseHover(MouseHoverEvent e);
-    public abstract void onMouseHoverEnded();
-    public abstract void cleanup();
-
-
-    public void set(UI ui) {
+    public void set(@NotNull UI ui) {
         setSize(ui.getWidth(),ui.getHeight());
         setBackgroundColor(ui.getBackgroundColor());
-        setPosition(ui.getAnchor(),ui.getPivot(),ui.getOffset());
-        setParent(ui.getParent());
+        setPosition(ui.getAnchor(),ui.getPivot(),ui.getMutableOffset());
     }
 
     public void addOffset(int x, int y) {
@@ -213,11 +221,8 @@ public abstract class UI implements Comparable<UI> {
     }
     
     public void setAngle(float angle) {
-        this.angle = angle;
-        
-        for (Component c : components.values()) {
-            c.setAngle(angle);
-        }
+        this.angle = angle % 360f;
+        for (Component c : components.values()) c.setAngle(this.angle);
     }
     
     public boolean isHidden() {
@@ -238,6 +243,11 @@ public abstract class UI implements Comparable<UI> {
     
     @Override
     public int compareTo(@NotNull UI ui) {
-        return drawOrder - ui.drawOrder;
+        return Integer.compare(drawOrder, ui.drawOrder);
     }
+    
+    public abstract void onMouseClicked(MouseButtonEvent e);
+    public abstract void onMouseHover(MouseHoverEvent e);
+    public abstract void onMouseHoverEnded();
+    public abstract void cleanup();
 }

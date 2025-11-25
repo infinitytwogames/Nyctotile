@@ -8,36 +8,34 @@ import org.infinitytwo.umbralore.core.event.input.MouseHoverEvent;
 import org.infinitytwo.umbralore.core.data.Item;
 import org.infinitytwo.umbralore.core.model.TextureAtlas;
 import org.infinitytwo.umbralore.core.renderer.FontRenderer;
-import org.infinitytwo.umbralore.core.ui.builder.UIBuilder;
 import org.infinitytwo.umbralore.core.ui.display.Grid;
-import org.infinitytwo.umbralore.core.ui.display.Screen;
+import org.infinitytwo.umbralore.core.ui.display.Scene;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
-import java.util.Map;
 
 public class InventoryGridViewer extends Grid {
     protected Inventory link;
-    protected Screen screen;
+    protected Scene scene;
     protected FontRenderer fontRenderer;
     protected final List<ItemSlot> slots = new ArrayList<>();
     protected final Window window;
     private TextureAtlas atlas;
     protected Factory factory;
 
-    public InventoryGridViewer(Screen screen, FontRenderer fontRenderer, Window window, int columns) {
-        super(screen);
-        this.screen = screen;
+    public InventoryGridViewer(Scene scene, FontRenderer fontRenderer, Window window, int columns) {
+        super(scene);
+        this.scene = scene;
         this.fontRenderer = fontRenderer;
         this.columns = columns;
         this.window = window;
     }
 
-    public InventoryGridViewer(Screen screen, FontRenderer fontRenderer, Window window, Factory factory, int columns) {
-        super(screen);
-        this.screen = screen;
+    public InventoryGridViewer(Scene scene, FontRenderer fontRenderer, Window window, Factory factory, int columns) {
+        super(scene);
+        this.scene = scene;
         this.fontRenderer = fontRenderer;
         this.window = window;
         this.factory = factory;
@@ -72,12 +70,12 @@ public class InventoryGridViewer extends Grid {
     public ItemSlot getItemSlot(int i) {
         ItemSlot result;
         if (factory == null) {
-            ItemSlot slot = new ItemSlot(screen, fontRenderer, window);
+            ItemSlot slot = new ItemSlot(scene, fontRenderer, window);
             slot.setAtlas(atlas);
             slot.setItem(link.get(i));
             result = slot;
         } else {
-            result = factory.create(i, link.get(i), screen, fontRenderer, window);
+            result = factory.create(i, link.get(i), scene, fontRenderer, window);
         }
         return result;
     }
@@ -186,6 +184,6 @@ public class InventoryGridViewer extends Grid {
     }
 
     public interface Factory {
-        ItemSlot create(int slot, Item item, Screen screen, FontRenderer fontRenderer, Window window);
+        ItemSlot create(int slot, Item item, Scene scene, FontRenderer fontRenderer, Window window);
     }
 }

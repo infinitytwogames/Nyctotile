@@ -49,4 +49,8 @@ public final class VectorMath {
     public static String toString(Vector3i vector) {
         return "x: "+vector.x + ", y: "+ vector.y+ ", z: "+vector.z;
     }
+    
+    public static Vector2i copy(Vector2i vector) {
+        return new Vector2i(vector);
+    }
 }

@@ -12,15 +12,16 @@ import java.nio.FloatBuffer;
 
 import static org.infinitytwo.umbralore.core.constants.Constants.UI_DESIGN_HEIGHT;
 import static org.lwjgl.opengl.GL11.*;
-import static org.lwjgl.opengl.GL13.glActiveTexture;
-import static org.lwjgl.opengl.GL20.glGetUniformLocation;
-import static org.lwjgl.opengl.GL20.glUniform1i;
 
 public final class Display {
     public static int width;
     public static int height = (int) UI_DESIGN_HEIGHT;
     public static Matrix4f projection = new Matrix4f();
     private static volatile boolean enabled = true;
+    
+    public static int getWidth() {
+        return width;
+    }
     
     public static void init() {
         EventBus.connect(Display.class);
@@ -42,6 +43,11 @@ public final class Display {
         return new Vector2i(screenX, screenY);
     }
     
+    public static int transformVirtualToWindow(Window window, int c) {
+        float scale = (float) window.getHeight() / Display.height;
+        return (int) (c * scale);
+    }
+    
     public static Matrix4f get3DProjectionMatrix(Camera camera, Window window) {
         return projection = new Matrix4f().perspective((float) Math.toRadians(camera.getFov()), (float) window.getWidth() / window.getHeight(), 0.1f, 1024f);
     }
@@ -53,6 +59,11 @@ public final class Display {
         int virtualY = (int) (windowY * scale);
         
         return new Vector2i(virtualX, virtualY);
+    }
+    
+    public static int transformWindowToVirtual(Window window, int c) {
+        float scale = (float) Display.height / window.getHeight();
+        return (int) (c * scale);
     }
     
     public static Vector2i transformWindowToVirtual(Window window, Vector2i pos) {
@@ -205,4 +216,5 @@ public final class Display {
     public static void glFrontFace(int mode) {
         GL11.glFrontFace(mode);
     }
+    
 }

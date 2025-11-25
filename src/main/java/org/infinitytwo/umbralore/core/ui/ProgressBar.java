@@ -5,10 +5,11 @@ import org.infinitytwo.umbralore.core.RGBA;
 import org.infinitytwo.umbralore.core.event.input.MouseButtonEvent;
 import org.infinitytwo.umbralore.core.event.input.MouseHoverEvent;
 import org.infinitytwo.umbralore.core.renderer.FontRenderer;
+import org.infinitytwo.umbralore.core.ui.animations.UpdatableUI;
 import org.infinitytwo.umbralore.core.ui.builder.RectangleBuilder;
 import org.infinitytwo.umbralore.core.ui.builder.UIBuilder;
 import org.infinitytwo.umbralore.core.ui.builtin.Rectangle;
-import org.infinitytwo.umbralore.core.ui.display.Screen;
+import org.infinitytwo.umbralore.core.ui.display.Scene;
 import org.infinitytwo.umbralore.core.ui.position.Anchor;
 import org.infinitytwo.umbralore.core.ui.position.Pivot;
 
@@ -25,7 +26,7 @@ public class ProgressBar extends UpdatableUI {
     protected int percentage = 0;
     protected float speed = 10;
 
-    public ProgressBar(Screen renderer, FontRenderer textRenderer, RGB text, int max) {
+    public ProgressBar(Scene renderer, FontRenderer textRenderer, RGB text, int max) {
         super(renderer.getUIBatchRenderer());
         bar = new Rectangle(renderer.getUIBatchRenderer());
         total.set(max);
@@ -35,7 +36,7 @@ public class ProgressBar extends UpdatableUI {
         bar.setParent(this);
     }
 
-    public static ProgressBarBuilder builder(Screen renderer, FontRenderer textRenderer, RGB text) {
+    public static ProgressBarBuilder builder(Scene renderer, FontRenderer textRenderer, RGB text) {
         return new ProgressBarBuilder(renderer,textRenderer,text);
     }
 
@@ -101,7 +102,7 @@ public class ProgressBar extends UpdatableUI {
     }
 
     public static class ProgressBarBuilder extends UIBuilder<ProgressBar> {
-        public ProgressBarBuilder(Screen renderer, FontRenderer fontRenderer, RGB color) {
+        public ProgressBarBuilder(Scene renderer, FontRenderer fontRenderer, RGB color) {
             super(new ProgressBar(renderer, fontRenderer, color, 10));
         }
 

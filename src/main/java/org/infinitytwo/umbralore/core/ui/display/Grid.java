@@ -2,7 +2,6 @@ package org.infinitytwo.umbralore.core.ui.display;
 
 import org.infinitytwo.umbralore.core.event.input.MouseButtonEvent;
 import org.infinitytwo.umbralore.core.event.input.MouseHoverEvent;
-import org.infinitytwo.umbralore.core.renderer.UIBatchRenderer;
 import org.infinitytwo.umbralore.core.ui.UI;
 import org.infinitytwo.umbralore.core.ui.builder.UIBuilder;
 import org.joml.Vector2i;
@@ -17,11 +16,11 @@ public class Grid extends UI {
     protected int space;
     protected int padding;
     protected Vector2i cellSize = new Vector2i();
-    protected Screen screen;
+    protected Scene scene;
 
-    public Grid(Screen renderer) {
+    public Grid(Scene renderer) {
         super(renderer.getUIBatchRenderer());
-        screen = renderer;
+        scene = renderer;
     }
 
     public int getColumns() {
@@ -102,7 +101,7 @@ public class Grid extends UI {
 
     public int put(UI ui, int row, int column) {
         ui.setParent(this);
-        screen.register(ui);
+        scene.register(ui);
 
         uis.put(ui, new Cell(column, row)); // column = x, row = y
         return uis.size() - 1;

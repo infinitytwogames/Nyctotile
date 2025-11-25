@@ -5,48 +5,41 @@ import org.infinitytwo.umbralore.core.event.SubscribeEvent;
 import org.infinitytwo.umbralore.core.event.bus.EventBus;
 import org.infinitytwo.umbralore.core.event.input.MouseButtonEvent;
 import org.infinitytwo.umbralore.core.event.input.MouseHoverEvent;
-import org.infinitytwo.umbralore.core.renderer.FontRenderer;
 import org.infinitytwo.umbralore.core.renderer.UIBatchRenderer;
 import org.infinitytwo.umbralore.core.Window;
 import org.infinitytwo.umbralore.core.ui.UI;
-import org.infinitytwo.umbralore.core.ui.UpdatableUI;
-import org.infinitytwo.umbralore.core.ui.builtin.Tooltip;
+import org.infinitytwo.umbralore.core.ui.animations.UpdatableUI;
 import org.joml.Vector2f;
 import org.joml.Vector2i;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.concurrent.ConcurrentLinkedQueue;
 
 import static org.infinitytwo.umbralore.core.VectorMath.isPointWithinRectangle;
 import static org.infinitytwo.umbralore.core.Display.transformWindowToVirtual;
 
-public class Screen {
-    private final UIBatchRenderer uiBatchRenderer;
+public class Scene {
+    protected final UIBatchRenderer renderer;
     protected final ArrayList<UI> uis;
-    private final Window window;
+    protected final Window window;
     private long lastFrameTime = System.nanoTime(); // nanoseconds
     protected float delta; // in seconds
     private final ConcurrentLinkedQueue<Runnable> runs = new ConcurrentLinkedQueue<>();
-    private final FontRenderer renderer;
-    private final Tooltip tooltip;
-    private boolean showTooltip = false;
-    private boolean handleInput = true;
-
-    public Screen(UIBatchRenderer uiBatchRenderer, Window window) {
-        this.uiBatchRenderer = uiBatchRenderer;
+    protected boolean handleInput = true;
+    
+    public Scene(UIBatchRenderer renderer, Window window) {
+        this.renderer = renderer;
         this.window = window;
         this.uis = new ArrayList<>();
-        tooltip = new Tooltip(this);
-
-        renderer = new FontRenderer("src/main/resources/font.ttf",32);
-
+        
         EventBus.connect(this);
     }
-
+    
     public UIBatchRenderer getUIBatchRenderer() {
-        return uiBatchRenderer;
+        return renderer;
     }
-
+    
     public int register(UI ui) {
         if (!uis.contains(ui)) {
             int l = uis.size();
@@ -55,47 +48,59 @@ public class Screen {
         }
         return 0;
     }
-
+    
     public void draw() {
         long now = System.nanoTime();
         delta = (now - lastFrameTime) / 1_000_000_000.0f; // Convert to seconds
         lastFrameTime = now;
-
+        
+        Collections.sort(uis);
+        
         calculateHover();
-        uiBatchRenderer.begin();
+        renderer.begin();
         drawUIs();
         Mouse.draw();
-        uiBatchRenderer.flush();
-
+        renderer.flush();
+        
         Runnable r;
         while ((r = runs.poll()) != null) {
             r.run();
         }
     }
-
+    
     protected void calculateHover() {
         Vector2f m = window.getMousePosition();
         Vector2i mousePosition = transformWindowToVirtual(window, new Vector2i((int) m.x, (int) m.y));
-
+        
         boolean hoverHandled = false;
         for (int i = uis.size() - 1; i >= 0; i--) {
             UI ui = uis.get(i);
-            boolean hoveringNow = isPointWithinRectangle(ui.getPosition(), mousePosition, ui.getEnd());
-
+            
+            if (ui.isHidden()) {
+                if (ui.isHovering()) {
+                    ui.setHovering(false);
+                    ui.onMouseHoverEnded();
+                }
+                continue;
+            }
+            
+            boolean hoveringNow = isPointWithinRectangle(ui.getPosition(), mousePosition, ui.getEndPoint());
+            
             if (hoveringNow && !hoverHandled) {
-                if (!ui.isHovering()) {ui.setHovering(true);
+                if (!ui.isHovering()) {
+                    ui.setHovering(true);
                     ui.onMouseHover(new MouseHoverEvent(mousePosition));
                 }
                 hoverHandled = true;
             } else {
-                if (ui.isHovering()) {ui.setHovering(false);
+                if (ui.isHovering()) {
+                    ui.setHovering(false);
                     ui.onMouseHoverEnded();
-
                 }
             }
         }
     }
-
+    
     protected void drawUIs() {
         for (UI ui : uis) {
             if (ui instanceof UpdatableUI updatable) {
@@ -104,56 +109,53 @@ public class Screen {
             ui.draw();
         }
     }
-
+    
     @SubscribeEvent
     public void onMouseClicked(MouseButtonEvent e) {
         if (!handleInput) return;
         Vector2i mousePosition = transformWindowToVirtual(window, e.x, e.y);
+        
+        // Iterate backward (front-most to back-most)
         for (int i = uis.size() - 1; i >= 0; i--) {
-            if (isPointWithinRectangle(uis.get(i).getPosition(), mousePosition, uis.get(i).getEnd())) {
-                uis.get(i).onMouseClicked(e);
-                break;
+            UI ui = uis.get(i);
+            
+            // If hidden, skip this element for interaction.
+            if (ui.isHidden()) {
+                continue;
+            }
+            
+            // Check for intersection
+            if (isPointWithinRectangle(ui.getPosition(), mousePosition, ui.getEndPoint())) {
+                ui.onMouseClicked(e);
+                break; // Stop after clicking the front-most, non-hidden element.
             }
         }
     }
-
+    
     public Window getWindow() {
         return window;
     }
-
+    
     public void run(Runnable runnable) {
         runs.add(runnable);
     }
-
-    public FontRenderer getFontRenderer() {
-        return renderer;
-    }
-
-    public void showTooltip(String text) {
-        showTooltip = true;
-        tooltip.setText(text);
-    }
-
-    public void hideTooltip() {
-        showTooltip = false;
-    }
-
+    
     public void close() {
         for (UI ui : uis) {
             ui.cleanup();
         }
         setHandleInput(false);
     }
-
+    
     public void open() {
         setHandleInput(true);
     }
     
-    public boolean isHandleInput() {
-        return handleInput;
-    }
-    
     public void setHandleInput(boolean handleInput) {
         this.handleInput = handleInput;
+    }
+    
+    public void stop() {
+        setHandleInput(false);
     }
 }

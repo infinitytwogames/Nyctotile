@@ -6,7 +6,7 @@ import org.infinitytwo.umbralore.core.event.input.MouseHoverEvent;
 import org.infinitytwo.umbralore.core.renderer.FontRenderer;
 import org.infinitytwo.umbralore.core.renderer.UIBatchRenderer;
 import org.infinitytwo.umbralore.core.ui.component.Text;
-import org.infinitytwo.umbralore.core.ui.display.Screen;
+import org.infinitytwo.umbralore.core.ui.display.Scene;
 import org.infinitytwo.umbralore.core.ui.position.Anchor;
 import org.infinitytwo.umbralore.core.ui.position.Pivot;
 import org.infinitytwo.umbralore.core.ui.builder.UIBuilder;
@@ -22,7 +22,7 @@ public class Label extends UI {
     protected final Path path;
     private String str;
     
-    public Label(Screen renderer, Path path) {
+    public Label(Scene renderer, Path path) {
         super(renderer.getUIBatchRenderer());
         this.textRenderer = new FontRenderer(path.toString(),16);
         text = new Text(textRenderer, renderer);
@@ -37,6 +37,7 @@ public class Label extends UI {
     @Override
     public void draw() {
         super.draw();
+        text.setDrawOrder(drawOrder);
         text.setText(getVisibleText());
         text.draw();
     }

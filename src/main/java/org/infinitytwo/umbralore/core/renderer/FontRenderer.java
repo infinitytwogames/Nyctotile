@@ -154,9 +154,11 @@ public class FontRenderer {
             logger.error("FontRenderer is not initialized",new IllegalStateException("FontRenderer is not initialized"));
             return;
         }
+        float safeZOffset = (float)z * 0.001f; // e.g., 2 * 0.001 = 0.002
+        
         program.bind();
         Matrix4f model = new Matrix4f()
-                .translate(x, y, z) // 1. Move to the desired position
+                .translate(x, y, safeZOffset) // Use the scaled float offset
                 .rotateZ((float)Math.toRadians(angle));
         
         // Upload projection
@@ -178,7 +180,9 @@ public class FontRenderer {
         glActiveTexture(GL_TEXTURE0);
         glBindTexture(GL_TEXTURE_2D, texID);
         glEnable(GL_BLEND);
-        glDisable(GL_DEPTH_TEST);
+        glEnable(GL_DEPTH_TEST);
+        
+        glDepthFunc(GL_LEQUAL);
         glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
         // Build dynamic vertex buffer

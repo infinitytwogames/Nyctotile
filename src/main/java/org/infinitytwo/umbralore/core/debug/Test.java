@@ -27,7 +27,7 @@ import org.infinitytwo.umbralore.core.registry.*;
 import org.infinitytwo.umbralore.core.renderer.*;
 import org.infinitytwo.umbralore.core.ui.builtin.InventoryGridViewer;
 import org.infinitytwo.umbralore.core.ui.builtin.ItemSlot;
-import org.infinitytwo.umbralore.core.ui.display.Screen;
+import org.infinitytwo.umbralore.core.ui.display.Scene;
 import org.infinitytwo.umbralore.core.ui.builtin.Background;
 import org.infinitytwo.umbralore.core.ui.builtin.Hotbar;
 import org.infinitytwo.umbralore.core.ui.position.Anchor;
@@ -74,11 +74,11 @@ public class Test {
     private static EventBus eventBus = new EventBus("Network");
     private static boolean locked = false;
     private static UIBatchRenderer renderer;
-    private static Screen pauseScreen;
+    private static Scene pauseScene;
     private static Player player;
     private static TextureAtlas itemAtlas;
     private static ItemRegistry itemRegistry;
-    private static Screen mainScreen;
+    private static Scene mainScene;
     private static EntityRenderer entityRenderer;
     private static Entity entity;
     private static BlockDataReader reader;
@@ -231,7 +231,7 @@ public class Test {
         Display.onWindowResize(new WindowResizedEvent(1000, 512, window));
     }
     
-    private static Screen setPos;
+    private static Scene setPos;
     
     private static void construction() {
         atlas = new TextureAtlas(2, 4);
@@ -320,9 +320,9 @@ public class Test {
         player.getInventory().set(6, Item.of(i));
         
         // "PAUSE" SCREEN
-        pauseScreen = new Screen(renderer, window);
+        pauseScene = new Scene(renderer, window);
         
-        InventoryGridViewer viewer = new InventoryGridViewer(pauseScreen, new FontRenderer(Constants.fontFilePath, 16), window, (InventoryGridViewer.Factory) (slot, item, screen, fontRenderer, window) -> {
+        InventoryGridViewer viewer = new InventoryGridViewer(pauseScene, new FontRenderer(Constants.fontFilePath, 16), window, (InventoryGridViewer.Factory) (slot, item, screen, fontRenderer, window) -> {
             ItemSlot ie = new ItemSlot(screen, fontRenderer, window);
             ie.setAtlas(itemAtlas);
             ie.setBackgroundColor(0, 0, 0, 1);
@@ -335,20 +335,20 @@ public class Test {
         viewer.setPosition(new Anchor(0.5f, 0.5f), new Pivot(0.5f, 0.5f));
         viewer.updateSize();
         
-        pauseScreen.register(viewer);
-        pauseScreen.register(new Background.Builder(renderer).applyDefault().backgroundColor(0, 0, 0, 0.5f).build());
+        pauseScene.register(viewer);
+        pauseScene.register(new Background.Builder(renderer).applyDefault().backgroundColor(0, 0, 0, 0.5f).build());
         
-        mainScreen = new Screen(renderer, window);
-        Hotbar hotbar = new Hotbar(mainScreen, textRenderer, window, 9);
+        mainScene = new Scene(renderer, window);
+        Hotbar hotbar = new Hotbar(mainScene, textRenderer, window, 9);
         hotbar.setAtlas(itemAtlas);
         hotbar.setCellSize(128);
         hotbar.setBackgroundColor(0, 0, 0, 0.5f);
         hotbar.setPosition(new Anchor(0.5f, 1), new Pivot(0.5f, 1));
         hotbar.updateSize();
         hotbar.linkInventory(player.getInventory());
-        mainScreen.register(hotbar);
+        mainScene.register(hotbar);
         
-        Mouse.init(itemAtlas, mainScreen, -1, textRenderer, window);
+        Mouse.init(itemAtlas, mainScene, -1, textRenderer, window);
         
         // MODEL RENDERING TEST
         Model model = new Model("test");
@@ -456,8 +456,8 @@ public class Test {
         GL20.glUseProgram(0);
         Display.prepare2d();
         
-        mainScreen.draw();
-        if (locked) pauseScreen.draw();
+        mainScene.draw();
+        if (locked) pauseScene.draw();
         
         Display.prepare3d();
     }
@@ -546,7 +546,7 @@ public class Test {
         return registry;
     }
     
-    public static Screen getCurrentScreen() {
-        return pauseScreen;
+    public static Scene getCurrentScreen() {
+        return pauseScene;
     }
 }

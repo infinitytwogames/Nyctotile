@@ -12,7 +12,7 @@ import org.infinitytwo.umbralore.core.ui.position.Anchor;
 import org.infinitytwo.umbralore.core.ui.position.Pivot;
 import org.joml.Vector2i;
 
-public class GUI extends Screen {
+public class GUI extends Scene {
     protected int width, height;
     protected Rectangle gui; // GUI background
     protected Background background; // Darkens the background

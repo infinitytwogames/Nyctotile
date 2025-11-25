@@ -76,6 +76,9 @@ void main() {
             out vec4 FragColor;
             void main(){
                 float alpha = texture(uFontAtlas, vUV).r;
+                if (alpha < 0.1) {
+                        discard;
+                }
                 FragColor = vec4(uTextColor, alpha);
             }
             """;

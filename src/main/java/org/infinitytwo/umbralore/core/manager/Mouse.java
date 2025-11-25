@@ -6,10 +6,9 @@ import org.infinitytwo.umbralore.core.Window;
 import org.infinitytwo.umbralore.core.data.Item;
 import org.infinitytwo.umbralore.core.model.TextureAtlas;
 import org.infinitytwo.umbralore.core.renderer.FontRenderer;
-import org.infinitytwo.umbralore.core.ui.display.Screen;
+import org.infinitytwo.umbralore.core.ui.display.Scene;
 import org.infinitytwo.umbralore.core.ui.component.ItemHolder;
 import org.joml.Vector2i;
-import org.lwjgl.glfw.GLFW;
 
 import static org.lwjgl.glfw.GLFW.*;
 
@@ -28,8 +27,8 @@ public class Mouse {
         return window;
     }
 
-    public static void init(TextureAtlas a, Screen screen, int index, FontRenderer renderer, Window window) {
-        itemHolder = new ItemHolder(a, screen, index, renderer);
+    public static void init(TextureAtlas a, Scene scene, int index, FontRenderer renderer, Window window) {
+        itemHolder = new ItemHolder(a, scene, index, renderer);
         Mouse.window = window;
 
         itemHolder.setSize(64,64);
@@ -147,7 +146,7 @@ public class Mouse {
         itemHolder.renderUsing(atlas, index);
     }
 
-    public static Screen getScreen() {
+    public static Scene getScreen() {
         return itemHolder.getScreen();
     }
 

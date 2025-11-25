@@ -9,7 +9,7 @@ import org.infinitytwo.umbralore.core.data.Item;
 import org.infinitytwo.umbralore.core.model.TextureAtlas;
 import org.infinitytwo.umbralore.core.registry.ItemRegistry;
 import org.infinitytwo.umbralore.core.renderer.FontRenderer;
-import org.infinitytwo.umbralore.core.ui.display.Screen;
+import org.infinitytwo.umbralore.core.ui.display.Scene;
 import org.infinitytwo.umbralore.core.ui.UI;
 import org.infinitytwo.umbralore.core.ui.component.ItemHolder;
 
@@ -18,10 +18,10 @@ import static org.lwjgl.glfw.GLFW.GLFW_PRESS;
 public class ItemSlot extends UI {
     protected final ItemHolder item;
 
-    public ItemSlot(Screen screen, FontRenderer fontRenderer, Window window) {
-        super(screen.getUIBatchRenderer());
-        item = new ItemHolder(ItemRegistry.getTextureAtlas(), screen, 0, fontRenderer);
-        screen.register(this);
+    public ItemSlot(Scene scene, FontRenderer fontRenderer, Window window) {
+        super(scene.getUIBatchRenderer());
+        item = new ItemHolder(ItemRegistry.getTextureAtlas(), scene, 0, fontRenderer);
+        scene.register(this);
         item.setParent(this);
     }
 
@@ -40,7 +40,7 @@ public class ItemSlot extends UI {
         }
     }
 
-    public Screen getScreen() {
+    public Scene getScreen() {
         return item.getScreen();
     }
 

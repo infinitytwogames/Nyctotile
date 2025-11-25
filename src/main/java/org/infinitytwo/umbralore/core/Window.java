@@ -1,10 +1,7 @@
 package org.infinitytwo.umbralore.core;
 
 import org.infinitytwo.umbralore.core.event.bus.EventBus;
-import org.infinitytwo.umbralore.core.event.input.CharacterInputEvent;
-import org.infinitytwo.umbralore.core.event.input.KeyPressEvent;
-import org.infinitytwo.umbralore.core.event.input.MouseButtonEvent;
-import org.infinitytwo.umbralore.core.event.input.MouseScrollEvent;
+import org.infinitytwo.umbralore.core.event.input.*;
 import org.infinitytwo.umbralore.core.event.state.WindowResizedEvent;
 import org.infinitytwo.umbralore.core.data.io.ResourceLoader;
 import org.joml.Vector2f;
@@ -37,6 +34,7 @@ public class Window {
     private GLFWMouseButtonCallback glfwMouseButtonCallback;
     private GLFWCharCallback glfwCharCallback;
     private GLFWScrollCallback scrollCallback;
+    private GLFWCursorPosCallback cursorPosCallback;
     
     public int getHeight() {
         return height;
@@ -97,7 +95,7 @@ public class Window {
         
         EventBus.connect(new WindowResizedEvent(width, height, this));
         
-        GLFW.glfwSetFramebufferSizeCallback(window, framebufferSizeCallback = new GLFWFramebufferSizeCallback() {
+        glfwSetFramebufferSizeCallback(window, framebufferSizeCallback = new GLFWFramebufferSizeCallback() {
             @Override
             public void invoke(long window, int newWidth, int newHeight) {
                 width = newWidth;
@@ -107,21 +105,21 @@ public class Window {
             }
         });
         
-        GLFW.glfwSetScrollCallback(window, scrollCallback = new GLFWScrollCallback() {
+        glfwSetScrollCallback(window, scrollCallback = new GLFWScrollCallback() {
             @Override
             public void invoke(long handle, double x, double y) {
                 EventBus.dispatch(new MouseScrollEvent(instance, (int) x, (int) y));
             }
         });
         
-        GLFW.glfwSetKeyCallback(window, glfwKeyCallback = new GLFWKeyCallback() {
+        glfwSetKeyCallback(window, glfwKeyCallback = new GLFWKeyCallback() {
             @Override
             public void invoke(long window, int key, int scancode, int action, int mods) {
                 if (isFocused()) EventBus.dispatch(new KeyPressEvent(key, action, mods));
             }
         });
         
-        GLFW.glfwSetMouseButtonCallback(window, glfwMouseButtonCallback = new GLFWMouseButtonCallback() {
+        glfwSetMouseButtonCallback(window, glfwMouseButtonCallback = new GLFWMouseButtonCallback() {
             @Override
             public void invoke(long window, int button, int action, int mods) {
                 if (isFocused()) {
@@ -131,12 +129,19 @@ public class Window {
             }
         });
         
-         GLFW.glfwSetCharCallback(window, glfwCharCallback = new GLFWCharCallback() {
+         glfwSetCharCallback(window, glfwCharCallback = new GLFWCharCallback() {
              @Override
              public void invoke(long handle, int codepoint) {
                  if (isFocused()) EventBus.dispatch(new CharacterInputEvent(codepoint, Character.toChars(codepoint)));
              }
         });
+         
+         glfwSetCursorPosCallback(window,cursorPosCallback = new GLFWCursorPosCallback() {
+             @Override
+             public void invoke(long window, double x, double y) {
+                 EventBus.dispatch(new MouseCoordinatesEvent((float) x, (float) y));
+             }
+         });
     }
     
     public void initOpenGL() {
@@ -159,6 +164,7 @@ public class Window {
         if (glfwCharCallback != null) glfwCharCallback.free();
         if (framebufferSizeCallback != null) framebufferSizeCallback.free();
         if (scrollCallback != null) scrollCallback.free();
+        if (cursorPosCallback != null) cursorPosCallback.free();
         
         GLFW.glfwDestroyWindow(window);
     }

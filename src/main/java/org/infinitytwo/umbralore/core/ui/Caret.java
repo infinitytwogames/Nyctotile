@@ -4,6 +4,7 @@ import org.infinitytwo.umbralore.core.RGBA;
 import org.infinitytwo.umbralore.core.event.input.MouseButtonEvent;
 import org.infinitytwo.umbralore.core.event.input.MouseHoverEvent;
 import org.infinitytwo.umbralore.core.renderer.UIBatchRenderer;
+import org.infinitytwo.umbralore.core.ui.animations.UpdatableUI;
 import org.infinitytwo.umbralore.core.ui.builder.UIBuilder;
 
 public class Caret extends UpdatableUI {

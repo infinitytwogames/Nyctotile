@@ -4,4 +4,7 @@ public interface Component {
     void draw();
     
     void setAngle(float angle);
+    
+    void setDrawOrder(int z);
+    int getDrawOrder();
 }

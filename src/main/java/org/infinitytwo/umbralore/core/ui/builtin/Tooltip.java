@@ -5,7 +5,7 @@ import org.infinitytwo.umbralore.core.event.input.MouseButtonEvent;
 import org.infinitytwo.umbralore.core.event.input.MouseHoverEvent;
 import org.infinitytwo.umbralore.core.event.state.WindowResizedEvent;
 import org.infinitytwo.umbralore.core.renderer.FontRenderer;
-import org.infinitytwo.umbralore.core.ui.display.Screen;
+import org.infinitytwo.umbralore.core.ui.display.Scene;
 import org.infinitytwo.umbralore.core.ui.UI;
 import org.infinitytwo.umbralore.core.ui.component.Scale;
 import org.infinitytwo.umbralore.core.ui.component.Text;
@@ -17,19 +17,19 @@ public class Tooltip extends UI {
     protected Scale scale = new Scale(0.75f,0.15f);
     protected FontRenderer fontRenderer;
 
-    public Tooltip(Screen screen) {
-        super(screen.getUIBatchRenderer());
+    public Tooltip(Scene scene) {
+        super(scene.getUIBatchRenderer());
 
         fontRenderer = new FontRenderer(Constants.fontFilePath,64);
 
         setBackgroundColor(0,0,0,0.5f);
 
         setPosition(new Anchor(0.5f,1), new Pivot(0.5f,1));
-        text = new Text(fontRenderer,screen);
+        text = new Text(fontRenderer, scene);
         text.setPosition(new Anchor(0.5f,0.5f), new Pivot(0.5f,0.5f));
         text.setParent(this);
 
-        scale.windowResize(new WindowResizedEvent(screen.getWindow()));
+        scale.windowResize(new WindowResizedEvent(scene.getWindow()));
 
     }
 

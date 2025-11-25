@@ -3,7 +3,7 @@ package org.infinitytwo.umbralore.core.ui.component;
 import org.infinitytwo.umbralore.core.Display;
 import org.infinitytwo.umbralore.core.RGB;
 import org.infinitytwo.umbralore.core.renderer.FontRenderer;
-import org.infinitytwo.umbralore.core.ui.display.Screen;
+import org.infinitytwo.umbralore.core.ui.display.Scene;
 import org.infinitytwo.umbralore.core.ui.UI;
 import org.infinitytwo.umbralore.core.ui.position.Anchor;
 import org.infinitytwo.umbralore.core.ui.position.Pivot;
@@ -19,13 +19,13 @@ public class Text implements Component {
     protected String text = "";
     protected RGB color = new RGB(1, 1, 1);
     protected boolean centerY = true;
-    protected Screen screen;
+    protected Scene scene;
     protected float angle;
     private int drawOrder;
     
-    public Text(FontRenderer renderer, Screen screen) {
+    public Text(FontRenderer renderer, Scene scene) {
         this.renderer = renderer;
-        this.screen = screen;
+        this.scene = scene;
     }
 
     public boolean isCenterY() {
@@ -73,7 +73,7 @@ public class Text implements Component {
         setPivot(pivot);
         setOffset(offset);
     }
-
+    
     public Vector2i getPosition() {
         if (renderer == null) return new Vector2i();
         int xa, ya;
@@ -114,7 +114,7 @@ public class Text implements Component {
     }
 
     public void draw() {
-        screen.run(() -> renderer.renderText(text, getPosition(),drawOrder, color, angle));
+        renderer.renderText(text, getPosition(),drawOrder+1, color, angle);
     }
 
     public void setPosition(Anchor anchor, Pivot pivot) {
@@ -145,5 +145,15 @@ public class Text implements Component {
     @Override
     public void setAngle(float angle) {
         this.angle = angle;
+    }
+    
+    @Override
+    public void setDrawOrder(int z) {
+        drawOrder = z;
+    }
+    
+    @Override
+    public int getDrawOrder() {
+        return drawOrder;
     }
 }

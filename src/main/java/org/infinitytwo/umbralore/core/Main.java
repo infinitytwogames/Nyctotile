@@ -19,8 +19,10 @@ import org.infinitytwo.umbralore.core.network.ServerNetwork;
 import org.infinitytwo.umbralore.core.registry.BlockRegistry;
 import org.infinitytwo.umbralore.core.registry.DimensionRegistry;
 import org.infinitytwo.umbralore.core.renderer.*;
+import org.infinitytwo.umbralore.core.ui.Label;
 import org.infinitytwo.umbralore.core.ui.component.Scale;
-import org.infinitytwo.umbralore.core.ui.display.Screen;
+import org.infinitytwo.umbralore.core.ui.display.Scene;
+import org.infinitytwo.umbralore.core.ui.display.scroll.ScrollableMenu;
 import org.infinitytwo.umbralore.core.ui.input.Button;
 import org.infinitytwo.umbralore.core.ui.input.TextInput;
 import org.infinitytwo.umbralore.core.ui.position.Anchor;
@@ -28,6 +30,7 @@ import org.infinitytwo.umbralore.core.ui.position.Pivot;
 import org.infinitytwo.umbralore.core.world.GMap;
 import org.infinitytwo.umbralore.core.world.GridMap;
 import org.infinitytwo.umbralore.core.world.dimension.Overworld;
+import org.joml.Vector2i;
 import org.joml.Vector3f;
 import org.lwjgl.glfw.GLFWErrorCallback;
 import org.slf4j.Logger;
@@ -35,8 +38,10 @@ import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.UUID;
 
+import static org.infinitytwo.umbralore.core.Game.sensitivity;
 import static org.lwjgl.glfw.GLFW.*;
 import static org.lwjgl.opengl.GL11.*;
 import static org.infinitytwo.umbralore.core.Game.delta;
@@ -46,7 +51,7 @@ public class Main {
     private static FontRenderer fontRenderer;
     private static Window window;
     private static UIBatchRenderer renderer;
-    private static Screen screen;
+    private static Scene scene;
     
     private static ServerThread server;
     private static TextureAtlas atlas;
@@ -55,7 +60,7 @@ public class Main {
     private static GridMap map;
     private static Outline outliner;
     private static InputManager input;
-    private static Screen mainScreen;
+    private static Scene mainScene;
     private static World world;
     private static EventBus clientEventBus;
     private static boolean started;
@@ -65,7 +70,6 @@ public class Main {
     private static final float fixedDelta = (float) 1 / 60;
     private static double accumulator;
     private static boolean locked;
-    private static final float sensitivity = 0.5f;
     
     public static void main(String[] args) {
         // Early Setup
@@ -114,10 +118,11 @@ public class Main {
     
     private static void construction() {
         // IMPORTANT CONSTRUCTION
+        sensitivity = 0.5f;
         EventBus.connect(Main.class);
         fontRenderer = new FontRenderer(Constants.fontFilePath, 32);
         renderer = new UIBatchRenderer();
-        screen = new Screen(renderer, window);
+        scene = new Scene(renderer, window);
         logger.info("Constructing...");
         window.setWindowIcon("src/main/resources/assets/icon/icon.png");
         
@@ -212,7 +217,7 @@ public class Main {
         },"Dev","");
         
         // SCREENS
-        mainScreen = new Screen(renderer, window);
+        mainScene = new Scene(renderer, window);
         world = World.getInstance();
         overworld = new Overworld(1, BlockRegistry.getMainBlockRegistry());
         world.setCurrent(overworld);
@@ -270,7 +275,7 @@ public class Main {
         });
         
         Path fontPath = Path.of(Constants.fontFilePath);
-        Button play = new Button(mainScreen, fontPath, "Start the Test") {
+        Button play = new Button(mainScene, fontPath, "Start the Test") {
             
             @Override
             public void onMouseClicked(MouseButtonEvent e) {
@@ -281,14 +286,14 @@ public class Main {
                 glfwSetInputMode(window.getWindow(),GLFW_CURSOR,GLFW_CURSOR_DISABLED);
                 world.connectToServer();
                 started = true;
-                ScreenManager.popScreen();
+                SceneManager.popScreen();
             }
         };
         play.setSize(512, 128);
         play.setPosition(new Anchor(0.5f, 0.5f), new Pivot(0.5f, 0.5f));
         play.setBackgroundColor(new RGBA(0, 0, 0, 1));
         
-        TextInput i = new TextInput(screen, fontPath) {
+        TextInput i = new TextInput(scene, fontPath) {
             @Override
             public void submit(String data) {
                 clientNetwork.send(new Packets.PCommand(data), true);
@@ -301,10 +306,36 @@ public class Main {
         i.setText("HELLO");
         i.setTextPosition(new Anchor(), new Pivot());
         
-        mainScreen.register(play);
+        ScrollableMenu menu = new ScrollableMenu(
+                mainScene, // Title/Header height in pixels
+                window
+        );
         
-        ScreenManager.register("main", mainScreen);
-        ScreenManager.setScreen("main");
+        // Set position and size of the ScrollableMenu UI
+        menu.setPosition(new Anchor(0.5f,0.5f),new Pivot(0.5f,0.5f));
+        menu.setSize(1024, 512);
+        menu.setBackgroundColor(0,0,0,0.5f);
+        
+        menu.getScrollButton().setBackgroundColor(1,1,1,1);
+        menu.getScrollButton().setWidth(50);
+        
+        // Add some UI elements to the scrollable content area
+        for (int j = 0; j < 20; j++) {
+            Label label = new Label(mainScene,fontPath);
+            label.setSize(250,64);
+            label.setBackgroundColor(0.25f,0.25f,0.25f,1);
+            label.setText("Text: "+j);
+            label.setOffset(0,64 * j);
+            
+            menu.addUI(label);
+        }
+        
+        // Register menu itself to the scene
+        mainScene.register(menu);
+//        mainScene.register(play);
+        
+        SceneManager.register("main", mainScene);
+        SceneManager.setScreen("main");
     }
     
     private static void handleInput() {
@@ -327,7 +358,7 @@ public class Main {
     private static void render() {
         if (!started) {
             Display.prepare2d();
-            ScreenManager.draw();
+            SceneManager.draw();
         } else
             fontRenderer.renderText(Display.get3DProjectionMatrix(camera,window),"Velocity: "+VectorMath.toString(VectorMath.toInt(world.getLocalPlayer().getVelocity())),0,32,0,0,0);
         input.update();

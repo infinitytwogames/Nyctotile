@@ -7,19 +7,19 @@ import org.infinitytwo.umbralore.core.event.bus.EventBus;
 import org.infinitytwo.umbralore.core.event.input.MouseButtonEvent;
 import org.infinitytwo.umbralore.core.event.input.MouseHoverEvent;
 import org.infinitytwo.umbralore.core.ui.UI;
-import org.infinitytwo.umbralore.core.ui.display.Screen;
+import org.infinitytwo.umbralore.core.ui.display.Scene;
 
 import java.util.Collection;
 
 public class InventoryViewer extends UI {
-    private final Screen screen;
+    private final Scene scene;
 
     protected ItemSlot[] slots;
     protected Inventory inventory;
 
-    public InventoryViewer(Screen renderer) {
+    public InventoryViewer(Scene renderer) {
         super(renderer.getUIBatchRenderer());
-        this.screen = renderer;
+        this.scene = renderer;
     }
 
     public void linkInventory(Inventory inventory) {
@@ -32,7 +32,7 @@ public class InventoryViewer extends UI {
     public void put(ItemSlot slot, int id) {
         if (id > slots.length) throw new IndexOutOfBoundsException("The slot id is out of bounds.");
         slots[id] = slot;
-        screen.register(slot);
+        scene.register(slot);
     }
 
     @SubscribeEvent

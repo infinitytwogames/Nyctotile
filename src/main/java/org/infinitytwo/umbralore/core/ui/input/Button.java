@@ -4,9 +4,10 @@ import org.infinitytwo.umbralore.core.RGBA;
 import org.infinitytwo.umbralore.core.event.input.MouseButtonEvent;
 import org.infinitytwo.umbralore.core.event.input.MouseHoverEvent;
 import org.infinitytwo.umbralore.core.ui.Label;
-import org.infinitytwo.umbralore.core.ui.display.Screen;
+import org.infinitytwo.umbralore.core.ui.display.Scene;
 import org.infinitytwo.umbralore.core.ui.position.Anchor;
 import org.infinitytwo.umbralore.core.ui.position.Pivot;
+import org.jetbrains.annotations.NotNull;
 import org.joml.Vector2i;
 
 import java.nio.file.Path;
@@ -14,7 +15,7 @@ import java.nio.file.Path;
 public abstract class Button extends Label {
     protected RGBA original;
 
-    public Button(Screen renderer, Path path, String s) {
+    public Button(Scene renderer, Path path, String s) {
         super(renderer, path);
         original = getBackgroundColor();
 
@@ -23,7 +24,7 @@ public abstract class Button extends Label {
     }
 
     @Override
-    public void setBackgroundColor(RGBA backgroundColor) {
+    public void setBackgroundColor(@NotNull RGBA backgroundColor) {
         original = backgroundColor;
         super.setBackgroundColor(backgroundColor);
     }

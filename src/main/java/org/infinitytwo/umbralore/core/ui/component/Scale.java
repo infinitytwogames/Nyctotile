@@ -72,6 +72,16 @@ public class Scale implements Component {
     
     }
     
+    @Override
+    public void setDrawOrder(int z) {
+    
+    }
+    
+    @Override
+    public int getDrawOrder() {
+        return 0;
+    }
+    
     public int getWidth() {
         return width;
     }

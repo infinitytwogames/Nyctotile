@@ -1,11 +1,10 @@
 package org.infinitytwo.umbralore.core.ui;
 
-import org.infinitytwo.umbralore.core.RGB;
 import org.infinitytwo.umbralore.core.RGBA;
 import org.infinitytwo.umbralore.core.ui.builder.RectangleBuilder;
 import org.infinitytwo.umbralore.core.ui.builder.UIBuilder;
 import org.infinitytwo.umbralore.core.ui.builtin.Rectangle;
-import org.infinitytwo.umbralore.core.ui.display.Screen;
+import org.infinitytwo.umbralore.core.ui.display.Scene;
 import org.infinitytwo.umbralore.core.ui.position.Anchor;
 import org.infinitytwo.umbralore.core.ui.position.Pivot;
 import org.joml.Vector2i;
@@ -20,7 +19,7 @@ public class TextProgressBar extends Label {
 
     protected int percentage = 0;
 
-    public TextProgressBar(Screen renderer, Path font, int max) {
+    public TextProgressBar(Scene renderer, Path font, int max) {
         super(renderer,font);
         bar = new Rectangle(renderer.getUIBatchRenderer());
         total.set(max);
@@ -33,7 +32,7 @@ public class TextProgressBar extends Label {
         bar.setParent(this);
     }
 
-    public static ProgressBarBuilder builder(Screen renderer, Path font) {
+    public static ProgressBarBuilder builder(Scene renderer, Path font) {
         return new ProgressBarBuilder(renderer,font);
     }
 
@@ -84,7 +83,7 @@ public class TextProgressBar extends Label {
     }
 
     public static class ProgressBarBuilder extends UIBuilder<TextProgressBar> {
-        public ProgressBarBuilder(Screen renderer, Path font) {
+        public ProgressBarBuilder(Scene renderer, Path font) {
             super(new TextProgressBar(renderer, font, 10));
         }
 

@@ -9,7 +9,7 @@ import org.infinitytwo.umbralore.core.event.bus.EventBus;
 import org.infinitytwo.umbralore.core.event.input.MouseScrollEvent;
 import org.infinitytwo.umbralore.core.registry.ItemRegistry;
 import org.infinitytwo.umbralore.core.renderer.FontRenderer;
-import org.infinitytwo.umbralore.core.ui.display.Screen;
+import org.infinitytwo.umbralore.core.ui.display.Scene;
 import org.jetbrains.annotations.NotNull;
 
 public class Hotbar extends InventoryGridViewer {
@@ -19,7 +19,7 @@ public class Hotbar extends InventoryGridViewer {
     ;
     private RGBA original;
 
-    public Hotbar(Screen renderer, FontRenderer fontRenderer, Window window, int slots) {
+    public Hotbar(Scene renderer, FontRenderer fontRenderer, Window window, int slots) {
         super(renderer, fontRenderer, window, new ItemFactory(), slots);
 
         EventBus.connect(this);
@@ -89,8 +89,8 @@ public class Hotbar extends InventoryGridViewer {
     private static class ItemFactory implements Factory {
 
         @Override
-        public ItemSlot create(int slot, Item item, Screen screen, FontRenderer fontRenderer, Window window) {
-            ItemSlot i = new ItemSlot(screen,fontRenderer,window);
+        public ItemSlot create(int slot, Item item, Scene scene, FontRenderer fontRenderer, Window window) {
+            ItemSlot i = new ItemSlot(scene,fontRenderer,window);
 
             i.setAtlas(ItemRegistry.getTextureAtlas());
             i.setBackgroundColor(0,0,0.25f,0.5f);
