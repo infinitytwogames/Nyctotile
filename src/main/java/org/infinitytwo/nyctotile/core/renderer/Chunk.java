@@ -105,7 +105,7 @@ public class Chunk extends ChunkData {
                         
                             // Step 3: Apply the Light Level Intensity (Light.a)
                             // This scales the entire color from 0.0 (pitch black) to 1.0 (full brightness).
-                            vec3 finalColor = tintedColor * 1.0;
+                            vec3 finalColor = tintedColor * Light.a;
                         
                             // Final Output
                             FragColor = vec4(finalColor, texColor.a);
@@ -281,10 +281,6 @@ public class Chunk extends ChunkData {
         buildMeshData();
     }
     
-    // Chunk.java
-
-// ... (other methods)
-    
     /**
      * Triggers a synchronous rebuild and mesh upload.
      * Use with caution as this runs on the main (render) thread.
@@ -322,14 +318,9 @@ public class Chunk extends ChunkData {
         buffer.close();
     }
     
-    // ... (In your main `setLight` method overrides)
     @Override
     public void setLight(int x, int y, int z, int r, int g, int b, int level) {
         super.setLight(x, y, z, r, g, b, level);
-        
-        // 💡 CRITICAL: Force the synchronous rebuild immediately after changing the light data.
-        rebuildSynchronous();
-        // This bypasses the lag inherent in the asynchronous buildMeshData()
     }
     
     public void dirty() {
@@ -378,24 +369,24 @@ public class Chunk extends ChunkData {
     @Override
     public void setLightLevel(int x, int y, int z, int lightLevel) {
         super.setLightLevel(x, y, z, lightLevel);
-        rebuild();
+        dirty();
     }
     
     @Override
     public void setRed(int x, int y, int z, int red) {
         super.setRed(x, y, z, red);
-        rebuildSynchronous();
+        dirty();
     }
     
     @Override
     public void setGreen(int x, int y, int z, int green) {
         super.setGreen(x, y, z, green);
-        rebuild();
+        dirty();
     }
     
     @Override
     public void setBlue(int x, int y, int z, int blue) {
         super.setBlue(x, y, z, blue);
-        rebuild();
+        dirty();
     }
 }

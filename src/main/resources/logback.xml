@@ -8,7 +8,7 @@
             <onMismatch>DENY</onMismatch>
         </filter>
         <encoder class="ch.qos.logback.classic.encoder.PatternLayoutEncoder">
-            <pattern>[%d{yyyy-MM-dd HH:mm:ss.SSS}] [%logger{0} %thread/%level]: %msg%n</pattern>
+            <pattern>[%d{yyyy-MM-dd HH:mm:ss.SSS}] [%logger{0}.%thread/%level]: %msg%n</pattern>
         </encoder>
     </appender>
 
@@ -20,7 +20,7 @@
             <onMismatch>DENY</onMismatch>
         </filter>
         <encoder class="ch.qos.logback.classic.encoder.PatternLayoutEncoder">
-            <pattern>%yellow([%d{yyyy-MM-dd HH:mm:ss.SSS}] [%logger{0} %thread/%level]: %msg%n)</pattern>
+            <pattern>%yellow([%d{yyyy-MM-dd HH:mm:ss.SSS}] [%logger{0}.%thread/%level]: %msg%n)</pattern>
         </encoder>
     </appender>
 
@@ -43,7 +43,7 @@
         </filter>
         <encoder class="ch.qos.logback.classic.encoder.PatternLayoutEncoder">
             <pattern>
-                %highlight([%d{yyyy-MM-dd HH:mm:ss.SSS}] [%logger{0} %thread/%level]: %msg%n){
+                %highlight([%d{yyyy-MM-dd HH:mm:ss.SSS}] [%logger{0}.%thread/%level]: %msg%n){
                 ERROR=red, DEBUG=blue, TRACE=cyan
                 }
             </pattern>

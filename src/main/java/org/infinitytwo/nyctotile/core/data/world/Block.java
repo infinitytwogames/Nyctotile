@@ -17,7 +17,7 @@ public class Block {
     }
 
     public boolean isInvisible() {
-        return type.isInvisible();
+        return type.isTransparent();
     }
 
     public String getMaterial() {

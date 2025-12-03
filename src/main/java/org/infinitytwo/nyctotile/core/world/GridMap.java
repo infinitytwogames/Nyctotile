@@ -29,75 +29,80 @@ public class GridMap extends GMap {
     protected final ConcurrentHashMap<ChunkPos, Chunk> chunks = new ConcurrentHashMap<>();
     protected final BlockRegistry registry;
     private final FrustumCuller culler = new FrustumCuller();
-
+    
     public GridMap(BlockRegistry registry) {
         this.registry = registry;
     }
-
+    
     public static Vector2i convertToChunkPosition(Vector3i block) {
         return new Vector2i(
                 Math.floorDiv(block.x, SIZE_X),
                 Math.floorDiv(block.z, SIZE_Z)
         );
     }
-
+    
     public static Vector2i convertToChunkPosition(int x, int z) {
         return new Vector2i(
                 Math.floorDiv(x, SIZE_X),
                 Math.floorDiv(z, SIZE_Z)
         );
     }
-
+    
     public static Vector3i convertToLocalChunk(int worldX, int worldY, int worldZ) {
         int localX = Math.floorMod(worldX, SIZE_X);
         int localZ = Math.floorMod(worldZ, SIZE_Z);
         return new Vector3i(localX, worldY, localZ);
     }
-
+    
     public static Vector2i worldToChunk(int worldX, int worldZ) {
         int chunkX = Math.floorDiv(worldX, SIZE_X);
         int chunkZ = Math.floorDiv(worldZ, SIZE_Z);
         return new Vector2i(chunkX, chunkZ);
     }
-
-
+    
+    
     public static Vector3i convertToWorldPosition(Vector2i chunk, Vector3i localChunkPos) {
-        return localChunkPos.add((chunk.x * SIZE_X),0,(chunk.y * SIZE_Z));
+        return localChunkPos.add((chunk.x * SIZE_X), 0, (chunk.y * SIZE_Z));
     }
-
+    
     public static Vector3i convertToWorldPosition(Vector2i chunk, int x, int y, int z) {
-        return convertToWorldPosition(chunk,new Vector3i(x,y,z));
+        return convertToWorldPosition(chunk, new Vector3i(x, y, z));
     }
-
+    
     public static Vector2i worldToChunk(Vector3i pos) {
         return worldToChunk(pos.x, pos.z);
     }
-
+    
+    @Override
     public Block getBlock(int x, int y, int z) {
-        Vector2i p = convertToChunkPosition(x,z);
+        Vector2i p = convertToChunkPosition(x, z);
         ChunkPos pos = new ChunkPos(p.x, p.y);
-
+        
         if (chunks.containsKey(pos)) {
-            int id = chunks.get(pos).getBlockId(convertToLocalChunk(x,y,z));
-            if (id != 0) return new Block(registry.get(id)); else {
+            int id = chunks.get(pos).getBlockId(convertToLocalChunk(x, y, z));
+            if (id != 0) return new Block(registry.get(id));
+            else {
                 return null;
             }
         } else return null;
     }
-
+    
+    @Override
     public void removeBlock(int x, int y, int z) throws IllegalChunkAccessException {
-        Vector2i p = convertToChunkPosition(x,z);
+        Vector2i p = convertToChunkPosition(x, z);
         ChunkPos pos = new ChunkPos(p.x, p.y);
-
+        
         if (chunks.containsKey(pos)) {
-            chunks.get(pos).setBlock(convertToLocalChunk(x,y,z), 0);
-        } else throw new IllegalChunkAccessException("Cannot modify a non-existing chunk. "+p);
-    }
-
-    public void removeBlock(Vector3i pos) throws IllegalChunkAccessException {
-        removeBlock(pos.x,pos.y, pos.z);
+            chunks.get(pos).setBlock(convertToLocalChunk(x, y, z), 0);
+        } else throw new IllegalChunkAccessException("Cannot modify a non-existing chunk. " + p);
     }
     
+    @Override
+    public void removeBlock(Vector3i pos) throws IllegalChunkAccessException {
+        removeBlock(pos.x, pos.y, pos.z);
+    }
+    
+    @Override
     public List<ChunkPos> getSurroundingChunks(ChunkPos center, int radius) {
         List<ChunkPos> result = new ArrayList<>();
         for (int dx = -radius; dx <= radius; dx++) {
@@ -125,26 +130,98 @@ public class GridMap extends GMap {
     @Override
     public Object getData(Vector3i pos, BlockDataReader reader, String name) throws IllegalChunkAccessException, IllegalDataTypeException {
         Chunk chunk = chunks.get(worldToChunkPos(pos.x, pos.z));
-        return reader.getData(chunk.getBlockId(pos.x,pos.y,pos.z), chunk.getData(pos), name);
+        return reader.getData(chunk.getBlockId(pos.x, pos.y, pos.z), chunk.getData(pos), name);
+    }
+    
+    @Override
+    public void setLight(int x, int y, int z, int r, int g, int b, int level) {
+        Chunk chunk = chunks.get(worldToChunkPos(x, z));
+        
+        if (chunk == null) throw new IllegalChunkAccessException("Cannot access a non-existing chunk.");
+        chunk.setLight(x,y,z,r,g,b,level);
+    }
+    
+    @Override
+    public void setRed(int x, int y, int z, int red) {
+        Chunk chunk = chunks.get(worldToChunkPos(x, z));
+        
+        if (chunk == null) throw new IllegalChunkAccessException("Cannot access a non-existing chunk.");
+        chunk.setRed(x,y,z,red);
+    }
+    
+    @Override
+    public void setGreen(int x, int y, int z, int green) {
+        Chunk chunk = chunks.get(worldToChunkPos(x, z));
+        
+        if (chunk == null) throw new IllegalChunkAccessException("Cannot access a non-existing chunk.");
+        chunk.setGreen(x,y,z,green);
+    }
+    
+    @Override
+    public void setBlue(int x, int y, int z, int blue) {
+        Chunk chunk = chunks.get(worldToChunkPos(x, z));
+        
+        if (chunk == null) throw new IllegalChunkAccessException("Cannot access a non-existing chunk.");
+        chunk.setBlue(x,y,z,blue);
+    }
+    
+    @Override
+    public void setLightLevel(int x, int y, int z, int level) {
+        Chunk chunk = chunks.get(worldToChunkPos(x, z));
+        
+        if (chunk == null) throw new IllegalChunkAccessException("Cannot access a non-existing chunk.");
+        chunk.setLightLevel(x,y,z,level);
+    }
+    
+    @Override
+    public int getRed(int x, int y, int z) {
+        Chunk chunk = chunks.get(worldToChunkPos(x, z));
+        
+        if (chunk == null) throw new IllegalChunkAccessException("Cannot access a non-existing chunk.");
+        return chunk.getRed(x,y,z);
+    }
+    
+    @Override
+    public int getGreen(int x, int y, int z) {
+        Chunk chunk = chunks.get(worldToChunkPos(x, z));
+        
+        if (chunk == null) throw new IllegalChunkAccessException("Cannot access a non-existing chunk.");
+        return chunk.getGreen(x,y,z);
+    }
+    
+    @Override
+    public int getBlue(int x, int y, int z) {
+        Chunk chunk = chunks.get(worldToChunkPos(x, z));
+        
+        if (chunk == null) throw new IllegalChunkAccessException("Cannot access a non-existing chunk.");
+        return chunk.getBlue(x,y,z);
+    }
+    
+    @Override
+    public int getLightLevel(int x, int y, int z) {
+        Chunk chunk = chunks.get(worldToChunkPos(x, z));
+        
+        if (chunk == null) throw new IllegalChunkAccessException("Cannot access a non-existing chunk.");
+        return chunk.getLightLevel(x,y,z);
     }
     
     public void addChunk(Chunk chunk) {
-        ChunkPos pos = new ChunkPos(chunk.getPosition().x,chunk.getPosition().y);
-        chunks.put(pos,chunk);
+        ChunkPos pos = new ChunkPos(chunk.getPosition().x, chunk.getPosition().y);
+        chunks.put(pos, chunk);
         
-        for (ChunkPos neighbour : getSurroundingChunks(pos,1)) {
+        for (ChunkPos neighbour : getSurroundingChunks(pos, 1)) {
             if (chunks.containsKey(neighbour)) chunks.get(neighbour).rebuild();
         }
     }
-
-    public void rebuildChunk(int x, int y) {
-        ChunkPos pos = new ChunkPos(x,y);
-
+    
+    public void rebuildChunk(int x, int z) {
+        ChunkPos pos = new ChunkPos(x, z);
+        
         if (chunks.containsKey(pos)) {
             chunks.get(pos).dirty();
         }
     }
-
+    
     public void draw(Camera camera, Window window, int view) {
         Vector2i chunkP = convertToChunkPosition((int) camera.getPosition().x, (int) camera.getPosition().z);
         ChunkPos pos = new ChunkPos(chunkP.x, chunkP.y);
@@ -153,41 +230,41 @@ public class GridMap extends GMap {
         for (ChunkPos search : r) {
             if (chunks.containsKey(search)) {
                 Chunk chunk = chunks.get(search);
-                chunk.draw(camera,window);
+                chunk.draw(camera, window);
             }
         }
     }
-
+    
     public RaycastResult raycast(Vector3f origin, Vector3f direction, float maxDistance) {
         Vector3f dir = new Vector3f(direction).normalize(); // Normalized direction
         final float EPSILON = 1e-6f;
-
+        
         Vector3f pos = new Vector3f(origin);
         Vector3i blockPos = new Vector3i((int) Math.floor(pos.x), (int) Math.floor(pos.y), (int) Math.floor(pos.z));
         Vector3f step = new Vector3f(Math.signum(dir.x), Math.signum(dir.y), Math.signum(dir.z));
-
+        
         Vector3f tDelta = new Vector3f(
-                Math.abs(dir.x) > EPSILON ? Math.abs(1.0f / dir.x) : Float.POSITIVE_INFINITY,
-                Math.abs(dir.y) > EPSILON ? Math.abs(1.0f / dir.y) : Float.POSITIVE_INFINITY,
-                Math.abs(dir.z) > EPSILON ? Math.abs(1.0f / dir.z) : Float.POSITIVE_INFINITY
+                Math.abs(dir.x) > EPSILON? Math.abs(1.0f / dir.x) : Float.POSITIVE_INFINITY,
+                Math.abs(dir.y) > EPSILON? Math.abs(1.0f / dir.y) : Float.POSITIVE_INFINITY,
+                Math.abs(dir.z) > EPSILON? Math.abs(1.0f / dir.z) : Float.POSITIVE_INFINITY
         );
-
+        
         Vector3f tMax = new Vector3f(
-                dir.x > 0 ? ((blockPos.x + 1) - pos.x) * tDelta.x : (pos.x - blockPos.x) * tDelta.x,
-                dir.y > 0 ? ((blockPos.y + 1) - pos.y) * tDelta.y : (pos.y - blockPos.y) * tDelta.y,
-                dir.z > 0 ? ((blockPos.z + 1) - pos.z) * tDelta.z : (pos.z - blockPos.z) * tDelta.z
+                dir.x > 0? ((blockPos.x + 1) - pos.x) * tDelta.x : (pos.x - blockPos.x) * tDelta.x,
+                dir.y > 0? ((blockPos.y + 1) - pos.y) * tDelta.y : (pos.y - blockPos.y) * tDelta.y,
+                dir.z > 0? ((blockPos.z + 1) - pos.z) * tDelta.z : (pos.z - blockPos.z) * tDelta.z
         );
-
+        
         float distance = 0.0f;
         Vector3i normal = new Vector3i();
-
+        
         while (distance <= maxDistance) {
             Block block = getBlock(blockPos.x, blockPos.y, blockPos.z);
-
+            
             if (block != null) {
                 return new RaycastResult(new Vector3i(blockPos), new Vector3i(normal));
             }
-
+            
             if (tMax.x < tMax.y && tMax.x < tMax.z) {
                 blockPos.x += (int) step.x;
                 distance = tMax.x;
@@ -205,7 +282,7 @@ public class GridMap extends GMap {
                 normal.set(0, 0, (int) -step.z);
             }
         }
-
+        
         return null;
     }
     
@@ -218,30 +295,30 @@ public class GridMap extends GMap {
         Vector3i blockPos = block.getPosition();
         Vector2i p = convertToChunkPosition(blockPos);
         ChunkPos pos = new ChunkPos(p.x, p.y);
-
+        
         if (chunks.containsKey(pos)) {
             chunks.get(pos).setBlock(convertToLocalChunk(blockPos), registry.getId(block.getType().getId()));
-        } else throw new IllegalChunkAccessException("Cannot modify a non-existing chunk. "+p);
+        } else throw new IllegalChunkAccessException("Cannot modify a non-existing chunk. " + p);
     }
-
+    
     public static Vector3i convertToLocalChunk(Vector3i blockPos) {
         return convertToLocalChunk(blockPos.x, blockPos.y, blockPos.z);
     }
-
+    
     public Map<ChunkPos, Chunk> getChunks() {
         return Map.copyOf(chunks);
     }
-
+    
     public Chunk getChunk(Vector2i pos) {
         return chunks.get(new ChunkPos(pos.x, pos.y));
     }
-
+    
     public List<ChunkPos> getMissingSurroundingChunks(ChunkPos center, int radius) {
-        return getMissingSurroundingChunks(center.x(),center.z(),radius);
+        return getMissingSurroundingChunks(center.x(), center.z(), radius);
     }
-
+    
     public void addChunk(ChunkData data, ShaderProgram program, TextureAtlas atlas) {
-        chunks.put(new ChunkPos(data.getPosition().x, data.getPosition().y),data.createChunk(atlas,registry));
+        chunks.put(new ChunkPos(data.getPosition().x, data.getPosition().y), data.createChunk(atlas, registry));
     }
     
     @Override
@@ -261,12 +338,12 @@ public class GridMap extends GMap {
     
     @Override
     public Block getTopBlock(int x, int z) {
-        Chunk chunk = chunks.get(worldToChunkPos(x,z));
+        Chunk chunk = chunks.get(worldToChunkPos(x, z));
         
         if (chunk != null) {
             for (int y = 0; y < ChunkData.SIZE_Y; y++) {
                 if (chunk.getBlockId(x, y, z) > 0) {
-                    return getBlock(x,y,z);
+                    return getBlock(x, y, z);
                 }
             }
         }
@@ -276,12 +353,12 @@ public class GridMap extends GMap {
     public List<Chunk> getAllChunks() {
         return new ArrayList<>(chunks.values());
     }
-
+    
     public boolean isTransparent(int x, int y, int z) {
-        Block block = getBlock(x,y,z);
+        Block block = getBlock(x, y, z);
         return block == null;
     }
-
+    
     public BlockRegistry getRegistry() {
         return registry;
     }
@@ -295,5 +372,9 @@ public class GridMap extends GMap {
             }
         }
         return result;
+    }
+    
+    public void rebuildChunk(Vector2i pos) {
+        rebuildChunk(pos.x, pos.y);
     }
 }

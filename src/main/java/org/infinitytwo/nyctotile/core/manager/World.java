@@ -19,24 +19,29 @@ import org.infinitytwo.nyctotile.core.world.dimension.Dimension;
 import java.util.*;
 
 public class World {
+    private boolean connectionReq;
+    private boolean dimensionRequest;
     private Dimension current;
     private GridMap map;
     private ClientNetwork thread;
-    private boolean connectionReq;
     private ServerThread serverThread;
-    
-    private final Set<ChunkPos> requested = Collections.synchronizedSet(new HashSet<>());
-    private boolean dimensionRequest;
-    private static final Map<String, Dimension> loadedDimension = new HashMap<>();
-    private static long seed;
-    private static SpawnLocation location;
-    private final Interval clear = new Interval(5000, requested::clear);
-    
-    private static final World world = new World();
     private TextureAtlas atlas;
     private Camera camera;
     private Window window;
     private Player player;
+    
+    private final Set<ChunkPos> requested = Collections.synchronizedSet(new HashSet<>());
+    private final Interval clear = new Interval(5000, requested::clear);
+    
+    private static final Map<String, Dimension> loadedDimension = new HashMap<>();
+    private static final World world = new World();
+    
+    private static long seed;
+    private static SpawnLocation location;
+    private static float time;
+    
+    private World() {
+    }
     
     public static Dimension getLoadedDimension(String dimension) {
         return loadedDimension.get(dimension);
@@ -49,8 +54,6 @@ public class World {
     public static Collection<Dimension> getLoadedDimensions() {
         return Collections.unmodifiableCollection(loadedDimension.values());
     }
-    
-    private World() {}
     
     public static long getSeed() {
         return seed;
@@ -73,6 +76,22 @@ public class World {
         return world;
     }
     
+    public static void setSpawnLocation(SpawnLocation location) {
+        World.location = location;
+    }
+    
+    public static void setTime(float time) {
+        World.time = time % 24;
+    }
+    
+    public static void addTime(float time) {
+        World.time = (World.time + time) % 24;
+    }
+    
+    public static float getTime() {
+        return time;
+    }
+    
     public Dimension getCurrent() {
         return current;
     }
@@ -89,11 +108,9 @@ public class World {
         this.map = map;
     }
     
-    public static void setSpawnLocation(SpawnLocation location) {
-        World.location = location;
-    }
-    
     public void draw(int view) {
+        addTime((float) Game.getDelta() / 60f);
+        
         clear.update();
         if (map != null) {
             map.draw(camera, window, view);
@@ -132,7 +149,7 @@ public class World {
             // GET THE CURRENT DIMENSION
             if (current == null && !dimensionRequest) {
                 dimensionRequest = true;
-                thread.send(new Packets.PCommand("getDimension"),true);
+                thread.send(new Packets.PCommand("getDimension"), true);
             }
             
             if (current == null) return;
@@ -172,7 +189,7 @@ public class World {
             return;
         }
         
-        if (player == null) player = new Player(current,window,camera);
+        if (player == null) player = new Player(current, window, camera);
         clear.start();
     }
     

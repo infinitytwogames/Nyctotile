@@ -396,7 +396,7 @@ public class Main {
             Vector2i pos = GMap.worldToChunk((int) position.x, (int) position.z);
             Vector3i localChunkPos = GMap.convertToLocalChunk(VectorMath.toInt(position));
             
-            world.getMap().getChunk(pos).setLight(localChunkPos.x,localChunkPos.y,localChunkPos.z, 255, 255, 255, 15);
+            world.getMap().getChunk(pos).setLight(localChunkPos.x,localChunkPos.y-1,localChunkPos.z, 255, 255, 255, 15);
         }
     }
 }

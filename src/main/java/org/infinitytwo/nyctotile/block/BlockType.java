@@ -28,7 +28,7 @@ public abstract class BlockType implements Registerable {
         this.id = name;
     }
 
-    public boolean isInvisible() {
+    public boolean isTransparent() {
         return invisible;
     }
 

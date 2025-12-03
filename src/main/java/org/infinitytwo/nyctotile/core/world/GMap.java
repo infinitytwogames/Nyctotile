@@ -57,16 +57,28 @@ public abstract class GMap {
         return convertToLocalChunk(blockPos.x, blockPos.y, blockPos.z);
     }
     
+    public abstract boolean isBlockLoaded(int x, int y, int z);
+    public abstract BlockType getBlockType(Vector3i pos);
+    public abstract Block getTopBlock(int x, int z);
     public abstract Block getBlock(int x, int y, int z);
+    public abstract void setBlock(Block block) throws IllegalChunkAccessException;
     public abstract void removeBlock(int x, int y, int z) throws IllegalChunkAccessException;
     public abstract void removeBlock(Vector3i pos) throws IllegalChunkAccessException;
-    public abstract List<ChunkPos> getSurroundingChunks(ChunkPos center, int radius);
+    
     public abstract void insertData(Vector3i pos, byte[] data) throws IllegalChunkAccessException;
     public abstract byte[] getData(Vector3i pos) throws IllegalChunkAccessException;
     public abstract Object getData(Vector3i pos, BlockDataReader reader, String name) throws IllegalChunkAccessException, IllegalDataTypeException;
-    public abstract BlockType getBlockType(Vector3i pos);
+    
+    public abstract void setLight(int x, int y, int z, int r, int g, int b, int level);
+    public abstract void setRed(int x, int y, int z, int red);
+    public abstract void setGreen(int x, int y, int z, int green);
+    public abstract void setBlue(int x, int y, int z, int blue);
+    public abstract void setLightLevel(int x, int y, int z, int level);
+    public abstract int getRed(int x, int y, int z);
+    public abstract int getGreen(int x, int y, int z);
+    public abstract int getBlue(int x, int y, int z);
+    public abstract int getLightLevel(int x, int y, int z);
+    
+    public abstract List<ChunkPos> getSurroundingChunks(ChunkPos center, int radius);
     public abstract RaycastResult raycast(Vector3f origin, Vector3f direction, float maxDistance);
-    public abstract void setBlock(Block block) throws IllegalChunkAccessException;
-    public abstract boolean isBlockLoaded(int x, int y, int z);
-    public abstract Block getTopBlock(int x, int z);
 }
