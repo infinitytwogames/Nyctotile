@@ -17,6 +17,8 @@ import java.util.UUID;
 import static org.joml.Math.lerp;
 
 public abstract class Entity implements Registerable {
+    private static final float COLLISION_EPSILON = 0.0001f;
+    
     protected final String id;
     protected UUID uuid;
     protected final Window window;
@@ -27,15 +29,14 @@ public abstract class Entity implements Registerable {
     protected float gravity = -22.7f;
     protected Dimension dimension;
     protected Inventory inventory;
-    private boolean isGrounded = false;
     protected int modelIndex;
-    protected float movementSpeed = 7;
+    protected float movementSpeed = 1;
     protected float jumpStrength = 7.2f;
-    private final Vector3f scale = new Vector3f(1,1,1);
-    private final Vector3f rotation = new Vector3f();
-    private static float airResistance = 7;
+    protected final Vector3f scale = new Vector3f(1,1,1);
+    protected final Vector3f rotation = new Vector3f();
+    protected static float airResistance = 7;
     
-    private static final float COLLISION_EPSILON = 0.0001f;
+    private boolean isGrounded = false;
 
     public static synchronized float getAirResistance() {
         return airResistance;

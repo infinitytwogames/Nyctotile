@@ -10,7 +10,7 @@ import java.util.Queue;
 
 // TODO: RESUME IMPLEMENTATION
 public class LightingEngine {
-    private GMap map;
+    private final GMap map;
     private final Queue<Light> lightAdditionQueue = new LinkedList<>();
     private final Queue<Light> lightRemovalQueue = new LinkedList<>();
     
@@ -32,6 +32,15 @@ public class LightingEngine {
             
             // 2. Seed the addition queue to start the BFS
             lightAdditionQueue.add(new Light(worldPos, lightLevel));
+        }
+    }
+    
+    public void addLightSource(Vector3i worldPos, Light light) {
+        if (light.getLevel() > 0) {
+            map.setLight(worldPos.x, worldPos.y, worldPos.z, light.r(), light.g(), light.b(), light.getLevel());
+            
+            // Seed the addition queue to start the BFS
+            lightAdditionQueue.add(new Light(worldPos, light.getLevel()));
         }
     }
     

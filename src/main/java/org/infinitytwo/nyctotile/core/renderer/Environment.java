@@ -171,7 +171,7 @@ public class Environment {
         shader.setUniformMatrix4fv("view", view);
         
         glDisable(GL_CULL_FACE); // Disable backface culling
-        glDepthFunc(GL_LESS);
+        glDepthFunc(GL_LEQUAL);
         glBindVertexArray(vao);
         glDrawElements(GL_TRIANGLES, vertexCount, GL_UNSIGNED_INT, 0);
         glBindVertexArray(0);

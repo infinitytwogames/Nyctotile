@@ -95,7 +95,7 @@ public class RGBA extends RGB {
         return getAlpha();
     }
     
-    public RGBA a(int a) {
+    public RGBA a(float a) {
         return setAlpha(a);
     }
     

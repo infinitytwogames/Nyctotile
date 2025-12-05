@@ -2,6 +2,7 @@
   <dictionary name="project">
     <words>
       <w>circ</w>
+      <w>collidable</w>
       <w>coord</w>
       <w>coords</w>
       <w>joml</w>

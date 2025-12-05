@@ -1,5 +1,6 @@
 package org.infinitytwo.nyctotile.core.data.world;
 
+import org.infinitytwo.nyctotile.core.data.Light;
 import org.infinitytwo.nyctotile.core.data.buffer.IntPacker;
 import org.infinitytwo.nyctotile.core.data.buffer.NIntBuffer;
 import org.infinitytwo.nyctotile.core.exception.IllegalChunkAccessException;
@@ -229,5 +230,53 @@ public class ChunkData {
         setGreen(x, y, z, g);
         setBlue(x, y, z, b);
         setLightLevel(x, y, z, level);
+    }
+    
+    public void setLight(int x, int y, int z, Light light) {
+        setLight(x,y,z,light.r(),light.g(),light.b(),light.level());
+    }
+    
+    public int getBlockId(Vector3i pos) {
+        return getBlockId(pos.x,pos.y,pos.z);
+    }
+    
+    public Light getLight(Vector3i pos) {
+        return new Light(pos,getRed(pos),getGreen(pos),getBlue(pos),getLightLevel(pos));
+    }
+    
+    public int getLightLevel(Vector3i pos) {
+        return getLightLevel(pos.x, pos.y,pos.z);
+    }
+    
+    public int getBlue(Vector3i pos) {
+        return getBlue(pos.x,pos.y,pos.z);
+    }
+    
+    public int getGreen(Vector3i pos) {
+        return getGreen(pos.x,pos.y,pos.z);
+    }
+    
+    public int getRed(Vector3i pos) {
+        return getRed(pos.x,pos.y, pos.z);
+    }
+    
+    public void setLight(Vector3i position, int r, int g, int b, int level) {
+        setLight(position.x, getPosition().y, position.z, r, g, b, level);
+    }
+    
+    public void setRed(Vector3i pos, int red) {
+        setRed(pos.x, pos.y, pos.z, red);
+    }
+    
+    public void setGreen(Vector3i pos, int green) {
+        setGreen(pos.x, pos.y, pos.z, green);
+    }
+    
+    public void setBlue(Vector3i pos, int blue) {
+        setBlue(pos.x, pos.y, pos.z, blue);
+    }
+    
+    public void setLightLevel(Vector3i pos, int level) {
+        setLightLevel(pos.x, pos.y, pos.z, level);
     }
 }

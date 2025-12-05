@@ -1,6 +1,5 @@
 package org.infinitytwo.nyctotile.core.world;
 
-import org.infinitytwo.nyctotile.core.data.world.Block;
 import org.infinitytwo.nyctotile.core.data.world.ChunkPos;
 import org.infinitytwo.nyctotile.core.manager.WorkerThreads;
 import org.infinitytwo.nyctotile.core.data.world.ChunkData;
@@ -45,27 +44,6 @@ public class ServerProcedureGridMap extends ServerGridMap {
         return dt * dt + dh * dh;
     }
     
-    @Override
-    public Block getBlock(int x, int y, int z) {
-        Vector2i p = convertToChunkPosition(x, z);
-        ChunkPos pos = new ChunkPos(p.x, p.y);
-        
-        // 1. NON-BLOCKING CHECK: Check the already loaded chunks map (inherited from ServerGridMap)
-        ChunkData data = chunks.get(pos);
-        
-        if (data != null) {
-            // Chunk is loaded and ready: return the block data.
-            int id = data.getBlockId(x, y, z);
-            if (id != 0) return new Block(registry.get(id));
-            return null; // Block is air (ID 0)
-        }
-        
-        // 2. NON-BLOCKING CHECK: If the chunk is currently generating (or not generating at all),
-        // we treat it as air for physics purposes to prevent blocking.
-        // If it's generating, we rely on the Chunk Manager to load it soon.
-        return null;
-    }
-
     public void generateBiomeChunkHeightmap(NoiseGenerationSettings settings, ChunkPos GenChunk, Biome[] biomes) {
         final int seaLevel = settings.seaLevel;
         final int baseHeight = settings.baseHeight;
@@ -175,6 +153,7 @@ public class ServerProcedureGridMap extends ServerGridMap {
         }
     }
 
+    @Deprecated
     private void carveWormPath(ChunkData data, CaveWorm worm) throws IllegalChunkAccessException {
         int steps = 80 + random.nextInt(60); // random tunnel length (80–140)
         float baseRadius = worm.radius;
@@ -196,6 +175,7 @@ public class ServerProcedureGridMap extends ServerGridMap {
         }
     }
 
+    @Deprecated
     private List<CaveWorm> generateCavePaths(ChunkPos chunk) {
         List<CaveWorm> worms = new ArrayList<>();
 

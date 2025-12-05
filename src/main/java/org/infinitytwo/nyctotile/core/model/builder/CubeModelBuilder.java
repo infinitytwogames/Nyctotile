@@ -19,7 +19,7 @@ public class CubeModelBuilder {
 
         switch (face) {
             case NORTH -> { // -Z (Correct - North Face uses 0.7f brightness)
-                b = 0.2f;
+                b = 0.7f;
                 // tri 1 (000, 100, 110)
                 buffer.put(0f+x); buffer.put(0f+y); buffer.put(0f+z); buffer.put(u0); buffer.put(v0); buffer.put(b); buffer.put(light.getRed()); buffer.put(light.getGreen()); buffer.put(light.getBlue()); buffer.put(light.getAlpha());
                 buffer.put(1f+x); buffer.put(0f+y); buffer.put(0f+z); buffer.put(u1); buffer.put(v0); buffer.put(b); buffer.put(light.getRed()); buffer.put(light.getGreen()); buffer.put(light.getBlue()); buffer.put(light.getAlpha());
@@ -31,7 +31,7 @@ public class CubeModelBuilder {
                 buffer.put(0f+x); buffer.put(1f+y); buffer.put(0f+z); buffer.put(u0); buffer.put(v1); buffer.put(b); buffer.put(light.getRed()); buffer.put(light.getGreen()); buffer.put(light.getBlue()); buffer.put(light.getAlpha());
             }
             case SOUTH -> { // +Z (South Face - uses 0.7f brightness)
-                b = 0.3f;
+                b = 0.7f;
                 // tri 1 (101, 001, 011)
                 buffer.put(1f+x); buffer.put(0f+y); buffer.put(1f+z); buffer.put(u0); buffer.put(v0); buffer.put(b); buffer.put(light.getRed()); buffer.put(light.getGreen()); buffer.put(light.getBlue()); buffer.put(light.getAlpha());
                 buffer.put(0f+x); buffer.put(0f+y); buffer.put(1f+z); buffer.put(u1); buffer.put(v0); buffer.put(b); buffer.put(light.getRed()); buffer.put(light.getGreen()); buffer.put(light.getBlue()); buffer.put(light.getAlpha());
@@ -43,7 +43,7 @@ public class CubeModelBuilder {
                 buffer.put(1f+x); buffer.put(1f+y); buffer.put(1f+z); buffer.put(u0); buffer.put(v1); buffer.put(b); buffer.put(light.getRed()); buffer.put(light.getGreen()); buffer.put(light.getBlue()); buffer.put(light.getAlpha());
             }
             case WEST -> { // -X (West Face - uses 0.7f brightness)
-                b = 0.3f;
+                b = 0.7f;
                 // tri 1 (001, 000, 010)
                 buffer.put(0f+x); buffer.put(0f+y); buffer.put(1f+z); buffer.put(u0); buffer.put(v0); buffer.put(b); buffer.put(light.getRed()); buffer.put(light.getGreen()); buffer.put(light.getBlue()); buffer.put(light.getAlpha());
                 buffer.put(0f+x); buffer.put(0f+y); buffer.put(0f+z); buffer.put(u1); buffer.put(v0); buffer.put(b); buffer.put(light.getRed()); buffer.put(light.getGreen()); buffer.put(light.getBlue()); buffer.put(light.getAlpha());
@@ -55,7 +55,7 @@ public class CubeModelBuilder {
                 buffer.put(0f+x); buffer.put(1f+y); buffer.put(1f+z); buffer.put(u0); buffer.put(v1); buffer.put(b); buffer.put(light.getRed()); buffer.put(light.getGreen()); buffer.put(light.getBlue()); buffer.put(light.getAlpha());
             }
             case EAST -> { // +X (East Face - uses 0.8f brightness)
-                b = 0.4f;
+                b = 0.8f;
                 // tri 1 (100, 101, 111)
                 buffer.put(1f+x); buffer.put(0f+y); buffer.put(0f+z); buffer.put(u0); buffer.put(v0); buffer.put(b); buffer.put(light.getRed()); buffer.put(light.getGreen()); buffer.put(light.getBlue()); buffer.put(light.getAlpha());
                 buffer.put(1f+x); buffer.put(0f+y); buffer.put(1f+z); buffer.put(u1); buffer.put(v0); buffer.put(b); buffer.put(light.getRed()); buffer.put(light.getGreen()); buffer.put(light.getBlue()); buffer.put(light.getAlpha());
@@ -67,7 +67,7 @@ public class CubeModelBuilder {
                 buffer.put(1f+x); buffer.put(1f+y); buffer.put(0f+z); buffer.put(u0); buffer.put(v1); buffer.put(b); buffer.put(light.getRed()); buffer.put(light.getGreen()); buffer.put(light.getBlue()); buffer.put(light.getAlpha());
             }
             case UP -> { // +Y (Up Face - uses 0.8f brightness)
-                b = 0.4f;
+                b = 0.8f;
                 // tri 1 (010, 110, 111)
                 buffer.put(0f+x); buffer.put(1f+y); buffer.put(0f+z); buffer.put(u0); buffer.put(v0); buffer.put(b); buffer.put(light.getRed()); buffer.put(light.getGreen()); buffer.put(light.getBlue()); buffer.put(light.getAlpha());
                 buffer.put(1f+x); buffer.put(1f+y); buffer.put(0f+z); buffer.put(u1); buffer.put(v0); buffer.put(b); buffer.put(light.getRed()); buffer.put(light.getGreen()); buffer.put(light.getBlue()); buffer.put(light.getAlpha());
@@ -79,7 +79,7 @@ public class CubeModelBuilder {
                 buffer.put(0f+x); buffer.put(1f+y); buffer.put(1f+z); buffer.put(u0); buffer.put(v1); buffer.put(b); buffer.put(light.getRed()); buffer.put(light.getGreen()); buffer.put(light.getBlue()); buffer.put(light.getAlpha());
             }
             case DOWN -> { // -Y (Down Face - uses 0.5f brightness)
-                b = 0.1f;
+                b = 0.5f;
                 // tri 1 (001, 101, 100)
                 buffer.put(0f+x); buffer.put(0f+y); buffer.put(1f+z); buffer.put(u0); buffer.put(v0); buffer.put(b); buffer.put(light.getRed()); buffer.put(light.getGreen()); buffer.put(light.getBlue()); buffer.put(light.getAlpha());
                 buffer.put(1f+x); buffer.put(0f+y); buffer.put(1f+z); buffer.put(u1); buffer.put(v0); buffer.put(b); buffer.put(light.getRed()); buffer.put(light.getGreen()); buffer.put(light.getBlue()); buffer.put(light.getAlpha());

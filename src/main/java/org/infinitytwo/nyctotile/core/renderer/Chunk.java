@@ -4,7 +4,7 @@ import org.infinitytwo.nyctotile.core.data.RGBA;
 import org.infinitytwo.nyctotile.core.manager.ChunkManager;
 import org.infinitytwo.nyctotile.core.Window;
 import org.infinitytwo.nyctotile.core.manager.WorkerThreads;
-import org.infinitytwo.nyctotile.block.BlockType;
+import org.infinitytwo.nyctotile.core.data.BlockType;
 import org.infinitytwo.nyctotile.core.data.world.ChunkData;
 import org.infinitytwo.nyctotile.core.data.buffer.NFloatBuffer;
 import org.infinitytwo.nyctotile.core.exception.IllegalChunkAccessException;
@@ -355,10 +355,6 @@ public class Chunk extends ChunkData {
         
         chunk.dirty();
         return chunk;
-    }
-    
-    public int getBlockId(Vector3i pos) {
-        return getBlockId(pos.x, pos.y, pos.z);
     }
     
     @Override

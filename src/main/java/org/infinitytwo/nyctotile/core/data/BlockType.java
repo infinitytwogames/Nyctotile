@@ -1,6 +1,5 @@
-package org.infinitytwo.nyctotile.block;
+package org.infinitytwo.nyctotile.core.data;
 
-import org.infinitytwo.nyctotile.core.data.RGBA;
 import org.infinitytwo.nyctotile.core.data.world.AABB;
 import org.infinitytwo.nyctotile.core.data.buffer.NFloatBuffer;
 import org.infinitytwo.nyctotile.core.model.TextureAtlas;
@@ -9,17 +8,15 @@ import org.infinitytwo.nyctotile.core.registry.Registerable;
 import org.infinitytwo.nyctotile.core.world.GridMap;
 import org.joml.Vector3i;
 
-import java.util.List;
-
 public abstract class BlockType implements Registerable {
-    public int textureIndex;
+    protected int textureIndex;
     protected AABB[] hitboxes = {new AABB(0, 0, 0, 1, 1, 1)};
-    public List<Float> vertex;
     protected final String material;
     protected final boolean invisible;
     protected final String id;
     protected boolean collidable = true;
     protected float friction = 1;
+    protected Light lightSource = new Light();
 
     public BlockType(String material, boolean invisible, String name, int textureIndex) {
         this.textureIndex = textureIndex;
@@ -72,5 +69,9 @@ public abstract class BlockType implements Registerable {
 
     public float getFriction() {
         return friction;
+    }
+    
+    public Light getLightSource() {
+        return lightSource;
     }
 }

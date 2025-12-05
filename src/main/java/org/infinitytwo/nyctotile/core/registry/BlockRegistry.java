@@ -1,6 +1,6 @@
 package org.infinitytwo.nyctotile.core.registry;
 
-import org.infinitytwo.nyctotile.block.BlockType;
+import org.infinitytwo.nyctotile.core.data.BlockType;
 import org.infinitytwo.nyctotile.core.exception.IllegalDataTypeException;
 
 import java.lang.annotation.*;

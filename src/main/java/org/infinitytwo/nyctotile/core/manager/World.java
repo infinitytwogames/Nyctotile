@@ -3,6 +3,7 @@ package org.infinitytwo.nyctotile.core.manager;
 import org.infinitytwo.nyctotile.core.Game;
 import org.infinitytwo.nyctotile.core.ServerThread;
 import org.infinitytwo.nyctotile.core.Window;
+import org.infinitytwo.nyctotile.core.data.Light;
 import org.infinitytwo.nyctotile.core.data.world.ChunkPos;
 import org.infinitytwo.nyctotile.core.data.SpawnLocation;
 import org.infinitytwo.nyctotile.core.entity.Player;
@@ -39,6 +40,7 @@ public class World {
     private static long seed;
     private static SpawnLocation location;
     private static float time;
+    private static Light ambience = new Light(255, 255, 255, 15);
     
     private World() {
     }
@@ -90,6 +92,14 @@ public class World {
     
     public static float getTime() {
         return time;
+    }
+    
+    public static Light getAmbience() {
+        return ambience;
+    }
+    
+    public static void setAmbience(Light ambience) {
+        World.ambience.set(ambience);
     }
     
     public Dimension getCurrent() {

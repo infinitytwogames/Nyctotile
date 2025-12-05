@@ -30,6 +30,9 @@ public class Player extends Entity {
         this.camera = camera;
         
         hitbox = new AABB(-0.3f, 0, -0.3f, 0.3f, 1.8f, 0.3f);
+        
+        assert camera != null;
+        camera.doLerp = false;
     }
     
     public Player(PlayerData data, Dimension map, Window window) {
@@ -90,8 +93,8 @@ public class Player extends Entity {
         // --- 3. Apply Input to Local Velocity for Client-Side Prediction ---
         
         // Horizontal: Overwrite the local velocity's horizontal component with input (overrides friction)
-        velocity.x = velocityInput.x;
-        velocity.z = velocityInput.z;
+        velocity.x += velocityInput.x;
+        velocity.z += velocityInput.z;
         
         // Vertical: Only apply jump velocity if it was triggered. Gravity is handled in super.update.
         if (velocityInput.y > 0) {
@@ -101,12 +104,7 @@ public class Player extends Entity {
         // 4. Run base Entity physics (gravity, collision, friction/damping, and final move)
         super.update(deltaTime, map);
         
-        if (Math.abs(position.x - prevPosition.x) > EPSILON ||
-                Math.abs(position.y - prevPosition.y) > EPSILON ||
-                Math.abs(position.z - prevPosition.z) > EPSILON)
-        {
-//          setPrevPosition();
-        }
+        camera.setPosition(position.x,position.y+0.8f,position.z);
         bus.post(new VelocityChangedEvent(velocityInput.x, velocityInput.y, velocityInput.z));
     }
     
@@ -127,6 +125,7 @@ public class Player extends Entity {
     // Assuming this code is in your Player class
     
     public void updateCamera(float delta) {
+        if (true) return; // This function sucks
         if (camera == null) return;
         
         // --- Camera Smoothing Constants ---

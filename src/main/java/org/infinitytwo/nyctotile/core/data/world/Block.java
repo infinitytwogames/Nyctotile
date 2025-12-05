@@ -1,12 +1,14 @@
 package org.infinitytwo.nyctotile.core.data.world;
 
-import org.infinitytwo.nyctotile.block.BlockType;
+import org.infinitytwo.nyctotile.core.data.BlockType;
+import org.infinitytwo.nyctotile.core.data.Light;
 import org.joml.Vector3f;
 import org.joml.Vector3i;
 
 public class Block {
     protected Vector3i position = new Vector3i();
     private final BlockType type;
+    protected Light light;
 
     public Block(BlockType type) {
         this.type = type;
@@ -56,5 +58,14 @@ public class Block {
     @Override
     public String toString() {
         return "Block(Pos: ("+getPosition().x + " "+getPosition().y+ " "+getPosition().z + "), Type: "+getType().getId();
+    }
+    
+    public void setLight(Light light) {
+        this.light.set(light);
+    }
+    
+    public Light getLight() {
+        light.setPosition(position);
+        return light;
     }
 }
